@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareerMate - Recruiter Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="chat-ai.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .kanban-column { min-width: 280px; }
+        @media (max-width: 768px) {
+            .kanban-column { min-width: 250px; }
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .mobile-tabs {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .mobile-tabs.active {
+            max-height: 500px;
+        }
+        /* Chat Box Styles */
+        .chat-widget {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .chat-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .chat-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+        .chat-button i {
+            color: white;
+            font-size: 24px;
+        }
+        .chat-window {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 380px;
+            max-width: calc(100vw - 40px);
+            height: 600px;
+            max-height: calc(100vh - 120px);
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 1001;
+        }
+        .chat-window.active {
+            display: flex;
+        }
+        .chat-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .chat-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .chat-close {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 20px;
+            padding: 4px;
+        }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .message {
+            display: flex;
+            gap: 8px;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .message.user {
+            flex-direction: row-reverse;
+        }
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .message.ai .message-avatar {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+        .message.user .message-avatar {
+            background: #e5e7eb;
+            color: #6b7280;
+        }
+        .message-content {
+            max-width: 75%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .message.ai .message-content {
+            background: #f3f4f6;
+            color: #1f2937;
+        }
+        .message.user .message-content {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+        .chat-input-area {
+            padding: 16px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 8px;
+        }
+        .chat-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 20px;
+            font-size: 14px;
+            outline: none;
+        }
+        .chat-input:focus {
+            border-color: #3b82f6;
+        }
+        .chat-upload {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            color: #3b82f6;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .chat-upload:hover {
+            background: #e5e7eb;
+            border-color: #3b82f6;
+        }
+        .chat-send {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .chat-send:hover {
+            opacity: 0.9;
+        }
+        .file-input-hidden {
+            display: none;
+        }
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 10px 14px;
+        }
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #9ca3af;
+            animation: typing 1.4s infinite;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+        .quick-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .quick-action-btn {
+            padding: 6px 12px;
+            background: #f3f4f6;
+            border: none;
+            border-radius: 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .quick-action-btn:hover {
+            background: #e5e7eb;
+        }
+        @media (max-width: 640px) {
+            .chat-window {
+                width: calc(100vw - 20px);
+                right: 10px;
+                bottom: 80px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 h-screen flex flex-col">
+
+    <nav class="bg-white border-b border-gray-200 h-14 sm:h-16 flex items-center justify-between px-4 sm:px-6 shrink-0">
+        <div class="flex items-center gap-3 sm:gap-8">
+            <button id="mobile-menu-btn" class="md:hidden p-2 text-gray-600 hover:text-gray-900">
+                <i class="fas fa-bars text-lg"></i>
+            </button>
+            <a href="#" class="text-xl sm:text-2xl font-bold text-blue-600 tracking-tight">CareerMate</a>
+            <div class="hidden md:flex gap-4 lg:gap-6 text-sm font-medium text-gray-500">
+                <a href="#dashboard" onclick="showTab('dashboard')" class="tab-link hover:text-blue-600 transition">Dashboard</a>
+                <a href="#post-job" onclick="showTab('post-job')" class="tab-link hover:text-blue-600 transition">Đăng tin</a>
+                <a href="#applicants" onclick="showTab('applicants')" class="tab-link text-blue-600">Ứng viên</a>
+                <a href="#job-matching" onclick="showTab('job-matching')" class="tab-link hover:text-blue-600 transition">Gợi ý ứng viên</a>
+                <a href="#vip" onclick="showTab('vip')" class="tab-link hover:text-blue-600 transition">Gói VIP <span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full ml-1">Gold</span></a>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 sm:gap-4">
+            <button class="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 relative">
+                <i class="fas fa-bell text-lg sm:text-xl"></i>
+                <span class="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
+            </button>
+            <div class="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold border border-blue-200 text-xs sm:text-sm">HR</div>
+        </div>
+    </nav>
+    
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="mobile-tabs md:hidden bg-white border-b border-gray-200">
+        <div class="px-4 py-3 space-y-1">
+            <a href="#dashboard" onclick="showTab('dashboard')" class="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm">Dashboard</a>
+            <a href="#post-job" onclick="showTab('post-job')" class="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm">Đăng tin</a>
+            <a href="#applicants" onclick="showTab('applicants')" class="block px-3 py-2 text-blue-600 bg-blue-50 rounded-lg text-sm font-medium">Ứng viên</a>
+            <a href="#job-matching" onclick="showTab('job-matching')" class="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm">Gợi ý ứng viên</a>
+            <a href="#vip" onclick="showTab('vip')" class="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm">Gói VIP <span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full ml-1">Gold</span></a>
+        </div>
+    </div>
+
+    <!-- Applicants Tab Content -->
+    <div id="applicants" class="tab-content active">
+        <header class="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 shrink-0">
+            <div class="flex-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <h1 class="text-lg sm:text-xl font-bold text-gray-900 break-words">Backend Developer (Java/Spring Boot)</h1>
+                    <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 whitespace-nowrap">Đang tuyển</span>
+                </div>
+                <p class="text-xs sm:text-sm text-gray-500 mt-1 break-words">ID: #JB-2025-001 • Hết hạn: 30/12/2025 • Hà Nội</p>
+            </div>
+            <div class="flex gap-2 sm:gap-3">
+                <button class="px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-50 text-gray-700 flex items-center gap-1 sm:gap-2">
+                    <i class="fas fa-plus text-xs sm:text-sm"></i>
+                    <span class="hidden sm:inline">Thêm ứng viên</span>
+                    <span class="sm:hidden">Thêm</span>
+                </button>
+                <button class="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 rounded-lg text-xs sm:text-sm font-medium hover:bg-blue-700 text-white shadow-sm">
+                    <span class="hidden sm:inline">Sửa tin đăng</span>
+                    <span class="sm:hidden">Sửa</span>
+                </button>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-x-auto overflow-y-hidden p-3 sm:p-4 lg:p-6">
+            <div class="flex h-full gap-3 sm:gap-4 lg:gap-6 min-w-max">
+            
+            <div class="kanban-column flex flex-col w-[280px] sm:w-80 bg-gray-100 rounded-lg sm:rounded-xl border border-gray-200 h-full">
+                <div class="p-3 sm:p-4 flex items-center justify-between border-b border-gray-200/50">
+                    <h3 class="font-semibold text-gray-700 text-sm sm:text-base">Mới ứng tuyển <span class="bg-gray-200 text-gray-600 text-xs px-1.5 sm:px-2 py-0.5 rounded-full ml-1 sm:ml-2">3</span></h3>
+                    <button class="text-gray-400 hover:text-gray-600 text-xs sm:text-sm">•••</button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-2 sm:p-3 space-y-2 sm:space-y-3 custom-scrollbar">
+                    
+                    <div class="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition cursor-pointer group">
+                        <div class="flex justify-between items-start mb-2 gap-2">
+                            <h4 class="font-semibold text-gray-900 group-hover:text-blue-600 text-sm sm:text-base flex-1">Nguyễn Văn A</h4>
+                            <span class="text-xs font-bold text-green-600 bg-green-50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded border border-green-100 whitespace-nowrap">92%</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-2 sm:mb-3">2 năm KN • Đại học Bách Khoa</p>
+                        <div class="flex items-center justify-between mt-2 pt-2 border-t border-gray-50">
+                            <span class="text-xs text-gray-400">10 phút trước</span>
+                            <div class="flex gap-1">
+                                <button class="p-1 hover:bg-gray-100 rounded text-gray-500 text-xs sm:text-sm" title="Xem CV"><i class="fas fa-file-pdf"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition cursor-pointer group">
+                        <div class="flex justify-between items-start mb-2 gap-2">
+                            <h4 class="font-semibold text-gray-900 group-hover:text-blue-600 text-sm sm:text-base flex-1">Trần Thị B</h4>
+                            <span class="text-xs font-bold text-yellow-600 bg-yellow-50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded border border-yellow-100 whitespace-nowrap">75%</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-2 sm:mb-3">Fresher • Chứng chỉ AWS</p>
+                        <div class="flex items-center justify-between mt-2 pt-2 border-t border-gray-50">
+                            <span class="text-xs text-gray-400">1 giờ trước</span>
+                             <div class="flex gap-1">
+                                <button class="p-1 hover:bg-gray-100 rounded text-gray-500 text-xs sm:text-sm" title="Xem CV"><i class="fas fa-file-pdf"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="kanban-column flex flex-col w-[280px] sm:w-80 bg-gray-100 rounded-lg sm:rounded-xl border border-gray-200 h-full">
+                <div class="p-3 sm:p-4 flex items-center justify-between border-b border-gray-200/50">
+                    <h3 class="font-semibold text-blue-700 text-sm sm:text-base">Đã xem <span class="bg-blue-100 text-blue-700 text-xs px-1.5 sm:px-2 py-0.5 rounded-full ml-1 sm:ml-2">2</span></h3>
+                    <button class="text-gray-400 hover:text-gray-600 text-xs sm:text-sm">•••</button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-2 sm:p-3 space-y-2 sm:space-y-3">
+                    
+                    <div class="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition cursor-pointer border-l-4 border-l-blue-500">
+                        <div class="flex justify-between items-start mb-2 gap-2">
+                            <h4 class="font-semibold text-gray-900 text-sm sm:text-base flex-1">Lê Văn C</h4>
+                            <span class="text-xs font-bold text-green-600 bg-green-50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded border border-green-100 whitespace-nowrap">88%</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-2 sm:mb-3">3 năm KN • Fullstack</p>
+                        <div class="text-xs bg-blue-50 text-blue-700 p-2 rounded mb-2">
+                            ✨ AI Note: Ứng viên này có GitHub rất ấn tượng.
+                        </div>
+                        <div class="flex items-center justify-between mt-2 pt-2 border-t border-gray-50">
+                            <span class="text-xs text-gray-400">Hôm qua</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="kanban-column flex flex-col w-[280px] sm:w-80 bg-gray-100 rounded-lg sm:rounded-xl border border-gray-200 h-full">
+                <div class="p-3 sm:p-4 flex items-center justify-between border-b border-gray-200/50">
+                    <h3 class="font-semibold text-purple-700 text-sm sm:text-base">Phỏng vấn <span class="bg-purple-100 text-purple-700 text-xs px-1.5 sm:px-2 py-0.5 rounded-full ml-1 sm:ml-2">1</span></h3>
+                    <button class="text-gray-400 hover:text-gray-600 text-xs sm:text-sm">•••</button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-2 sm:p-3 space-y-2 sm:space-y-3">
+                    
+                    <div class="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition cursor-pointer border-l-4 border-l-purple-500">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-semibold text-gray-900 text-sm sm:text-base">Phạm Văn D</h4>
+                        </div>
+                        <div class="flex items-center gap-2 mb-3 bg-purple-50 p-2 rounded text-xs text-purple-700 font-medium">
+                            <i class="fas fa-clock text-xs"></i>
+                            <span>14:00 - 20/12/2025</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="flex-1 py-1.5 text-xs font-medium text-white bg-purple-600 rounded hover:bg-purple-700">Join</button>
+                            <button class="flex-1 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200">Đánh giá</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="kanban-column flex flex-col w-[280px] sm:w-80 bg-gray-100 rounded-lg sm:rounded-xl border border-gray-200 h-full">
+                <div class="p-3 sm:p-4 flex items-center justify-between border-b border-gray-200/50">
+                    <h3 class="font-semibold text-green-700 text-sm sm:text-base">Đã Offer <span class="bg-green-100 text-green-700 text-xs px-1.5 sm:px-2 py-0.5 rounded-full ml-1 sm:ml-2">0</span></h3>
+                    <button class="text-gray-400 hover:text-gray-600 text-xs sm:text-sm">•••</button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-2 sm:p-3 space-y-2 sm:space-y-3 flex items-center justify-center">
+                    <div class="text-center text-gray-400">
+                        <p class="text-xs sm:text-sm">Chưa có ứng viên</p>
+                        <p class="text-xs mt-1 hidden sm:block">Kéo ứng viên vào đây</p>
+                    </div>
+                </div>
+            </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Post Job Tab Content -->
+    <div id="post-job" class="tab-content">
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6">
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 lg:p-8 mb-4 sm:mb-6">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Đăng tin tuyển dụng mới</h2>
+                    <form class="space-y-4 sm:space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tiêu đề công việc *</label>
+                            <input type="text" placeholder="VD: Backend Developer (Java/Spring Boot)" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Địa điểm *</label>
+                                <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option>Hà Nội</option>
+                                    <option>TP. Hồ Chí Minh</option>
+                                    <option>Đà Nẵng</option>
+                                    <option>Khác</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Mức lương</label>
+                                <input type="text" placeholder="VD: 15-20 triệu" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Kinh nghiệm yêu cầu</label>
+                            <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option>Không yêu cầu</option>
+                                <option>Dưới 1 năm</option>
+                                <option>1-2 năm</option>
+                                <option>2-5 năm</option>
+                                <option>Trên 5 năm</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Kỹ năng yêu cầu</label>
+                            <input type="text" placeholder="VD: Java, Spring Boot, MySQL (phân cách bằng dấu phẩy)" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Mô tả công việc *</label>
+                            <textarea rows="6" placeholder="Mô tả chi tiết về công việc, trách nhiệm..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Yêu cầu ứng viên</label>
+                            <textarea rows="4" placeholder="Các yêu cầu cụ thể về trình độ, kỹ năng..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Ngày hết hạn</label>
+                                <input type="date" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Số lượng tuyển</label>
+                                <input type="number" placeholder="VD: 2" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
+                            <button type="submit" class="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg text-sm sm:text-base">
+                                <i class="fas fa-paper-plane mr-2"></i>Đăng tin ngay
+                            </button>
+                            <button type="button" class="px-4 sm:px-6 py-2.5 sm:py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition text-sm sm:text-base">
+                                Lưu nháp
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- My Job Posts -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                    <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Tin tuyển dụng của tôi</h3>
+                    <div class="space-y-3 sm:space-y-4">
+                        <div class="border border-gray-200 rounded-lg p-3 sm:p-4 hover:bg-gray-50 transition">
+                            <div class="flex flex-col sm:flex-row items-start justify-between gap-3">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                                        <h4 class="font-semibold text-gray-900 text-sm sm:text-base">Backend Developer (Java/Spring Boot)</h4>
+                                        <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded whitespace-nowrap">Đang tuyển</span>
+                                    </div>
+                                    <p class="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2">Hà Nội • 15-20 triệu • Hết hạn: 30/12/2025</p>
+                                    <p class="text-xs text-gray-500">12 ứng viên • 3 đã phỏng vấn</p>
+                                </div>
+                                <div class="flex gap-2 sm:ml-4">
+                                    <button class="px-2 sm:px-3 py-1 text-blue-600 hover:bg-blue-50 rounded text-sm">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="px-2 sm:px-3 py-1 text-gray-600 hover:bg-gray-50 rounded text-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Job Matching Tab Content -->
+    <div id="job-matching" class="tab-content">
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6">
+            <div class="max-w-7xl mx-auto">
+                <div class="mb-4 sm:mb-6">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Gợi ý ứng viên phù hợp</h2>
+                    <p class="text-sm sm:text-base text-gray-600">AI sẽ tự động tìm kiếm và đề xuất ứng viên phù hợp với yêu cầu công việc của bạn</p>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-4 sm:mb-6">
+                    <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-3 sm:mb-4">
+                        <select class="flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base">
+                            <option>Chọn tin tuyển dụng</option>
+                            <option>Backend Developer (Java/Spring Boot)</option>
+                            <option>Frontend Developer (React)</option>
+                        </select>
+                        <button class="px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition text-sm sm:text-base">
+                            <i class="fas fa-search mr-2"></i>Tìm ứng viên
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                        <span><i class="fas fa-info-circle text-blue-500 mr-1"></i>Đã tìm thấy 8 ứng viên phù hợp</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-lg">NA</div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-900">Nguyễn Văn A</h4>
+                                    <p class="text-xs text-gray-500">Backend Developer</p>
+                                </div>
+                            </div>
+                            <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded">95%</span>
+                        </div>
+                        <div class="mb-4">
+                            <p class="text-sm text-gray-600 mb-2">2 năm kinh nghiệm • Đại học Bách Khoa</p>
+                            <div class="flex flex-wrap gap-2 mb-3">
+                                <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">Java</span>
+                                <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">Spring Boot</span>
+                                <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">MySQL</span>
+                            </div>
+                            <div class="text-xs bg-blue-50 text-blue-700 p-2 rounded">
+                                <i class="fas fa-lightbulb mr-1"></i>Ứng viên có portfolio GitHub ấn tượng
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+                                <i class="fas fa-eye mr-1"></i>Xem CV
+                            </button>
+                            <button class="flex-1 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
+                                <i class="fas fa-paper-plane mr-1"></i>Mời ứng tuyển
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-lg">TB</div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-900">Trần Thị B</h4>
+                                    <p class="text-xs text-gray-500">Fullstack Developer</p>
+                                </div>
+                            </div>
+                            <span class="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-bold rounded">88%</span>
+                        </div>
+                        <div class="mb-4">
+                            <p class="text-sm text-gray-600 mb-2">1.5 năm kinh nghiệm • Chứng chỉ AWS</p>
+                            <div class="flex flex-wrap gap-2 mb-3">
+                                <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">Java</span>
+                                <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">React</span>
+                                <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">AWS</span>
+                            </div>
+                            <div class="text-xs bg-blue-50 text-blue-700 p-2 rounded">
+                                <i class="fas fa-lightbulb mr-1"></i>Có kinh nghiệm làm việc với microservices
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+                                <i class="fas fa-eye mr-1"></i>Xem CV
+                            </button>
+                            <button class="flex-1 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
+                                <i class="fas fa-paper-plane mr-1"></i>Mời ứng tuyển
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-lg">LC</div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-900">Lê Văn C</h4>
+                                    <p class="text-xs text-gray-500">Backend Developer</p>
+                                </div>
+                            </div>
+                            <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded">92%</span>
+                        </div>
+                        <div class="mb-4">
+                            <p class="text-sm text-gray-600 mb-2">3 năm kinh nghiệm • Đại học Công nghệ</p>
+                            <div class="flex flex-wrap gap-2 mb-3">
+                                <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">Java</span>
+                                <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">Spring</span>
+                                <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">Docker</span>
+                            </div>
+                            <div class="text-xs bg-blue-50 text-blue-700 p-2 rounded">
+                                <i class="fas fa-lightbulb mr-1"></i>Đã từng làm việc tại startup công nghệ
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+                                <i class="fas fa-eye mr-1"></i>Xem CV
+                            </button>
+                            <button class="flex-1 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
+                                <i class="fas fa-paper-plane mr-1"></i>Mời ứng tuyển
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- VIP Package Tab Content -->
+    <div id="vip" class="tab-content">
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6">
+            <div class="max-w-6xl mx-auto">
+                <div class="text-center mb-6 sm:mb-8">
+                    <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Nâng cấp gói VIP</h2>
+                    <p class="text-sm sm:text-base text-gray-600">Tăng hiệu quả tuyển dụng với các tính năng độc quyền</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+                    <!-- Basic Package -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="text-center mb-6">
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">Gói Cơ bản</h3>
+                            <div class="mb-4">
+                                <span class="text-3xl font-bold text-gray-900">Miễn phí</span>
+                            </div>
+                            <p class="text-sm text-gray-600">Phù hợp cho doanh nghiệp nhỏ</p>
+                        </div>
+                        <ul class="space-y-3 mb-6">
+                            <li class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                Đăng 3 tin tuyển dụng/tháng
+                            </li>
+                            <li class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                Xem 20 CV/tháng
+                            </li>
+                            <li class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                Hỗ trợ email
+                            </li>
+                        </ul>
+                        <button class="w-full py-3 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition">
+                            Gói hiện tại
+                        </button>
+                    </div>
+
+                    <!-- Gold Package -->
+                    <div class="bg-white rounded-xl shadow-lg border-2 border-yellow-400 p-6 relative">
+                        <div class="absolute top-0 right-0 bg-yellow-400 text-yellow-900 px-4 py-1 rounded-bl-lg text-xs font-bold">
+                            PHỔ BIẾN
+                        </div>
+                        <div class="text-center mb-6">
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">Gói Gold</h3>
+                            <div class="mb-4">
+                                <span class="text-3xl font-bold text-gray-900">2.990.000đ</span>
+                                <span class="text-gray-500">/tháng</span>
+                            </div>
+                            <p class="text-sm text-gray-600">Phù hợp cho doanh nghiệp vừa</p>
+                        </div>
+                        <ul class="space-y-3 mb-6">
+                            <li class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                Đăng không giới hạn tin tuyển dụng
+                            </li>
+                            <li class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                Xem không giới hạn CV
+                            </li>
+                            <li class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                Gợi ý ứng viên AI
+                            </li>
+                            <li class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                Ưu tiên hiển thị tin đăng
+                            </li>
+                            <li class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                Hỗ trợ 24/7
+                            </li>
+                        </ul>
+                        <button class="w-full py-3 bg-yellow-400 text-yellow-900 rounded-lg font-semibold hover:bg-yellow-500 transition">
+                            Gói hiện tại
+                        </button>
+                    </div>
+
+                    <!-- Platinum Package -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="text-center mb-6">
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">Gói Platinum</h3>
+                            <div class="mb-4">
+                                <span class="text-3xl font-bold text-gray-900">5.990.000đ</span>
+                                <span class="text-gray-500">/tháng</span>
+                            </div>
+                            <p class="text-sm text-gray-600">Phù hợp cho doanh nghiệp lớn</p>
+                        </div>
+                        <ul class="space-y-3 mb-6">
+                            <li class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                Tất cả tính năng Gold
+                            </li>
+                            <li class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                Quản lý nhiều tài khoản
+                            </li>
+                            <li class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                Báo cáo chi tiết nâng cao
+                            </li>
+                            <li class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                Tích hợp API
+                            </li>
+                            <li class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                Account Manager riêng
+                            </li>
+                        </ul>
+                        <button class="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
+                            Nâng cấp ngay
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Current Package Info -->
+                <div class="bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-xl p-4 sm:p-6 text-white">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+                        <div>
+                            <h3 class="text-lg sm:text-xl font-bold mb-1">Gói Gold của bạn</h3>
+                            <p class="text-yellow-100 text-sm sm:text-base">Hết hạn: 30/01/2026 • Còn 40 ngày</p>
+                        </div>
+                        <button class="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-white text-yellow-600 rounded-lg font-semibold hover:bg-yellow-50 transition text-sm sm:text-base">
+                            Gia hạn ngay
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Dashboard Tab Content -->
+    <div id="dashboard" class="tab-content">
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6">
+            <div class="max-w-7xl mx-auto">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Dashboard</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-4 sm:mb-6">
+                    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                                <i class="fas fa-briefcase text-blue-600 text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-1">Tin đang tuyển</p>
+                        <p class="text-2xl font-bold text-gray-900">5</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="h-12 w-12 rounded-lg bg-green-100 flex items-center justify-center">
+                                <i class="fas fa-user-check text-green-600 text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-1">Ứng viên mới</p>
+                        <p class="text-2xl font-bold text-gray-900">23</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="h-12 w-12 rounded-lg bg-purple-100 flex items-center justify-center">
+                                <i class="fas fa-calendar-check text-purple-600 text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-1">Phỏng vấn sắp tới</p>
+                        <p class="text-2xl font-bold text-gray-900">3</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="h-12 w-12 rounded-lg bg-orange-100 flex items-center justify-center">
+                                <i class="fas fa-handshake text-orange-600 text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-1">Đã tuyển thành công</p>
+                        <p class="text-2xl font-bold text-gray-900">8</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- AI Chat Widget -->
+    <div class="chat-widget">
+        <button class="chat-button" id="chatToggle">
+            <i class="fas fa-comments"></i>
+        </button>
+        <div class="chat-window" id="chatWindow">
+            <div class="chat-header">
+                <h3>
+                    <i class="fas fa-robot"></i>
+                    CareerMate AI
+                </h3>
+                <button class="chat-close" id="chatClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="quick-actions" id="quickActions">
+                <button class="quick-action-btn" onclick="sendQuickMessage('Cách viết tin tuyển dụng hiệu quả')">
+                    ✍️ Viết tin tuyển dụng
+                </button>
+                <button class="quick-action-btn" onclick="sendQuickMessage('Cách đánh giá ứng viên')">
+                    👥 Đánh giá ứng viên
+                </button>
+                <button class="quick-action-btn" onclick="sendQuickMessage('Câu hỏi phỏng vấn hay')">
+                    💬 Câu hỏi phỏng vấn
+                </button>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="message ai">
+                    <div class="message-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="message-content">
+                        Xin chào! Tôi là CareerMate AI, trợ lý tuyển dụng của bạn. Tôi có thể giúp bạn:
+                        <br>• Viết và tối ưu tin tuyển dụng
+                        <br>• Đánh giá và sàng lọc ứng viên
+                        <br>• Gợi ý câu hỏi phỏng vấn
+                        <br>• Tư vấn chiến lược tuyển dụng
+                        <br><br>Bạn cần hỗ trợ gì hôm nay?
+                    </div>
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <input type="file" id="cvUpload" class="file-input-hidden" accept=".txt,.doc,.docx,.pdf">
+                <button class="chat-upload" onclick="document.getElementById('cvUpload').click()" title="Upload CV để phân tích">
+                    <i class="fas fa-file-upload"></i>
+                </button>
+                <input type="text" class="chat-input" id="chatInput" placeholder="Nhập câu hỏi của bạn..." onkeypress="handleChatKeyPress(event)">
+                <button class="chat-send" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabId).classList.add('active');
+            
+            // Update active link
+            document.querySelectorAll('.tab-link').forEach(link => {
+                link.classList.remove('text-blue-600');
+            });
+            if (event && event.target) {
+                event.target.classList.add('text-blue-600');
+            }
+            
+            // Close mobile menu
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (mobileMenu) {
+                mobileMenu.classList.remove('active');
+            }
+        }
+
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        if (mobileMenuBtn && mobileMenu) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('active');
+            });
+        }
+
+        // AI Chat Widget - Sử dụng CareerMateAI class từ chat-ai.js
+        const GEMINI_API_KEY = 'AIzaSyDbHY-D_6F42UgKuAZRwYIfZWSWi0WLWIE';
+        
+        // System prompt cho nhà tuyển dụng
+        const systemPrompt = `Bạn là CareerMate AI, một trợ lý tuyển dụng chuyên nghiệp giúp đỡ nhà tuyển dụng. 
+Nhiệm vụ chính của bạn:
+1. Viết và tối ưu hóa tin tuyển dụng để thu hút ứng viên chất lượng
+2. Đánh giá và sàng lọc ứng viên dựa trên CV và hồ sơ
+3. Gợi ý câu hỏi phỏng vấn phù hợp với vị trí tuyển dụng
+4. Tư vấn chiến lược tuyển dụng hiệu quả
+5. Hỗ trợ quy trình tuyển dụng từ A-Z
+
+Hãy trả lời một cách chuyên nghiệp, thực tế và hữu ích. Luôn trả lời bằng tiếng Việt.`;
+
+        // Khởi tạo CareerMateAI instance
+        let chatAI;
+        document.addEventListener('DOMContentLoaded', () => {
+            chatAI = new CareerMateAI({
+                apiKey: GEMINI_API_KEY,
+                systemPrompt: systemPrompt,
+                proxyUrl: 'gemini-proxy.php',
+                role: 'recruiter' // Role cho nhà tuyển dụng
+            });
+        });
+
+        // Wrapper functions để tương thích với onclick handlers
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter' && chatAI) {
+                chatAI.sendMessage();
+            }
+        }
+
+        function sendMessage() {
+            if (chatAI) {
+                chatAI.sendMessage();
+            }
+        }
+
+        function sendQuickMessage(message) {
+            if (chatAI) {
+                chatAI.sendQuickMessage(message);
+            }
+        }
+
+        // Tất cả các hàm AI đã được chuyển sang chat-ai.js
+    </script>
+</body>
+</html>
