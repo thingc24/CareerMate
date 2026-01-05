@@ -1,0 +1,52 @@
+package vn.careermate.controller;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+import vn.careermate.model.Challenge;
+import vn.careermate.model.ChallengeParticipation;
+import vn.careermate.service.ChallengeService;
+
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/challenges")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "*")
+public class ChallengeController {
+
+    private final ChallengeService challengeService;
+
+    @GetMapping
+    public ResponseEntity<List<Challenge>> getAvailableChallenges(
+            @RequestParam(required = false) String category
+    ) {
+        return ResponseEntity.ok(challengeService.getAvailableChallenges(category));
+    }
+
+    @GetMapping("/{challengeId}")
+    public ResponseEntity<Challenge> getChallenge(@PathVariable UUID challengeId) {
+        return ResponseEntity.ok(challengeService.getChallengeById(challengeId));
+    }
+
+    @PostMapping("/{challengeId}/join")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<ChallengeParticipation> joinChallenge(@PathVariable UUID challengeId) {
+        return ResponseEntity.ok(challengeService.joinChallenge(challengeId));
+    }
+
+    @PostMapping("/participations/{participationId}/complete")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<ChallengeParticipation> completeChallenge(@PathVariable UUID participationId) {
+        return ResponseEntity.ok(challengeService.completeChallenge(participationId));
+    }
+
+    @GetMapping("/my-participations")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<List<ChallengeParticipation>> getMyParticipations() {
+        return ResponseEntity.ok(challengeService.getMyParticipations());
+    }
+}
+

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareerMate - Thử thách</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="api-client.js"></script>
+    <script src="auth-helper.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="sinhvien.html" class="text-2xl font-bold text-blue-600">CareerMate</a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="sinhvien.html" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-home mr-2"></i>Dashboard
+                    </a>
+                    <div id="userAvatar" class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Thử thách</h1>
+            <p class="text-gray-600">Tham gia thử thách để nhận huy hiệu và nâng cao kỹ năng</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="mb-6">
+            <div class="flex gap-4 border-b border-gray-200">
+                <button onclick="showTab('active')" class="tab-btn px-4 py-2 font-medium text-blue-600 border-b-2 border-blue-600">
+                    Đang diễn ra
+                </button>
+                <button onclick="showTab('upcoming')" class="tab-btn px-4 py-2 font-medium text-gray-600 hover:text-gray-900">
+                    Sắp tới
+                </button>
+                <button onclick="showTab('completed')" class="tab-btn px-4 py-2 font-medium text-gray-600 hover:text-gray-900">
+                    Đã hoàn thành
+                </button>
+            </div>
+        </div>
+
+        <!-- Challenges Grid -->
+        <div id="challengesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Challenges will be loaded here -->
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="hidden text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+            <p class="text-gray-600">Đang tải thử thách...</p>
+        </div>
+    </script>
+
+    <script>
+        const api = new CareerMateAPI();
+        let currentTab = 'active';
+
+        // Check authentication
+        if (!checkAuth()) {
+            window.location.href = 'login.html';
+        }
+
+        // Load user info
+        loadUserInfo();
+
+        // Load challenges
+        loadChallenges();
+
+        function showTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+                btn.classList.add('text-gray-600');
+            });
+            event.target.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+            event.target.classList.remove('text-gray-600');
+            loadChallenges();
+        }
+
+        async function loadChallenges() {
+            try {
+                document.getElementById('challengesGrid').classList.add('hidden');
+                document.getElementById('loadingState').classList.remove('hidden');
+
+                const challenges = await api.getChallenges();
+                
+                // Filter by tab
+                const now = new Date();
+                let filtered = challenges;
+                
+                if (currentTab === 'active') {
+                    filtered = challenges.filter(c => {
+                        const start = c.startDate ? new Date(c.startDate) : null;
+                        const end = c.endDate ? new Date(c.endDate) : null;
+                        return (!start || start <= now) && (!end || end >= now);
+                    });
+                } else if (currentTab === 'upcoming') {
+                    filtered = challenges.filter(c => {
+                        const start = c.startDate ? new Date(c.startDate) : null;
+                        return start && start > now;
+                    });
+                } else if (currentTab === 'completed') {
+                    // Get user's completed challenges
+                    const participations = await api.getMyParticipations();
+                    const completedIds = participations.filter(p => p.status === 'COMPLETED').map(p => p.challengeId);
+                    filtered = challenges.filter(c => completedIds.includes(c.id));
+                }
+
+                document.getElementById('loadingState').classList.add('hidden');
+                displayChallenges(filtered);
+            } catch (error) {
+                console.error('Load challenges error:', error);
+                document.getElementById('loadingState').classList.add('hidden');
+            }
+        }
+
+        function displayChallenges(challenges) {
+            const container = document.getElementById('challengesGrid');
+            container.innerHTML = '';
+            container.classList.remove('hidden');
+
+            if (challenges.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-500">Không có thử thách nào</p></div>';
+                return;
+            }
+
+            challenges.forEach(challenge => {
+                const div = document.createElement('div');
+                div.className = 'bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition';
+                div.innerHTML = `
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-xl font-semibold text-gray-900">${challenge.title}</h3>
+                            ${challenge.badgeId ? '<i class="fas fa-trophy text-yellow-500"></i>' : ''}
+                        </div>
+                        <p class="text-gray-600 text-sm mb-4">${challenge.description || ''}</p>
+                        <div class="flex items-center gap-4 text-xs text-gray-500">
+                            <span><i class="fas fa-tag mr-1"></i>${challenge.category || 'Chung'}</span>
+                            <span><i class="fas fa-signal mr-1"></i>${challenge.difficulty || 'Trung bình'}</span>
+                        </div>
+                    </div>
+                    ${challenge.startDate || challenge.endDate ? `
+                    <div class="mb-4 p-3 bg-blue-50 rounded-lg text-sm">
+                        ${challenge.startDate ? `<div>Bắt đầu: ${new Date(challenge.startDate).toLocaleDateString('vi-VN')}</div>` : ''}
+                        ${challenge.endDate ? `<div>Kết thúc: ${new Date(challenge.endDate).toLocaleDateString('vi-VN')}</div>` : ''}
+                    </div>
+                    ` : ''}
+                    <button onclick="joinChallenge('${challenge.id}')" class="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition">
+                        <i class="fas fa-play mr-2"></i>Tham gia
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        async function joinChallenge(challengeId) {
+            try {
+                await api.joinChallenge(challengeId);
+                alert('Đã tham gia thử thách thành công!');
+                loadChallenges();
+            } catch (error) {
+                console.error('Join challenge error:', error);
+                alert('Lỗi khi tham gia: ' + error.message);
+            }
+        }
+
+        function loadUserInfo() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (user.fullName) {
+                const initials = user.fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                document.getElementById('userAvatar').textContent = initials;
+            }
+        }
+    </script>
+</body>
+</html>
+

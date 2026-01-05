@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareerMate - Chi tiết khóa học</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="api-client.js"></script>
+    <script src="auth-helper.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="sinhvien.html" class="text-2xl font-bold text-blue-600">CareerMate</a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="sinhvien.html" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-home mr-2"></i>Dashboard
+                    </a>
+                    <div id="userAvatar" class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div id="loadingState" class="text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+            <p class="text-gray-600">Đang tải thông tin khóa học...</p>
+        </div>
+
+        <div id="courseContent" class="hidden">
+            <!-- Course Header -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <h1 id="courseTitle" class="text-3xl font-bold text-gray-900 mb-2"></h1>
+                        <p id="courseDescription" class="text-gray-600 mb-4"></p>
+                        <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+                            <span id="courseInstructor"><i class="fas fa-user mr-1"></i></span>
+                            <span id="courseDuration"><i class="fas fa-clock mr-1"></i></span>
+                            <span id="courseLevel"><i class="fas fa-signal mr-1"></i></span>
+                        </div>
+                    </div>
+                    <div class="ml-6 text-right">
+                        <div id="coursePrice" class="text-3xl font-bold text-blue-600 mb-4"></div>
+                        <button id="enrollBtn" onclick="enrollCourse()" class="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
+                            <i class="fas fa-play mr-2"></i>Đăng ký ngay
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Main Content -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Course Content -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Nội dung khóa học</h2>
+                        <div id="courseContentDetails" class="prose max-w-none text-gray-700">
+                            <!-- Content will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Curriculum -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Chương trình học</h2>
+                        <div id="courseCurriculum" class="space-y-3">
+                            <!-- Curriculum will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="space-y-6">
+                    <!-- Course Info -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Thông tin khóa học</h3>
+                        <div id="courseInfo" class="space-y-3 text-sm">
+                            <!-- Info will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Related Courses -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Khóa học liên quan</h3>
+                        <div id="relatedCourses" class="space-y-3">
+                            <!-- Related courses will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const api = new CareerMateAPI();
+        let currentCourse = null;
+
+        // Check authentication
+        if (!checkAuth()) {
+            window.location.href = 'login.html';
+        }
+
+        // Load user info
+        loadUserInfo();
+
+        // Get course ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const courseId = urlParams.get('id');
+
+        if (courseId) {
+            loadCourseDetail(courseId);
+        } else {
+            document.getElementById('loadingState').innerHTML = '<p class="text-red-600">Không tìm thấy ID khóa học</p>';
+        }
+
+        async function loadCourseDetail(courseId) {
+            try {
+                const course = await api.getCourse(courseId);
+                currentCourse = course;
+                displayCourse(course);
+                loadRelatedCourses(course);
+            } catch (error) {
+                console.error('Load course error:', error);
+                document.getElementById('loadingState').innerHTML = '<p class="text-red-600">Lỗi khi tải thông tin khóa học</p>';
+            }
+        }
+
+        function displayCourse(course) {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('courseContent').classList.remove('hidden');
+
+            // Header
+            document.getElementById('courseTitle').textContent = course.title || 'Khóa học';
+            document.getElementById('courseDescription').textContent = course.description || 'Chưa có mô tả';
+            
+            document.getElementById('courseInstructor').innerHTML += course.instructor || 'Giảng viên';
+            document.getElementById('courseDuration').innerHTML += `${course.durationHours || 0} giờ`;
+            document.getElementById('courseLevel').innerHTML += course.level || 'Trung bình';
+
+            // Price
+            const priceElement = document.getElementById('coursePrice');
+            if (course.price === 0 || course.price === null) {
+                priceElement.textContent = 'Miễn phí';
+            } else {
+                priceElement.textContent = `${course.price.toLocaleString()}đ`;
+            }
+
+            // Content
+            document.getElementById('courseContentDetails').innerHTML = course.content || '<p class="text-gray-500">Chưa có nội dung</p>';
+
+            // Curriculum
+            const curriculumContainer = document.getElementById('courseCurriculum');
+            if (course.curriculum && course.curriculum.length > 0) {
+                curriculumContainer.innerHTML = course.curriculum.map((item, index) => `
+                    <div class="p-4 border border-gray-200 rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-semibold">${index + 1}</span>
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-gray-900">${item.title || `Bài ${index + 1}`}</h4>
+                                <p class="text-sm text-gray-600">${item.description || ''}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                curriculumContainer.innerHTML = '<p class="text-gray-500">Chưa có chương trình học</p>';
+            }
+
+            // Info
+            const infoContainer = document.getElementById('courseInfo');
+            infoContainer.innerHTML = `
+                <div class="flex justify-between"><span class="text-gray-600">Danh mục:</span><span class="text-gray-900">${course.category || 'Chung'}</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Cấp độ:</span><span class="text-gray-900">${course.level || 'Trung bình'}</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Thời lượng:</span><span class="text-gray-900">${course.durationHours || 0} giờ</span></div>
+            `;
+        }
+
+        async function loadRelatedCourses(course) {
+            try {
+                const courses = await api.getCourses(course.category);
+                const related = courses.filter(c => c.id !== course.id).slice(0, 3);
+                
+                const container = document.getElementById('relatedCourses');
+                if (related.length === 0) {
+                    container.innerHTML = '<p class="text-gray-500 text-sm">Không có khóa học liên quan</p>';
+                    return;
+                }
+
+                container.innerHTML = related.map(c => `
+                    <a href="course-detail.html?id=${c.id}" class="block p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                        <h4 class="font-semibold text-gray-900 text-sm mb-1">${c.title}</h4>
+                        <p class="text-xs text-gray-600">${c.instructor || 'Giảng viên'}</p>
+                    </a>
+                `).join('');
+            } catch (error) {
+                console.error('Load related courses error:', error);
+            }
+        }
+
+        async function enrollCourse() {
+            if (!currentCourse) return;
+
+            try {
+                await api.enrollInCourse(currentCourse.id);
+                alert('Đăng ký khóa học thành công!');
+                document.getElementById('enrollBtn').disabled = true;
+                document.getElementById('enrollBtn').innerHTML = '<i class="fas fa-check mr-2"></i>Đã đăng ký';
+            } catch (error) {
+                console.error('Enroll course error:', error);
+                alert('Lỗi khi đăng ký: ' + error.message);
+            }
+        }
+
+        function loadUserInfo() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (user.fullName) {
+                const initials = user.fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                document.getElementById('userAvatar').textContent = initials;
+            }
+        }
+    </script>
+</body>
+</html>
+

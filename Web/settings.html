@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareerMate - Cài đặt</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="api-client.js"></script>
+    <script src="auth-helper.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="sinhvien.html" class="text-2xl font-bold text-blue-600">CareerMate</a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="sinhvien.html" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-home mr-2"></i>Dashboard
+                    </a>
+                    <div id="userAvatar" class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Cài đặt tài khoản</h1>
+            <p class="text-gray-600">Quản lý cài đặt và bảo mật tài khoản của bạn</p>
+        </div>
+
+        <div class="space-y-6">
+            <!-- Account Settings -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Thông tin tài khoản</h2>
+                <form id="accountForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" id="email" disabled
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                        <p class="text-xs text-gray-500 mt-1">Email không thể thay đổi</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Họ và tên</label>
+                        <input type="text" id="fullName" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Số điện thoại</label>
+                        <input type="tel" id="phone"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                        <i class="fas fa-save mr-2"></i>Lưu thay đổi
+                    </button>
+                </form>
+            </div>
+
+            <!-- Change Password -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Đổi mật khẩu</h2>
+                <form id="passwordForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mật khẩu hiện tại</label>
+                        <input type="password" id="currentPassword" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mật khẩu mới</label>
+                        <input type="password" id="newPassword" required minlength="8"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Xác nhận mật khẩu mới</label>
+                        <input type="password" id="confirmPassword" required minlength="8"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                        <i class="fas fa-key mr-2"></i>Đổi mật khẩu
+                    </button>
+                </form>
+            </div>
+
+            <!-- Notifications -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Thông báo</h2>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-medium text-gray-900">Email thông báo</h3>
+                            <p class="text-sm text-gray-600">Nhận thông báo qua email</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="emailNotifications" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-medium text-gray-900">Thông báo ứng tuyển</h3>
+                            <p class="text-sm text-gray-600">Thông báo khi có cập nhật về đơn ứng tuyển</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="applicationNotifications" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-medium text-gray-900">Thông báo việc làm mới</h3>
+                            <p class="text-sm text-gray-600">Thông báo về việc làm phù hợp</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="jobNotifications" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Privacy -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Quyền riêng tư</h2>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-medium text-gray-900">Hiển thị hồ sơ công khai</h3>
+                            <p class="text-sm text-gray-600">Cho phép nhà tuyển dụng xem hồ sơ của bạn</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="publicProfile" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="bg-white rounded-xl shadow-sm border border-red-200 p-6">
+                <h2 class="text-xl font-semibold text-red-600 mb-4">Vùng nguy hiểm</h2>
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="font-medium text-gray-900 mb-2">Xóa tài khoản</h3>
+                        <p class="text-sm text-gray-600 mb-4">Xóa vĩnh viễn tài khoản và tất cả dữ liệu của bạn</p>
+                        <button onclick="deleteAccount()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                            <i class="fas fa-trash mr-2"></i>Xóa tài khoản
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const api = new CareerMateAPI();
+
+        // Check authentication
+        if (!checkAuth()) {
+            window.location.href = 'login.html';
+        }
+
+        // Load user info
+        loadUserInfo();
+        loadSettings();
+
+        // Form submits
+        document.getElementById('accountForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await saveAccountSettings();
+        });
+
+        document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await changePassword();
+        });
+
+        async function loadSettings() {
+            try {
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                document.getElementById('email').value = user.email || '';
+                document.getElementById('fullName').value = user.fullName || '';
+                document.getElementById('phone').value = user.phone || '';
+
+                // Load notification settings from localStorage
+                const settings = JSON.parse(localStorage.getItem('settings') || '{}');
+                document.getElementById('emailNotifications').checked = settings.emailNotifications !== false;
+                document.getElementById('applicationNotifications').checked = settings.applicationNotifications !== false;
+                document.getElementById('jobNotifications').checked = settings.jobNotifications !== false;
+                document.getElementById('publicProfile').checked = settings.publicProfile !== false;
+            } catch (error) {
+                console.error('Load settings error:', error);
+            }
+        }
+
+        async function saveAccountSettings() {
+            try {
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                const updatedUser = {
+                    ...user,
+                    fullName: document.getElementById('fullName').value,
+                    phone: document.getElementById('phone').value
+                };
+
+                // TODO: Call API to update user info
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+                alert('Đã lưu thay đổi thành công!');
+            } catch (error) {
+                console.error('Save settings error:', error);
+                alert('Lỗi khi lưu: ' + error.message);
+            }
+        }
+
+        async function changePassword() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (newPassword !== confirmPassword) {
+                alert('Mật khẩu xác nhận không khớp!');
+                return;
+            }
+
+            if (newPassword.length < 8) {
+                alert('Mật khẩu phải có ít nhất 8 ký tự!');
+                return;
+            }
+
+            try {
+                // TODO: Call API to change password
+                alert('Đổi mật khẩu thành công!');
+                document.getElementById('passwordForm').reset();
+            } catch (error) {
+                console.error('Change password error:', error);
+                alert('Lỗi khi đổi mật khẩu: ' + error.message);
+            }
+        }
+
+        // Save notification settings
+        document.getElementById('emailNotifications').addEventListener('change', saveNotificationSettings);
+        document.getElementById('applicationNotifications').addEventListener('change', saveNotificationSettings);
+        document.getElementById('jobNotifications').addEventListener('change', saveNotificationSettings);
+        document.getElementById('publicProfile').addEventListener('change', saveNotificationSettings);
+
+        function saveNotificationSettings() {
+            const settings = {
+                emailNotifications: document.getElementById('emailNotifications').checked,
+                applicationNotifications: document.getElementById('applicationNotifications').checked,
+                jobNotifications: document.getElementById('jobNotifications').checked,
+                publicProfile: document.getElementById('publicProfile').checked
+            };
+            localStorage.setItem('settings', JSON.stringify(settings));
+        }
+
+        function deleteAccount() {
+            if (confirm('Bạn có chắc muốn xóa tài khoản? Hành động này không thể hoàn tác!')) {
+                if (confirm('Xác nhận lần cuối: Bạn có chắc chắn muốn xóa tài khoản?')) {
+                    // TODO: Call API to delete account
+                    alert('Tài khoản đã được xóa');
+                    api.logout();
+                }
+            }
+        }
+
+        function loadUserInfo() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (user.fullName) {
+                const initials = user.fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                document.getElementById('userAvatar').textContent = initials;
+            }
+        }
+    </script>
+</body>
+</html>
+

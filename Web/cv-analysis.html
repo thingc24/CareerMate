@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareerMate - Phân tích CV</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="api-client.js"></script>
+    <script src="auth-helper.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="sinhvien.html" class="text-2xl font-bold text-blue-600">CareerMate</a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="sinhvien.html" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-home mr-2"></i>Dashboard
+                    </a>
+                    <div id="userAvatar" class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Phân tích CV với AI</h1>
+            <p class="text-gray-600">Tải lên CV của bạn để nhận phân tích chi tiết và gợi ý cải thiện</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Upload Section -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Tải lên CV</h2>
+                    
+                    <!-- File Upload -->
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition">
+                        <input type="file" id="cvFile" accept=".pdf,.doc,.docx" class="hidden">
+                        <label for="cvFile" class="cursor-pointer">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                            <p class="text-gray-600 mb-2">Click để chọn file hoặc kéo thả vào đây</p>
+                            <p class="text-sm text-gray-500">PDF, DOC, DOCX (tối đa 10MB)</p>
+                        </label>
+                    </div>
+
+                    <div id="selectedFile" class="hidden mt-4 p-3 bg-blue-50 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-file text-blue-600"></i>
+                                <span id="fileName" class="text-sm font-medium text-gray-900"></span>
+                            </div>
+                            <button onclick="clearFile()" class="text-red-500 hover:text-red-700">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button id="uploadBtn" onclick="uploadCV()" class="w-full mt-4 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        <i class="fas fa-upload mr-2"></i>Phân tích CV
+                    </button>
+
+                    <!-- My CVs -->
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <h3 class="text-sm font-semibold text-gray-900 mb-3">CV của tôi</h3>
+                        <div id="myCVs" class="space-y-2">
+                            <!-- CVs will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analysis Results -->
+            <div class="lg:col-span-2">
+                <div id="loadingState" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+                    <p class="text-gray-600">Đang phân tích CV của bạn...</p>
+                    <p class="text-sm text-gray-500 mt-2">Vui lòng đợi trong giây lát</p>
+                </div>
+
+                <div id="analysisResults" class="hidden space-y-6">
+                    <!-- Overall Score -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Điểm tổng thể</h2>
+                        <div class="flex items-center gap-6">
+                            <div class="relative w-32 h-32">
+                                <svg class="transform -rotate-90 w-32 h-32">
+                                    <circle cx="64" cy="64" r="56" stroke="#e5e7eb" stroke-width="8" fill="none"></circle>
+                                    <circle id="scoreCircle" cx="64" cy="64" r="56" stroke="#3b82f6" stroke-width="8" fill="none" 
+                                            stroke-dasharray="351.86" stroke-dashoffset="0" class="transition-all duration-1000"></circle>
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span id="overallScore" class="text-3xl font-bold text-blue-600">0</span>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-gray-600 mb-2">CV của bạn đạt điểm <span id="scoreText" class="font-semibold text-gray-900">0/100</span></p>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div id="scoreBar" class="bg-blue-600 h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Strengths -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                            <i class="fas fa-check-circle text-green-500 mr-2"></i>Điểm mạnh
+                        </h2>
+                        <ul id="strengthsList" class="space-y-2">
+                            <!-- Strengths will be loaded here -->
+                        </ul>
+                    </div>
+
+                    <!-- Weaknesses -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                            <i class="fas fa-exclamation-circle text-yellow-500 mr-2"></i>Cần cải thiện
+                        </h2>
+                        <ul id="weaknessesList" class="space-y-2">
+                            <!-- Weaknesses will be loaded here -->
+                        </ul>
+                    </div>
+
+                    <!-- Suggestions -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                            <i class="fas fa-lightbulb text-blue-500 mr-2"></i>Gợi ý cải thiện
+                        </h2>
+                        <ul id="suggestionsList" class="space-y-3">
+                            <!-- Suggestions will be loaded here -->
+                        </ul>
+                    </div>
+
+                    <!-- Detected Skills -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                            <i class="fas fa-tags text-purple-500 mr-2"></i>Kỹ năng được phát hiện
+                        </h2>
+                        <div id="skillsList" class="flex flex-wrap gap-2">
+                            <!-- Skills will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+                    <i class="fas fa-file-alt text-6xl text-gray-300 mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Chưa có CV nào được phân tích</h3>
+                    <p class="text-gray-600">Tải lên CV của bạn để bắt đầu phân tích</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const api = new CareerMateAPI();
+        let currentCV = null;
+
+        // Check authentication
+        if (!checkAuth()) {
+            window.location.href = 'login.html';
+        }
+
+        // Load user info
+        loadUserInfo();
+
+        // Load my CVs
+        loadMyCVs();
+
+        // File input change
+        document.getElementById('cvFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('selectedFile').classList.remove('hidden');
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('uploadBtn').disabled = false;
+            }
+        });
+
+        async function uploadCV() {
+            const fileInput = document.getElementById('cvFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Vui lòng chọn file CV');
+                return;
+            }
+
+            try {
+                document.getElementById('uploadBtn').disabled = true;
+                document.getElementById('loadingState').classList.remove('hidden');
+                document.getElementById('analysisResults').classList.add('hidden');
+                document.getElementById('emptyState').classList.add('hidden');
+
+                const cv = await api.uploadCV(file);
+                currentCV = cv;
+                
+                // Wait for analysis (polling)
+                await waitForAnalysis(cv.id);
+                
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert('Lỗi khi tải CV: ' + error.message);
+                document.getElementById('uploadBtn').disabled = false;
+                document.getElementById('loadingState').classList.add('hidden');
+            }
+        }
+
+        async function waitForAnalysis(cvId) {
+            const maxAttempts = 30;
+            let attempts = 0;
+
+            while (attempts < maxAttempts) {
+                try {
+                    const cvs = await api.getCVs();
+                    const cv = cvs.find(c => c.id === cvId);
+                    
+                    if (cv && cv.aiAnalysis) {
+                        displayAnalysis(cv);
+                        loadMyCVs();
+                        return;
+                    }
+                    
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    attempts++;
+                } catch (error) {
+                    console.error('Analysis check error:', error);
+                    break;
+                }
+            }
+
+            alert('Phân tích đang được xử lý. Vui lòng kiểm tra lại sau vài phút.');
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('uploadBtn').disabled = false;
+        }
+
+        function displayAnalysis(cv) {
+            const analysis = cv.aiAnalysis || {};
+            
+            // Overall Score
+            const score = analysis.overallScore || 0;
+            document.getElementById('overallScore').textContent = score;
+            document.getElementById('scoreText').textContent = `${score}/100`;
+            
+            const circumference = 2 * Math.PI * 56;
+            const offset = circumference - (score / 100) * circumference;
+            document.getElementById('scoreCircle').style.strokeDashoffset = offset;
+            document.getElementById('scoreBar').style.width = `${score}%`;
+
+            // Strengths
+            const strengthsList = document.getElementById('strengthsList');
+            strengthsList.innerHTML = '';
+            if (analysis.strengths && analysis.strengths.length > 0) {
+                analysis.strengths.forEach(strength => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-start gap-2 text-gray-700';
+                    li.innerHTML = `<i class="fas fa-check text-green-500 mt-1"></i><span>${strength}</span>`;
+                    strengthsList.appendChild(li);
+                });
+            } else {
+                strengthsList.innerHTML = '<li class="text-gray-500">Chưa có thông tin</li>';
+            }
+
+            // Weaknesses
+            const weaknessesList = document.getElementById('weaknessesList');
+            weaknessesList.innerHTML = '';
+            if (analysis.weaknesses && analysis.weaknesses.length > 0) {
+                analysis.weaknesses.forEach(weakness => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-start gap-2 text-gray-700';
+                    li.innerHTML = `<i class="fas fa-exclamation text-yellow-500 mt-1"></i><span>${weakness}</span>`;
+                    weaknessesList.appendChild(li);
+                });
+            } else {
+                weaknessesList.innerHTML = '<li class="text-gray-500">Chưa có thông tin</li>';
+            }
+
+            // Suggestions
+            const suggestionsList = document.getElementById('suggestionsList');
+            suggestionsList.innerHTML = '';
+            if (analysis.suggestions && analysis.suggestions.length > 0) {
+                analysis.suggestions.forEach((suggestion, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-start gap-3 p-3 bg-blue-50 rounded-lg';
+                    li.innerHTML = `
+                        <span class="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">${index + 1}</span>
+                        <span class="text-gray-700">${suggestion}</span>
+                    `;
+                    suggestionsList.appendChild(li);
+                });
+            } else {
+                suggestionsList.innerHTML = '<li class="text-gray-500">Chưa có thông tin</li>';
+            }
+
+            // Skills
+            const skillsList = document.getElementById('skillsList');
+            skillsList.innerHTML = '';
+            if (analysis.skillsDetected && analysis.skillsDetected.length > 0) {
+                analysis.skillsDetected.forEach(skill => {
+                    const span = document.createElement('span');
+                    span.className = 'px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium';
+                    span.textContent = skill;
+                    skillsList.appendChild(span);
+                });
+            } else {
+                skillsList.innerHTML = '<span class="text-gray-500">Chưa có thông tin</span>';
+            }
+
+            // Show results
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('analysisResults').classList.remove('hidden');
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('uploadBtn').disabled = false;
+        }
+
+        async function loadMyCVs() {
+            try {
+                const cvs = await api.getCVs();
+                const container = document.getElementById('myCVs');
+                container.innerHTML = '';
+
+                if (cvs.length === 0) {
+                    container.innerHTML = '<p class="text-sm text-gray-500">Chưa có CV nào</p>';
+                    return;
+                }
+
+                cvs.forEach(cv => {
+                    const div = document.createElement('div');
+                    div.className = 'p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer';
+                    div.onclick = () => {
+                        if (cv.aiAnalysis) {
+                            currentCV = cv;
+                            displayAnalysis(cv);
+                        } else {
+                            alert('CV này chưa được phân tích');
+                        }
+                    };
+                    div.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-file text-blue-600"></i>
+                                <span class="text-sm font-medium text-gray-900">${cv.fileName || 'CV'}</span>
+                            </div>
+                            ${cv.aiAnalysis ? '<i class="fas fa-check-circle text-green-500"></i>' : '<i class="fas fa-clock text-yellow-500"></i>'}
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (error) {
+                console.error('Load CVs error:', error);
+            }
+        }
+
+        function clearFile() {
+            document.getElementById('cvFile').value = '';
+            document.getElementById('selectedFile').classList.add('hidden');
+            document.getElementById('uploadBtn').disabled = true;
+        }
+
+        function loadUserInfo() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (user.fullName) {
+                const initials = user.fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                document.getElementById('userAvatar').textContent = initials;
+            }
+        }
+    </script>
+</body>
+</html>
+

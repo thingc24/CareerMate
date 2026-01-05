@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareerMate - Chi tiết việc làm</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="api-client.js"></script>
+    <script src="auth-helper.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="sinhvien.html" class="text-2xl font-bold text-blue-600">CareerMate</a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="sinhvien.html" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-home mr-2"></i>Dashboard
+                    </a>
+                    <div id="userAvatar" class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div id="loadingState" class="text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+            <p class="text-gray-600">Đang tải thông tin việc làm...</p>
+        </div>
+
+        <div id="jobContent" class="hidden">
+            <!-- Job Header -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex-1">
+                        <h1 id="jobTitle" class="text-3xl font-bold text-gray-900 mb-2"></h1>
+                        <div class="flex items-center gap-4 text-gray-600 mb-4">
+                            <span id="companyName" class="text-lg"></span>
+                            <span id="jobLocation" class="flex items-center gap-1">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span></span>
+                            </span>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <span id="jobType" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"></span>
+                            <span id="jobSalary" class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm"></span>
+                            <span id="matchScore" class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm"></span>
+                        </div>
+                    </div>
+                    <button id="applyBtn" onclick="applyJob()" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
+                        <i class="fas fa-paper-plane mr-2"></i>Ứng tuyển ngay
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Main Content -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Job Description -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Mô tả công việc</h2>
+                        <div id="jobDescription" class="prose max-w-none text-gray-700">
+                            <!-- Description will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Requirements -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Yêu cầu</h2>
+                        <ul id="jobRequirements" class="space-y-2 text-gray-700">
+                            <!-- Requirements will be loaded here -->
+                        </ul>
+                    </div>
+
+                    <!-- Skills -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Kỹ năng yêu cầu</h2>
+                        <div id="jobSkills" class="flex flex-wrap gap-2">
+                            <!-- Skills will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="space-y-6">
+                    <!-- Company Info -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Về công ty</h3>
+                        <div id="companyInfo">
+                            <!-- Company info will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Job Info -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Thông tin việc làm</h3>
+                        <div id="jobInfo" class="space-y-3 text-sm">
+                            <!-- Job info will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Related Jobs -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Việc làm liên quan</h3>
+                        <div id="relatedJobs" class="space-y-3">
+                            <!-- Related jobs will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const api = new CareerMateAPI();
+        let currentJob = null;
+
+        // Check authentication
+        if (!checkAuth()) {
+            window.location.href = 'login.html';
+        }
+
+        // Load user info
+        loadUserInfo();
+
+        // Get job ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const jobId = urlParams.get('id');
+
+        if (jobId) {
+            loadJobDetail(jobId);
+        } else {
+            document.getElementById('loadingState').innerHTML = '<p class="text-red-600">Không tìm thấy ID việc làm</p>';
+        }
+
+        async function loadJobDetail(jobId) {
+            try {
+                const job = await api.getJob(jobId);
+                currentJob = job;
+                displayJob(job);
+                loadRelatedJobs(job);
+            } catch (error) {
+                console.error('Load job error:', error);
+                document.getElementById('loadingState').innerHTML = '<p class="text-red-600">Lỗi khi tải thông tin việc làm</p>';
+            }
+        }
+
+        function displayJob(job) {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('jobContent').classList.remove('hidden');
+
+            // Header
+            document.getElementById('jobTitle').textContent = job.title || 'Việc làm';
+            document.getElementById('companyName').textContent = job.company?.name || 'Công ty';
+            document.getElementById('jobLocation').querySelector('span').textContent = job.location || 'Không xác định';
+            
+            if (job.jobType) {
+                document.getElementById('jobType').textContent = job.jobType;
+            } else {
+                document.getElementById('jobType').classList.add('hidden');
+            }
+
+            if (job.salary) {
+                document.getElementById('jobSalary').textContent = job.salary;
+            } else {
+                document.getElementById('jobSalary').classList.add('hidden');
+            }
+
+            if (job.matchScore) {
+                document.getElementById('matchScore').textContent = `Phù hợp ${job.matchScore}%`;
+            } else {
+                document.getElementById('matchScore').classList.add('hidden');
+            }
+
+            // Description
+            document.getElementById('jobDescription').innerHTML = job.description || '<p class="text-gray-500">Chưa có mô tả</p>';
+
+            // Requirements
+            const requirementsList = document.getElementById('jobRequirements');
+            if (job.requirements && job.requirements.length > 0) {
+                requirementsList.innerHTML = job.requirements.map(req => 
+                    `<li class="flex items-start gap-2"><i class="fas fa-check text-green-500 mt-1"></i><span>${req}</span></li>`
+                ).join('');
+            } else {
+                requirementsList.innerHTML = '<li class="text-gray-500">Chưa có thông tin</li>';
+            }
+
+            // Skills
+            const skillsList = document.getElementById('jobSkills');
+            if (job.skills && job.skills.length > 0) {
+                skillsList.innerHTML = job.skills.map(skill => 
+                    `<span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">${skill}</span>`
+                ).join('');
+            } else {
+                skillsList.innerHTML = '<span class="text-gray-500">Chưa có thông tin</span>';
+            }
+
+            // Company Info
+            const companyInfo = document.getElementById('companyInfo');
+            if (job.company) {
+                companyInfo.innerHTML = `
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">${job.company.name}</h4>
+                        <p class="text-sm text-gray-600">${job.company.description || 'Chưa có mô tả'}</p>
+                    </div>
+                    <a href="companies.html?id=${job.company.id}" class="text-blue-600 hover:text-blue-700 text-sm">
+                        Xem thông tin công ty <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                `;
+            }
+
+            // Job Info
+            const jobInfo = document.getElementById('jobInfo');
+            jobInfo.innerHTML = `
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Ngày đăng:</span>
+                    <span class="text-gray-900">${job.createdAt ? new Date(job.createdAt).toLocaleDateString('vi-VN') : 'N/A'}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Hạn nộp:</span>
+                    <span class="text-gray-900">${job.deadline ? new Date(job.deadline).toLocaleDateString('vi-VN') : 'Không giới hạn'}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Kinh nghiệm:</span>
+                    <span class="text-gray-900">${job.experienceRequired || 'Không yêu cầu'}</span>
+                </div>
+            `;
+        }
+
+        async function loadRelatedJobs(job) {
+            try {
+                const jobsData = await api.searchJobs('', '', 0, 5);
+                const relatedJobs = (jobsData.content || []).filter(j => j.id !== job.id).slice(0, 3);
+                
+                const container = document.getElementById('relatedJobs');
+                if (relatedJobs.length === 0) {
+                    container.innerHTML = '<p class="text-gray-500 text-sm">Không có việc làm liên quan</p>';
+                    return;
+                }
+
+                container.innerHTML = relatedJobs.map(job => `
+                    <a href="job-detail.html?id=${job.id}" class="block p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                        <h4 class="font-semibold text-gray-900 text-sm mb-1">${job.title}</h4>
+                        <p class="text-xs text-gray-600">${job.company?.name || 'Công ty'}</p>
+                    </a>
+                `).join('');
+            } catch (error) {
+                console.error('Load related jobs error:', error);
+            }
+        }
+
+        async function applyJob() {
+            if (!currentJob) return;
+
+            // Check if user has CV
+            try {
+                const cvs = await api.getCVs();
+                if (cvs.length === 0) {
+                    if (confirm('Bạn chưa có CV. Bạn có muốn tải CV lên trước không?')) {
+                        window.location.href = 'cv-analysis.html';
+                    }
+                    return;
+                }
+
+                // Select CV
+                const cvId = cvs[0].id; // Use first CV for now
+                
+                const application = await api.applyForJob(currentJob.id, cvId);
+                alert('Ứng tuyển thành công!');
+                document.getElementById('applyBtn').disabled = true;
+                document.getElementById('applyBtn').innerHTML = '<i class="fas fa-check mr-2"></i>Đã ứng tuyển';
+            } catch (error) {
+                console.error('Apply job error:', error);
+                alert('Lỗi khi ứng tuyển: ' + error.message);
+            }
+        }
+
+        function loadUserInfo() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (user.fullName) {
+                const initials = user.fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                document.getElementById('userAvatar').textContent = initials;
+            }
+        }
+    </script>
+</body>
+</html>
+

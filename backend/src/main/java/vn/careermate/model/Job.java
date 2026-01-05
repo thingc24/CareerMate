@@ -1,0 +1,121 @@
+package vn.careermate.model;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+@Entity
+@Table(name = "jobs", indexes = {
+    @Index(name = "idx_jobs_recruiter", columnList = "recruiter_id"),
+    @Index(name = "idx_jobs_company", columnList = "company_id"),
+    @Index(name = "idx_jobs_status", columnList = "status"),
+    @Index(name = "idx_jobs_location", columnList = "location"),
+    @Index(name = "idx_jobs_created", columnList = "created_at")
+})
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
+public class Job {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "recruiter_id", nullable = false)
+    private RecruiterProfile recruiter;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id", nullable = false)
+    private Company company;
+
+    @Column(nullable = false)
+    private String title;
+
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String description;
+
+    @Column(columnDefinition = "TEXT")
+    private String requirements;
+
+    @Column(nullable = false)
+    private String location;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "job_type")
+    private JobType jobType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "experience_level")
+    private ExperienceLevel experienceLevel;
+
+    @Column(name = "min_salary", precision = 12, scale = 2)
+    private BigDecimal minSalary;
+
+    @Column(name = "max_salary", precision = 12, scale = 2)
+    private BigDecimal maxSalary;
+
+    @Builder.Default
+    private String currency = "VND";
+
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private JobStatus status = JobStatus.PENDING;
+
+    @Builder.Default
+    @Column(name = "views_count")
+    private Integer viewsCount = 0;
+
+    @Builder.Default
+    @Column(name = "applications_count")
+    private Integer applicationsCount = 0;
+
+    @Column(name = "expires_at")
+    private LocalDateTime expiresAt;
+
+    @CreatedDate
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approved_by")
+    private User approvedBy;
+
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
+
+    @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<JobSkill> skills;
+
+    @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Application> applications;
+
+    public enum JobType {
+        FULL_TIME, PART_TIME, CONTRACT, INTERNSHIP, FREELANCE
+    }
+
+    public enum ExperienceLevel {
+        ENTRY, JUNIOR, MID, SENIOR, LEAD, EXPERT
+    }
+
+    public enum JobStatus {
+        DRAFT, PENDING, ACTIVE, CLOSED, REJECTED
+    }
+}
+

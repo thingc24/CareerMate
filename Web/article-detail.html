@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareerMate - Chi tiết bài viết</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="api-client.js"></script>
+    <script src="auth-helper.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="sinhvien.html" class="text-2xl font-bold text-blue-600">CareerMate</a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="sinhvien.html" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-home mr-2"></i>Dashboard
+                    </a>
+                    <div id="userAvatar" class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div id="loadingState" class="text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+            <p class="text-gray-600">Đang tải bài viết...</p>
+        </div>
+
+        <div id="articleContent" class="hidden">
+            <!-- Article Header -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                <h1 id="articleTitle" class="text-3xl font-bold text-gray-900 mb-4"></h1>
+                <div class="flex items-center gap-4 text-sm text-gray-600 mb-4">
+                    <span id="articleAuthor"><i class="fas fa-user mr-1"></i></span>
+                    <span id="articleDate"><i class="fas fa-calendar mr-1"></i></span>
+                    <span id="articleCategory"><i class="fas fa-tag mr-1"></i></span>
+                </div>
+                <p id="articleSummary" class="text-gray-700 text-lg"></p>
+            </div>
+
+            <!-- Article Body -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                <div id="articleBody" class="prose max-w-none text-gray-700">
+                    <!-- Article content will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Related Articles -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Bài viết liên quan</h2>
+                <div id="relatedArticles" class="space-y-3">
+                    <!-- Related articles will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const api = new CareerMateAPI();
+        let currentArticle = null;
+
+        // Check authentication
+        if (!checkAuth()) {
+            window.location.href = 'login.html';
+        }
+
+        // Load user info
+        loadUserInfo();
+
+        // Get article ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const articleId = urlParams.get('id');
+
+        if (articleId) {
+            loadArticleDetail(articleId);
+        } else {
+            document.getElementById('loadingState').innerHTML = '<p class="text-red-600">Không tìm thấy ID bài viết</p>';
+        }
+
+        async function loadArticleDetail(articleId) {
+            try {
+                const article = await api.getArticle(articleId);
+                currentArticle = article;
+                displayArticle(article);
+                loadRelatedArticles(article);
+            } catch (error) {
+                console.error('Load article error:', error);
+                document.getElementById('loadingState').innerHTML = '<p class="text-red-600">Lỗi khi tải bài viết</p>';
+            }
+        }
+
+        function displayArticle(article) {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('articleContent').classList.remove('hidden');
+
+            // Header
+            document.getElementById('articleTitle').textContent = article.title || 'Bài viết';
+            document.getElementById('articleSummary').textContent = article.summary || '';
+            
+            document.getElementById('articleAuthor').innerHTML += article.author || 'CareerMate';
+            document.getElementById('articleDate').innerHTML += article.publishedAt ? new Date(article.publishedAt).toLocaleDateString('vi-VN') : 'Mới';
+            document.getElementById('articleCategory').innerHTML += article.category || 'Chung';
+
+            // Body
+            const bodyContainer = document.getElementById('articleBody');
+            if (article.content) {
+                bodyContainer.innerHTML = article.content.replace(/\n/g, '<br>');
+            } else {
+                bodyContainer.innerHTML = '<p class="text-gray-500">Chưa có nội dung</p>';
+            }
+        }
+
+        async function loadRelatedArticles(article) {
+            try {
+                const articlesData = await api.getArticles('', article.category || '', 0, 5);
+                const articles = articlesData.content || articlesData || [];
+                const related = articles.filter(a => a.id !== article.id).slice(0, 3);
+                
+                const container = document.getElementById('relatedArticles');
+                if (related.length === 0) {
+                    container.innerHTML = '<p class="text-gray-500 text-sm">Không có bài viết liên quan</p>';
+                    return;
+                }
+
+                container.innerHTML = related.map(a => `
+                    <a href="article-detail.html?id=${a.id}" class="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                        <h4 class="font-semibold text-gray-900 mb-1">${a.title}</h4>
+                        <p class="text-sm text-gray-600">${a.summary || a.content?.substring(0, 100) || ''}...</p>
+                    </a>
+                `).join('');
+            } catch (error) {
+                console.error('Load related articles error:', error);
+            }
+        }
+
+        function loadUserInfo() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (user.fullName) {
+                const initials = user.fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                document.getElementById('userAvatar').textContent = initials;
+            }
+        }
+    </script>
+</body>
+</html>
+

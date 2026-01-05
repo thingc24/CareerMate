@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareerMate - Chi tiết công ty</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="api-client.js"></script>
+    <script src="auth-helper.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="sinhvien.html" class="text-2xl font-bold text-blue-600">CareerMate</a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="sinhvien.html" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-home mr-2"></i>Dashboard
+                    </a>
+                    <div id="userAvatar" class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div id="loadingState" class="text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+            <p class="text-gray-600">Đang tải thông tin công ty...</p>
+        </div>
+
+        <div id="companyContent" class="hidden">
+            <!-- Company Header -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                <div class="flex items-start gap-6">
+                    <div class="w-24 h-24 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center text-white text-4xl font-bold" id="companyLogo">
+                        C
+                    </div>
+                    <div class="flex-1">
+                        <h1 id="companyName" class="text-3xl font-bold text-gray-900 mb-2"></h1>
+                        <div class="flex flex-wrap gap-4 text-gray-600 mb-4">
+                            <span id="companyIndustry" class="flex items-center gap-1">
+                                <i class="fas fa-industry"></i>
+                                <span></span>
+                            </span>
+                            <span id="companyLocation" class="flex items-center gap-1">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span></span>
+                            </span>
+                            <span id="companyWebsite" class="flex items-center gap-1">
+                                <i class="fas fa-globe"></i>
+                                <a href="" target="_blank" class="text-blue-600 hover:underline"></a>
+                            </span>
+                        </div>
+                        <div id="companyRating" class="flex items-center gap-2">
+                            <!-- Rating will be shown here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Main Content -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- About -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Về công ty</h2>
+                        <div id="companyDescription" class="prose max-w-none text-gray-700">
+                            <!-- Description will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Jobs -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Việc làm đang tuyển</h2>
+                        <div id="companyJobs" class="space-y-3">
+                            <!-- Jobs will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="space-y-6">
+                    <!-- Company Info -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Thông tin</h3>
+                        <div id="companyInfo" class="space-y-3 text-sm">
+                            <!-- Info will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Reviews -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Đánh giá</h3>
+                        <div id="companyReviews" class="space-y-3">
+                            <!-- Reviews will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const api = new CareerMateAPI();
+        let currentCompany = null;
+
+        // Check authentication
+        if (!checkAuth()) {
+            window.location.href = 'login.html';
+        }
+
+        // Load user info
+        loadUserInfo();
+
+        // Get company ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const companyId = urlParams.get('id');
+
+        if (companyId) {
+            loadCompanyDetail(companyId);
+        } else {
+            document.getElementById('loadingState').innerHTML = '<p class="text-red-600">Không tìm thấy ID công ty</p>';
+        }
+
+        async function loadCompanyDetail(companyId) {
+            try {
+                const company = await api.getCompany(companyId);
+                currentCompany = company;
+                displayCompany(company);
+                loadCompanyJobs(companyId);
+            } catch (error) {
+                console.error('Load company error:', error);
+                document.getElementById('loadingState').innerHTML = '<p class="text-red-600">Lỗi khi tải thông tin công ty</p>';
+            }
+        }
+
+        function displayCompany(company) {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('companyContent').classList.remove('hidden');
+
+            // Header
+            document.getElementById('companyName').textContent = company.name || 'Công ty';
+            document.getElementById('companyLogo').textContent = company.name ? company.name.charAt(0).toUpperCase() : 'C';
+            
+            if (company.industry) {
+                document.getElementById('companyIndustry').querySelector('span').textContent = company.industry;
+            } else {
+                document.getElementById('companyIndustry').classList.add('hidden');
+            }
+
+            if (company.location) {
+                document.getElementById('companyLocation').querySelector('span').textContent = company.location;
+            } else {
+                document.getElementById('companyLocation').classList.add('hidden');
+            }
+
+            if (company.website) {
+                const websiteLink = document.getElementById('companyWebsite').querySelector('a');
+                websiteLink.href = company.website;
+                websiteLink.textContent = company.website;
+            } else {
+                document.getElementById('companyWebsite').classList.add('hidden');
+            }
+
+            // Rating
+            const ratingContainer = document.getElementById('companyRating');
+            if (company.averageRating) {
+                ratingContainer.innerHTML = `
+                    <div class="flex text-yellow-400">
+                        ${Array(Math.floor(company.averageRating)).fill(0).map(() => '<i class="fas fa-star"></i>').join('')}
+                    </div>
+                    <span class="text-gray-600">${company.averageRating.toFixed(1)} (${company.totalRatings || 0} đánh giá)</span>
+                `;
+            } else {
+                ratingContainer.innerHTML = '<span class="text-gray-500">Chưa có đánh giá</span>';
+            }
+
+            // Description
+            document.getElementById('companyDescription').innerHTML = company.description || '<p class="text-gray-500">Chưa có mô tả</p>';
+
+            // Info
+            const infoContainer = document.getElementById('companyInfo');
+            infoContainer.innerHTML = `
+                ${company.size ? `<div class="flex justify-between"><span class="text-gray-600">Quy mô:</span><span class="text-gray-900">${company.size}</span></div>` : ''}
+                ${company.foundedYear ? `<div class="flex justify-between"><span class="text-gray-600">Thành lập:</span><span class="text-gray-900">${company.foundedYear}</span></div>` : ''}
+            `;
+        }
+
+        async function loadCompanyJobs(companyId) {
+            try {
+                const jobsData = await api.searchJobs('', '', 0, 10);
+                const jobs = (jobsData.content || []).filter(job => job.company?.id === companyId);
+                
+                const container = document.getElementById('companyJobs');
+                if (jobs.length === 0) {
+                    container.innerHTML = '<p class="text-gray-500">Chưa có việc làm nào</p>';
+                    return;
+                }
+
+                container.innerHTML = jobs.map(job => `
+                    <a href="job-detail.html?id=${job.id}" class="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                        <h4 class="font-semibold text-gray-900 mb-1">${job.title}</h4>
+                        <p class="text-sm text-gray-600">${job.location || ''}</p>
+                    </a>
+                `).join('');
+            } catch (error) {
+                console.error('Load company jobs error:', error);
+            }
+        }
+
+        function loadUserInfo() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (user.fullName) {
+                const initials = user.fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                document.getElementById('userAvatar').textContent = initials;
+            }
+        }
+    </script>
+</body>
+</html>
+

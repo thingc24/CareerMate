@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareerMate - Quản lý công ty</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="api-client.js"></script>
+    <script src="auth-helper.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        @keyframes slide-in {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        .animate-slide-in {
+            animation: slide-in 0.3s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="nhatuyendung.html" class="text-2xl font-bold text-blue-600">CareerMate</a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="nhatuyendung.html" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-home mr-2"></i>Dashboard
+                    </a>
+                    <a href="recruiter-profile.html" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-user mr-2"></i>Hồ sơ
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Thông tin công ty</h1>
+            <p class="text-gray-600">Quản lý thông tin công ty của bạn</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <form id="companyForm" class="space-y-6">
+                <!-- Company Logo -->
+                <div class="text-center">
+                    <div id="logoPreview" class="h-32 w-32 rounded-lg bg-gray-100 flex items-center justify-center mx-auto mb-4 border-2 border-dashed border-gray-300">
+                        <i class="fas fa-building text-4xl text-gray-400"></i>
+                    </div>
+                    <button type="button" onclick="document.getElementById('logoInput').click()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
+                        <i class="fas fa-upload mr-2"></i>Tải logo công ty
+                    </button>
+                    <input type="file" id="logoInput" accept="image/*" class="hidden" onchange="handleLogoUpload(event)">
+                </div>
+
+                <!-- Basic Info -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tên công ty *</label>
+                        <input type="text" id="companyName" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Website</label>
+                        <input type="url" id="website" placeholder="https://example.com"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Địa chỉ *</label>
+                    <input type="text" id="address" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Thành phố</label>
+                        <input type="text" id="city"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Quốc gia</label>
+                        <input type="text" id="country" value="Việt Nam"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <!-- Company Details -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Mô tả công ty *</label>
+                    <textarea id="description" rows="6" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Giới thiệu về công ty, lĩnh vực hoạt động, văn hóa công ty..."></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Quy mô nhân sự</label>
+                        <select id="companySize"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Chọn quy mô</option>
+                            <option value="1-10">1-10 nhân viên</option>
+                            <option value="11-50">11-50 nhân viên</option>
+                            <option value="51-200">51-200 nhân viên</option>
+                            <option value="201-500">201-500 nhân viên</option>
+                            <option value="501-1000">501-1000 nhân viên</option>
+                            <option value="1000+">Trên 1000 nhân viên</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Lĩnh vực hoạt động</label>
+                        <input type="text" id="industry" placeholder="VD: Công nghệ thông tin"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Năm thành lập</label>
+                        <input type="number" id="foundedYear" min="1900" max="2024"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <!-- Contact Info -->
+                <div class="border-t border-gray-200 pt-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Thông tin liên hệ</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email liên hệ</label>
+                            <input type="email" id="contactEmail"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Số điện thoại</label>
+                            <input type="tel" id="contactPhone"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Social Media -->
+                <div class="border-t border-gray-200 pt-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Mạng xã hội</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fab fa-facebook text-blue-600 mr-2"></i>Facebook
+                            </label>
+                            <input type="url" id="facebook" placeholder="https://facebook.com/..."
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fab fa-linkedin text-blue-700 mr-2"></i>LinkedIn
+                            </label>
+                            <input type="url" id="linkedin" placeholder="https://linkedin.com/company/..."
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex gap-4 pt-6 border-t border-gray-200">
+                    <button type="submit" id="submitCompanyBtn" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                        <i class="fas fa-save mr-2"></i>Lưu thông tin
+                    </button>
+                    <a href="nhatuyendung.html" class="px-6 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition">
+                        Hủy
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Initialize API client - check if already exists
+        let api;
+        if (typeof window.api !== 'undefined') {
+            api = window.api;
+        } else {
+            api = new CareerMateAPI();
+            window.api = api;
+        }
+
+        // Check authentication
+        if (!checkAuth()) {
+            window.location.href = 'login.html';
+        }
+
+        async function loadCompanyInfo() {
+            try {
+                const company = await api.getMyCompany();
+                if (company) {
+                    document.getElementById('companyName').value = company.name || '';
+                    document.getElementById('website').value = company.websiteUrl || '';
+                    document.getElementById('address').value = company.headquarters || '';
+                    // Note: Company model uses 'headquarters' instead of separate address/city/country
+                    // You may need to parse headquarters or update the model
+                    document.getElementById('description').value = company.description || '';
+                    document.getElementById('companySize').value = company.companySize || '';
+                    document.getElementById('industry').value = company.industry || '';
+                    document.getElementById('foundedYear').value = company.foundedYear || '';
+                    // Note: Company model doesn't have contactEmail, contactPhone, facebook, linkedin
+                    // You may need to add these fields to the model
+                    
+                    if (company.logoUrl) {
+                        document.getElementById('logoPreview').innerHTML = `<img src="${company.logoUrl}" class="h-32 w-32 rounded-lg object-cover">`;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading company info:', error);
+            }
+        }
+
+        function handleLogoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const logoPreview = document.getElementById('logoPreview');
+                logoPreview.innerHTML = `<img src="${e.target.result}" class="h-32 w-32 rounded-lg object-cover">`;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Wait for DOM to be ready
+        function initFormHandler() {
+            const companyForm = document.getElementById('companyForm');
+            if (!companyForm) {
+                console.error('Company form not found!');
+                return;
+            }
+            console.log('Company form found, attaching submit handler');
+            
+            companyForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Form submit triggered');
+            
+            const submitBtn = e.target.querySelector('button[type="submit"]') || document.getElementById('submitCompanyBtn');
+            if (!submitBtn) {
+                console.error('Submit button not found!');
+                return;
+            }
+            const originalText = submitBtn.innerHTML;
+            
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang lưu...';
+                console.log('Submit button disabled, showing loading state');
+
+                const address = document.getElementById('address').value;
+                const city = document.getElementById('city').value;
+                const country = document.getElementById('country').value;
+                const headquarters = [address, city, country].filter(Boolean).join(', ');
+
+                const formData = {
+                    name: document.getElementById('companyName').value,
+                    websiteUrl: document.getElementById('website').value,
+                    headquarters: headquarters || address,
+                    description: document.getElementById('description').value,
+                    companySize: document.getElementById('companySize').value,
+                    industry: document.getElementById('industry').value,
+                    foundedYear: document.getElementById('foundedYear').value ? parseInt(document.getElementById('foundedYear').value) : null,
+                    logoUrl: null // TODO: Handle logo upload
+                };
+
+                console.log('Sending company data:', formData);
+                const result = await api.createOrUpdateCompany(formData);
+                console.log('Company saved successfully:', result);
+                
+                // Show success notification
+                const successMsg = document.createElement('div');
+                successMsg.id = 'successNotification';
+                successMsg.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 flex items-center gap-3 animate-slide-in';
+                successMsg.style.minWidth = '300px';
+                successMsg.innerHTML = `
+                    <i class="fas fa-check-circle text-2xl"></i>
+                    <div>
+                        <p class="font-semibold">Đã lưu thông tin công ty thành công!</p>
+                        <p class="text-sm text-green-100">Đang chuyển về trang đăng tin...</p>
+                    </div>
+                `;
+                document.body.appendChild(successMsg);
+                
+                console.log('Success notification shown, redirecting in 2 seconds...');
+                
+                // Auto redirect to post-job tab after 2 seconds
+                setTimeout(() => {
+                    console.log('Redirecting to nhatuyendung.html#post-job');
+                    window.location.href = 'nhatuyendung.html#post-job';
+                }, 2000);
+            } catch (error) {
+                console.error('Error saving company:', error);
+                
+                // Show error notification
+                const errorMsg = document.createElement('div');
+                errorMsg.id = 'errorNotification';
+                errorMsg.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 flex items-center gap-3 animate-slide-in';
+                errorMsg.style.minWidth = '300px';
+                errorMsg.innerHTML = `
+                    <i class="fas fa-exclamation-circle text-2xl"></i>
+                    <div>
+                        <p class="font-semibold">Lỗi khi lưu thông tin</p>
+                        <p class="text-sm text-red-100">${error.message || 'Không thể lưu thông tin công ty'}</p>
+                    </div>
+                `;
+                document.body.appendChild(errorMsg);
+                
+                // Remove error message after 5 seconds
+                setTimeout(() => {
+                    errorMsg.remove();
+                }, 5000);
+                
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+            });
+            
+            // Also add click handler to button as fallback
+            const submitBtn = document.getElementById('submitCompanyBtn');
+            if (submitBtn) {
+                submitBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    companyForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                });
+            }
+        }
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                initFormHandler();
+                loadCompanyInfo();
+            });
+        } else {
+            initFormHandler();
+            loadCompanyInfo();
+        }
+    </script>
+</body>
+</html>
+

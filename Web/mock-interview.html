@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareerMate - Phỏng vấn thử</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="api-client.js"></script>
+    <script src="auth-helper.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="sinhvien.html" class="text-2xl font-bold text-blue-600">CareerMate</a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="sinhvien.html" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-home mr-2"></i>Dashboard
+                    </a>
+                    <div id="userAvatar" class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Phỏng vấn thử với AI</h1>
+            <p class="text-gray-600">Luyện tập phỏng vấn với AI dựa trên vị trí công việc bạn quan tâm</p>
+        </div>
+
+        <!-- Select Job -->
+        <div id="jobSelection" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Chọn vị trí công việc</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tìm kiếm việc làm</label>
+                    <input type="text" id="jobSearch" placeholder="Nhập tên vị trí hoặc công ty..."
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div id="jobList" class="space-y-2 max-h-64 overflow-y-auto">
+                    <!-- Jobs will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Interview Session -->
+        <div id="interviewSession" class="hidden space-y-6">
+            <!-- Interview Info -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 id="jobTitle" class="text-xl font-semibold text-gray-900"></h2>
+                        <p id="companyName" class="text-gray-600"></p>
+                    </div>
+                    <button onclick="endInterview()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                        <i class="fas fa-stop mr-2"></i>Kết thúc
+                    </button>
+                </div>
+            </div>
+
+            <!-- Current Question -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Câu hỏi hiện tại</h3>
+                <div id="currentQuestion" class="p-4 bg-blue-50 rounded-lg mb-4">
+                    <p class="text-gray-700">Đang tải câu hỏi...</p>
+                </div>
+                <div class="space-y-4">
+                    <textarea id="answerInput" rows="4" placeholder="Nhập câu trả lời của bạn..."
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    <div class="flex gap-2">
+                        <button onclick="submitAnswer()" class="flex-1 bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition">
+                            <i class="fas fa-paper-plane mr-2"></i>Gửi câu trả lời
+                        </button>
+                        <button onclick="getNextQuestion()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                            <i class="fas fa-forward mr-2"></i>Bỏ qua
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feedback -->
+            <div id="feedbackSection" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Nhận xét từ AI</h3>
+                <div id="feedbackContent" class="space-y-3">
+                    <!-- Feedback will be shown here -->
+                </div>
+            </div>
+
+            <!-- Interview History -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Lịch sử phỏng vấn</h3>
+                <div id="interviewHistory" class="space-y-4">
+                    <!-- History will be shown here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+            <i class="fas fa-video text-6xl text-gray-300 mb-4"></i>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">Chưa có phiên phỏng vấn nào</h3>
+            <p class="text-gray-600">Chọn một vị trí công việc ở trên để bắt đầu phỏng vấn thử</p>
+        </div>
+    </div>
+
+    <script>
+        const api = new CareerMateAPI();
+        let currentJob = null;
+        let currentQuestion = null;
+        let interviewHistory = [];
+
+        // Check authentication
+        if (!checkAuth()) {
+            window.location.href = 'login.html';
+        }
+
+        // Load user info
+        loadUserInfo();
+
+        // Load jobs
+        loadJobs();
+
+        // Job search
+        document.getElementById('jobSearch').addEventListener('input', (e) => {
+            loadJobs(e.target.value);
+        });
+
+        async function loadJobs(keyword = '') {
+            try {
+                const jobsData = await api.searchJobs(keyword, '', 0, 10);
+                const jobs = jobsData.content || [];
+                const container = document.getElementById('jobList');
+                container.innerHTML = '';
+
+                if (jobs.length === 0) {
+                    container.innerHTML = '<p class="text-gray-500 text-center py-4">Không tìm thấy việc làm nào</p>';
+                    return;
+                }
+
+                jobs.forEach(job => {
+                    const div = document.createElement('div');
+                    div.className = 'p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition';
+                    div.onclick = () => startInterview(job);
+                    div.innerHTML = `
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="font-semibold text-gray-900">${job.title}</h4>
+                                <p class="text-sm text-gray-600">${job.company?.name || 'Công ty'}</p>
+                            </div>
+                            <i class="fas fa-chevron-right text-gray-400"></i>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (error) {
+                console.error('Load jobs error:', error);
+            }
+        }
+
+        async function startInterview(job) {
+            try {
+                currentJob = job;
+                interviewHistory = [];
+                
+                document.getElementById('jobSelection').classList.add('hidden');
+                document.getElementById('interviewSession').classList.remove('hidden');
+                document.getElementById('emptyState').classList.add('hidden');
+                
+                document.getElementById('jobTitle').textContent = job.title;
+                document.getElementById('companyName').textContent = job.company?.name || 'Công ty';
+
+                // Start mock interview
+                const interview = await api.startMockInterview(job.id);
+                currentQuestion = interview.question || "Hãy giới thiệu về bản thân bạn.";
+                
+                displayQuestion(currentQuestion);
+            } catch (error) {
+                console.error('Start interview error:', error);
+                alert('Lỗi khi bắt đầu phỏng vấn: ' + error.message);
+            }
+        }
+
+        function displayQuestion(question) {
+            document.getElementById('currentQuestion').innerHTML = `
+                <p class="text-gray-700 font-medium">${question}</p>
+            `;
+            document.getElementById('answerInput').value = '';
+            document.getElementById('feedbackSection').classList.add('hidden');
+        }
+
+        async function submitAnswer() {
+            const answer = document.getElementById('answerInput').value.trim();
+            if (!answer) {
+                alert('Vui lòng nhập câu trả lời');
+                return;
+            }
+
+            try {
+                // Evaluate answer
+                const feedback = await api.evaluateInterviewAnswer(
+                    currentQuestion,
+                    answer,
+                    { jobId: currentJob.id, jobTitle: currentJob.title }
+                );
+
+                // Add to history
+                interviewHistory.push({
+                    question: currentQuestion,
+                    answer: answer,
+                    feedback: feedback
+                });
+
+                displayFeedback(feedback);
+                displayHistory();
+                
+                // Get next question
+                setTimeout(() => {
+                    getNextQuestion();
+                }, 3000);
+            } catch (error) {
+                console.error('Submit answer error:', error);
+                alert('Lỗi khi gửi câu trả lời: ' + error.message);
+            }
+        }
+
+        function displayFeedback(feedback) {
+            const section = document.getElementById('feedbackSection');
+            const content = document.getElementById('feedbackContent');
+            
+            content.innerHTML = `
+                <div class="p-4 bg-green-50 rounded-lg">
+                    <h4 class="font-semibold text-gray-900 mb-2">Điểm số: ${feedback.score || 'N/A'}/10</h4>
+                    <p class="text-gray-700">${feedback.feedback || feedback.comment || 'Nhận xét đang được xử lý...'}</p>
+                </div>
+            `;
+            
+            section.classList.remove('hidden');
+        }
+
+        function displayHistory() {
+            const container = document.getElementById('interviewHistory');
+            container.innerHTML = '';
+
+            interviewHistory.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'p-4 border border-gray-200 rounded-lg';
+                div.innerHTML = `
+                    <div class="mb-2">
+                        <p class="font-semibold text-gray-900">Câu hỏi ${index + 1}:</p>
+                        <p class="text-gray-700">${item.question}</p>
+                    </div>
+                    <div class="mb-2">
+                        <p class="font-semibold text-gray-900">Câu trả lời của bạn:</p>
+                        <p class="text-gray-700">${item.answer}</p>
+                    </div>
+                    ${item.feedback ? `
+                    <div class="p-3 bg-blue-50 rounded-lg">
+                        <p class="font-semibold text-gray-900 mb-1">Nhận xét:</p>
+                        <p class="text-gray-700 text-sm">${item.feedback.feedback || item.feedback.comment || 'Đang xử lý...'}</p>
+                    </div>
+                    ` : ''}
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        async function getNextQuestion() {
+            // Generate next question based on job
+            const questions = [
+                "Tại sao bạn quan tâm đến vị trí này?",
+                "Bạn có kinh nghiệm gì liên quan đến công việc này?",
+                "Điểm mạnh lớn nhất của bạn là gì?",
+                "Bạn xử lý áp lực công việc như thế nào?",
+                "Bạn có câu hỏi gì cho chúng tôi không?"
+            ];
+            
+            const randomQuestion = questions[Math.floor(Math.random() * questions.length)];
+            currentQuestion = randomQuestion;
+            displayQuestion(currentQuestion);
+        }
+
+        function endInterview() {
+            if (confirm('Bạn có chắc muốn kết thúc phiên phỏng vấn?')) {
+                document.getElementById('jobSelection').classList.remove('hidden');
+                document.getElementById('interviewSession').classList.add('hidden');
+                currentJob = null;
+                currentQuestion = null;
+                interviewHistory = [];
+            }
+        }
+
+        function loadUserInfo() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (user.fullName) {
+                const initials = user.fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                document.getElementById('userAvatar').textContent = initials;
+            }
+        }
+    </script>
+</body>
+</html>
+

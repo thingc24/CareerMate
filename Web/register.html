@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareerMate - Đăng ký</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="api-client.js"></script>
+    <script src="auth-helper.js"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full">
+        <!-- Logo -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-blue-600 mb-2">CareerMate</h1>
+            <p class="text-gray-600">Tạo tài khoản mới</p>
+        </div>
+
+        <!-- Register Form -->
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+            <form id="registerForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Họ và tên *</label>
+                    <input type="text" id="fullName" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Nguyễn Văn A">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                    <input type="email" id="email" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="your@email.com">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Số điện thoại</label>
+                    <input type="tel" id="phone"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="0123456789">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Mật khẩu *</label>
+                    <input type="password" id="password" required minlength="8"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Tối thiểu 8 ký tự">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Xác nhận mật khẩu *</label>
+                    <input type="password" id="confirmPassword" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Nhập lại mật khẩu">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Bạn là *</label>
+                    <select id="role" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Chọn vai trò</option>
+                        <option value="STUDENT">Sinh viên / Ứng viên</option>
+                        <option value="RECRUITER">Nhà tuyển dụng</option>
+                    </select>
+                </div>
+
+                <div class="flex items-start">
+                    <input type="checkbox" id="terms" required
+                        class="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <label for="terms" class="ml-2 text-sm text-gray-600">
+                        Tôi đồng ý với <a href="#" class="text-blue-600 hover:text-blue-700">Điều khoản sử dụng</a> 
+                        và <a href="#" class="text-blue-600 hover:text-blue-700">Chính sách bảo mật</a>
+                    </label>
+                </div>
+
+                <button type="submit" 
+                    class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg">
+                    Đăng ký
+                </button>
+
+                <div class="text-center">
+                    <p class="text-sm text-gray-600">
+                        Đã có tài khoản? 
+                        <a href="login.html" class="text-blue-600 hover:text-blue-700 font-medium">Đăng nhập</a>
+                    </p>
+                </div>
+            </form>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="hidden mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"></div>
+        </div>
+    </div>
+
+    <script>
+        // Wait for API client to load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if already logged in
+            if (localStorage.getItem('accessToken')) {
+                const user = getCurrentUser();
+                if (user) {
+                    window.location.href = user.role === 'ADMIN' ? 'admin.html' : 
+                                         user.role === 'RECRUITER' ? 'nhatuyendung.html' : 
+                                         'sinhvien.html';
+                }
+            }
+
+            const registerForm = document.getElementById('registerForm');
+            if (registerForm) {
+                registerForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const password = document.getElementById('password').value;
+                    const confirmPassword = document.getElementById('confirmPassword').value;
+                    const errorDiv = document.getElementById('errorMessage');
+                    const submitBtn = registerForm.querySelector('button[type="submit"]');
+                    
+                    // Show loading state
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.textContent = 'Đang đăng ký...';
+                    }
+                    
+                    // Clear previous errors
+                    if (errorDiv) {
+                        errorDiv.textContent = '';
+                        errorDiv.classList.add('hidden');
+                    }
+
+                    // Validate password match
+                    if (password !== confirmPassword) {
+                        if (errorDiv) {
+                            errorDiv.textContent = 'Mật khẩu xác nhận không khớp!';
+                            errorDiv.classList.remove('hidden');
+                        }
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = 'Đăng ký';
+                        }
+                        return;
+                    }
+
+                    // Validate role
+                    const role = document.getElementById('role').value;
+                    if (!role) {
+                        if (errorDiv) {
+                            errorDiv.textContent = 'Vui lòng chọn vai trò!';
+                            errorDiv.classList.remove('hidden');
+                        }
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = 'Đăng ký';
+                        }
+                        return;
+                    }
+
+                    const userData = {
+                        email: document.getElementById('email').value,
+                        password: password,
+                        fullName: document.getElementById('fullName').value,
+                        phone: document.getElementById('phone').value || null,
+                        role: role
+                    };
+
+                    try {
+                        // Check if api is available
+                        if (typeof api === 'undefined') {
+                            throw new Error('API client chưa được tải. Vui lòng tải lại trang.');
+                        }
+
+                        const data = await api.register(userData);
+                        
+                        alert('Đăng ký thành công! Đang chuyển hướng...');
+                        
+                        // Redirect based on role
+                        const user = data.user || data;
+                        if (user.role === 'STUDENT') {
+                            window.location.href = 'sinhvien.html';
+                        } else if (user.role === 'RECRUITER') {
+                            window.location.href = 'nhatuyendung.html';
+                        } else {
+                            window.location.href = 'sinhvien.html';
+                        }
+                    } catch (error) {
+                        console.error('Register error:', error);
+                        if (errorDiv) {
+                            errorDiv.textContent = error.message || 'Đăng ký thất bại. Vui lòng thử lại.';
+                            errorDiv.classList.remove('hidden');
+                        } else {
+                            alert('Lỗi: ' + (error.message || 'Đăng ký thất bại'));
+                        }
+                    } finally {
+                        // Reset button state
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = 'Đăng ký';
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+
