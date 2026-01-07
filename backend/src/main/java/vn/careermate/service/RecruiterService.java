@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.careermate.model.*;
 import vn.careermate.repository.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -105,7 +104,6 @@ public class RecruiterService {
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
 
-        Application.ApplicationStatus oldStatus = application.getStatus();
         application.setStatus(status);
         application.setUpdatedAt(LocalDateTime.now());
 

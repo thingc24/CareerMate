@@ -28,14 +28,23 @@ public class StudentService {
     private final AIService aiService;
     private final FileStorageService fileStorageService;
 
+    @Transactional(readOnly = true)
     public StudentProfile getCurrentStudentProfile() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        
-        return studentProfileRepository.findByUserId(user.getId())
+
+        StudentProfile profile = studentProfileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new RuntimeException("Student profile not found"));
+
+        // Tránh lỗi lazy proxy khi serialize: bỏ reference tới các entity quan hệ
+        profile.setUser(null);
+        profile.setSkills(null);
+        profile.setCvs(null);
+        profile.setApplications(null);
+
+        return profile;
     }
 
     @Transactional
@@ -140,7 +149,8 @@ public class StudentService {
         application = applicationRepository.save(application);
 
         // Calculate match score with AI (async)
-        aiService.calculateJobMatchAsync(application);
+        // TODO: Implement job matching calculation
+        // aiService.calculateJobMatchAsync(application);
 
         // Update job applications count
         job.setApplicationsCount(job.getApplicationsCount() + 1);

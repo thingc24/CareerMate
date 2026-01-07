@@ -3,11 +3,11 @@ spring:
     name: careermate-backend
   
   # Database Configuration
-  # Cấu hình database - Đã setup với Docker
+  # Cấu hình database - PostgreSQL local
   datasource:
     url: jdbc:postgresql://localhost:5432/careermate_db
-    username: ${DB_USERNAME:careermate_user}  # Docker container user
-    password: ${DB_PASSWORD:careermate_password}  # Docker container password
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:Aa1234}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -19,8 +19,8 @@ spring:
   # JPA Configuration
   jpa:
     hibernate:
-      ddl-auto: validate # Use 'update' for development (tự động tạo tables), 'validate' for production
-      # Lưu ý: Nếu database chưa có tables, đổi thành 'update' để tự động tạo
+      ddl-auto: update # Tự động tạo/update tables khi chạy lần đầu với database trống
+      # Sau khi database ổn định có thể đổi lại thành 'validate' cho production
     show-sql: false  # Đổi thành true để xem SQL queries
     properties:
       hibernate:
@@ -86,11 +86,13 @@ ai:
   vector-db:
     type: weaviate # or pinecone
     weaviate:
-      url: ${WEAVIATE_URL:http://localhost:8080}
+      url: ${WEAVIATE_URL:http://localhost:8081}
       api-key: ${WEAVIATE_API_KEY:}
+      enabled: ${WEAVIATE_ENABLED:false}
     pinecone:
       api-key: ${PINECONE_API_KEY:}
       environment: ${PINECONE_ENV:}
+      enabled: ${PINECONE_ENABLED:false}
 
 # Application Configuration
 app:

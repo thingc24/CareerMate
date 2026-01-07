@@ -27,7 +27,7 @@ public class CareerRoadmapService {
 
         // Use AI to generate personalized roadmap
         String studentInfo = buildStudentInfo(student);
-        Map<String, Object> roadmapData = aiService.generateCareerRoadmap(studentInfo, careerGoal, currentLevel);
+        Map<String, Object> roadmapData = aiService.getCareerRoadmap(studentInfo, careerGoal);
 
         CareerRoadmap roadmap = CareerRoadmap.builder()
                 .student(student)

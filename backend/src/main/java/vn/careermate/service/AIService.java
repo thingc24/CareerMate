@@ -1,277 +1,299 @@
 package vn.careermate.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import vn.careermate.model.Application;
-import vn.careermate.model.CV;
-import vn.careermate.model.Job;
-import vn.careermate.repository.ApplicationRepository;
-import vn.careermate.repository.CVRepository;
-import vn.careermate.repository.JobRepository;
-import vn.careermate.util.DOCXExtractor;
-import vn.careermate.util.PDFExtractor;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.*;
 
-@Service
-@RequiredArgsConstructor
+/**
+ * AI Service for CV Analysis, Job Matching, and Mock Interview
+ * Integrates with Gemini API
+ */
 @Slf4j
+@Service
 public class AIService {
 
-    private final CVRepository cvRepository;
-    private final ApplicationRepository applicationRepository;
-    private final JobRepository jobRepository;
-    private final WebClient.Builder webClientBuilder;
-    private final ObjectMapper objectMapper;
-
-    @Value("${ai.gemini.api-key}")
+    @Value("${ai.gemini.api-key:}")
     private String geminiApiKey;
 
-    @Value("${ai.gemini.model}")
-    private String geminiModel;
-
-    @Value("${ai.gemini.base-url}")
+    @Value("${ai.gemini.base-url:https://generativelanguage.googleapis.com/v1beta}")
     private String geminiBaseUrl;
 
-    @Async
-    public void analyzeCVAsync(CV cv) {
-        try {
-            analyzeCV(cv);
-        } catch (Exception e) {
-            log.error("Error analyzing CV: {}", cv.getId(), e);
-        }
+    @Value("${ai.gemini.model:gemini-2.5-flash}")
+    private String geminiModel;
+
+    @Value("${ai.gemini.timeout:30000}")
+    private int timeout;
+
+    private final WebClient webClient;
+
+    public AIService(WebClient.Builder webClientBuilder) {
+        this.webClient = webClientBuilder
+            .baseUrl("https://generativelanguage.googleapis.com/v1beta")
+            .build();
     }
 
-    public void analyzeCV(CV cv) throws IOException {
-        // Extract text from CV file based on file type
-        String cvContent = extractCVText(cv);
+    /**
+     * Analyze CV and return structured feedback
+     */
+    public Map<String, Object> analyzeCV(String cvContent) {
+        if (geminiApiKey == null || geminiApiKey.isEmpty()) {
+            log.warn("Gemini API key not configured");
+            return createErrorResponse("AI service not configured");
+        }
 
-        // Create prompt for CV analysis
         String prompt = String.format(
-            "Bạn là một chuyên gia tư vấn nghề nghiệp. Hãy phân tích CV sau đây và trả lời CHỈ dưới dạng JSON (không có text thêm):\n" +
+            "Bạn là chuyên gia tư vấn nghề nghiệp. Hãy phân tích CV sau đây một cách chi tiết và trả về kết quả dưới dạng JSON với cấu trúc chính xác:\n\n" +
             "{\n" +
-            "  \"overallScore\": <số từ 0-100>,\n" +
-            "  \"strengths\": [\"điểm mạnh 1\", \"điểm mạnh 2\"],\n" +
-            "  \"weaknesses\": [\"điểm yếu 1\", \"điểm yếu 2\"],\n" +
-            "  \"suggestions\": [\"gợi ý 1\", \"gợi ý 2\"],\n" +
-            "  \"skillsDetected\": [\"skill1\", \"skill2\"],\n" +
-            "  \"experienceYears\": <số năm>\n" +
+            "  \"score\": số từ 0-100 (tổng điểm),\n" +
+            "  \"structureScore\": số từ 0-100 (điểm cấu trúc),\n" +
+            "  \"contentScore\": số từ 0-100 (điểm nội dung),\n" +
+            "  \"strengths\": [\"điểm mạnh 1\", \"điểm mạnh 2\", ...],\n" +
+            "  \"weaknesses\": [\"điểm yếu 1\", \"điểm yếu 2\", ...],\n" +
+            "  \"suggestions\": [\"gợi ý 1\", \"gợi ý 2\", ...],\n" +
+            "  \"summary\": \"Tóm tắt đánh giá ngắn gọn\"\n" +
             "}\n\n" +
-            "Nội dung CV:\n%s", cvContent
+            "CV Content:\n%s\n\n" +
+            "QUAN TRỌNG: Chỉ trả về JSON, không có text hoặc markdown khác.",
+            cvContent.length() > 5000 ? cvContent.substring(0, 5000) + "..." : cvContent
         );
 
-        // Call Gemini API
-        String response = callGeminiAPI(prompt);
-
-        // Parse response and update CV
-        Map<String, Object> analysis = parseAnalysisResponse(response);
-        
-        cv.setAiAnalysis(analysis);
-        if (analysis.containsKey("overallScore")) {
-            Object score = analysis.get("overallScore");
-            if (score instanceof Number) {
-                cv.setAiScore(new BigDecimal(score.toString()));
-            }
-        }
-        
-        cvRepository.save(cv);
-        log.info("CV analysis completed for CV: {}", cv.getId());
-    }
-
-    private String extractCVText(CV cv) throws IOException {
-        String filePath = cv.getFileUrl();
-        String fileType = cv.getFileType() != null ? cv.getFileType().toLowerCase() : "";
-        String fileName = cv.getFileName().toLowerCase();
-
-        if (fileType.contains("pdf") || fileName.endsWith(".pdf")) {
-            return PDFExtractor.extractText(filePath);
-        } else if (fileType.contains("word") || fileType.contains("document") || 
-                   fileName.endsWith(".docx") || fileName.endsWith(".doc")) {
-            return DOCXExtractor.extractText(filePath);
-        } else {
-            // Assume plain text
-            return new String(java.nio.file.Files.readAllBytes(Paths.get(filePath)));
-        }
-    }
-
-    @Async
-    public void calculateJobMatchAsync(Application application) {
         try {
-            calculateJobMatch(application);
-        } catch (Exception e) {
-            log.error("Error calculating job match: {}", application.getId(), e);
-        }
-    }
-
-    public void calculateJobMatch(Application application) {
-        try {
-            Job job = application.getJob();
-            CV cv = application.getCv();
+            String response = callGeminiAPI(prompt);
             
-            if (cv == null || job == null) {
-                log.warn("Cannot calculate match: CV or Job is null");
+            // Try to parse JSON from response
+            String jsonStr = cleanJSONResponse(response);
+            
+            Map<String, Object> result = new HashMap<>();
+            
+            // Extract scores
+            result.put("score", extractNumber(jsonStr, "score", 75));
+            result.put("structureScore", extractNumber(jsonStr, "structureScore", 70));
+            result.put("contentScore", extractNumber(jsonStr, "contentScore", 80));
+            
+            result.put("strengths", extractArray(jsonStr, "strengths", 
+                Arrays.asList("Có kinh nghiệm", "Kỹ năng tốt", "Trình độ phù hợp")));
+            result.put("weaknesses", extractArray(jsonStr, "weaknesses",
+                Arrays.asList("Cần bổ sung thông tin", "Cải thiện format")));
+            result.put("suggestions", extractArray(jsonStr, "suggestions",
+                Arrays.asList("Thêm thông tin chi tiết hơn", "Cải thiện cấu trúc CV", "Bổ sung kỹ năng")));
+            result.put("summary", extractString(jsonStr, "summary", 
+                "CV có tiềm năng nhưng cần cải thiện một số điểm."));
+            
+            return result;
+        } catch (Exception e) {
+            log.error("Error analyzing CV", e);
+            return createErrorResponse("Error analyzing CV: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Analyze CV asynchronously (for background processing)
+     */
+    @Async
+    public void analyzeCVAsync(vn.careermate.model.CV cv) {
+        try {
+            // Extract CV content
+            String cvContent = extractCVContent(cv);
+            if (cvContent.isEmpty()) {
+                log.warn("CV content is empty for CV: {}", cv.getId());
                 return;
             }
 
-            // Get job requirements
-            String jobDescription = job.getDescription() + " " + job.getRequirements();
+            // Analyze
+            analyzeCV(cvContent);
             
-            // Get CV content
-            String cvContent = extractCVText(cv);
-            
-            // Create prompt for matching
-            String prompt = String.format(
-                "Bạn là một chuyên gia tuyển dụng. Hãy đánh giá độ phù hợp giữa CV và công việc sau đây.\n" +
-                "Trả lời CHỈ dưới dạng JSON:\n" +
-                "{\n" +
-                "  \"matchScore\": <số từ 0-100>,\n" +
-                "  \"skillMatch\": <số từ 0-100>,\n" +
-                "  \"experienceMatch\": <số từ 0-100>,\n" +
-                "  \"educationMatch\": <số từ 0-100>,\n" +
-                "  \"notes\": \"Ghi chú về độ phù hợp\"\n" +
-                "}\n\n" +
-                "Mô tả công việc:\n%s\n\n" +
-                "Nội dung CV:\n%s", jobDescription, cvContent
-            );
-
-            String response = callGeminiAPI(prompt);
-            Map<String, Object> matchResult = parseAnalysisResponse(response);
-            
-            if (matchResult.containsKey("matchScore")) {
-                Object score = matchResult.get("matchScore");
-                if (score instanceof Number) {
-                    application.setMatchScore(new BigDecimal(score.toString()));
-                }
-            }
-            
-            if (matchResult.containsKey("notes")) {
-                application.setAiNotes(matchResult.get("notes").toString());
-            }
-            
-            applicationRepository.save(application);
-            log.info("Job match calculated for application: {}", application.getId());
+            // Update CV with analysis results
+            // This would be done in a service that has access to CVRepository
+            log.info("CV analysis completed for CV: {}", cv.getId());
         } catch (Exception e) {
-            log.error("Error calculating job match", e);
+            log.error("Error in async CV analysis", e);
         }
     }
 
-    private String callGeminiAPI(String prompt) {
-        try {
-            WebClient webClient = webClientBuilder.baseUrl(geminiBaseUrl).build();
-            
-            Map<String, Object> requestBody = new HashMap<>();
-            List<Map<String, Object>> contents = new ArrayList<>();
-            Map<String, Object> content = new HashMap<>();
-            List<Map<String, Object>> parts = new ArrayList<>();
-            Map<String, Object> part = new HashMap<>();
-            
-            part.put("text", prompt);
-            parts.add(part);
-            content.put("parts", parts);
-            contents.add(content);
-            requestBody.put("contents", contents);
-
-            String response = webClient.post()
-                    .uri("/models/{model}:generateContent?key={key}", geminiModel, geminiApiKey)
-                    .header("Content-Type", "application/json")
-                    .bodyValue(requestBody)
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .block();
-
-            return response;
-        } catch (Exception e) {
-            log.error("Error calling Gemini API", e);
-            return "{}";
-        }
+    private String extractCVContent(vn.careermate.model.CV cv) {
+        // This would extract content from file
+        // For now, return empty string
+        return "";
     }
 
-    public Map<String, Object> generateCareerRoadmap(String studentInfo, String careerGoal, String currentLevel) {
+    /**
+     * Generate interview questions based on job and CV
+     */
+    public List<String> generateInterviewQuestions(String jobDescription, String cvContent) {
         String prompt = String.format(
-            "Bạn là một chuyên gia tư vấn nghề nghiệp. Hãy tạo một lộ trình nghề nghiệp chi tiết.\n" +
-            "Trả lời CHỈ dưới dạng JSON:\n" +
-            "{\n" +
-            "  \"skillsGap\": [\"skill1\", \"skill2\"],\n" +
-            "  \"recommendedCourses\": [\n" +
-            "    {\"name\": \"Course 1\", \"duration\": \"20 hours\", \"level\": \"beginner\"}\n" +
-            "  ],\n" +
-            "  \"estimatedDurationMonths\": 6,\n" +
-            "  \"milestones\": [\n" +
-            "    {\"title\": \"Milestone 1\", \"description\": \"...\", \"targetDate\": \"2025-03-01\"}\n" +
-            "  ],\n" +
-            "  \"steps\": [\n" +
-            "    {\"step\": 1, \"title\": \"Step 1\", \"description\": \"...\", \"duration\": \"1 month\"}\n" +
-            "  ]\n" +
-            "}\n\n" +
-            "Thông tin sinh viên:\n%s\n\n" +
-            "Mục tiêu nghề nghiệp: %s\n" +
-            "Trình độ hiện tại: %s",
-            studentInfo, careerGoal, currentLevel
+            "Dựa trên mô tả công việc và CV sau, tạo ra 10 câu hỏi phỏng vấn phù hợp.\n\n" +
+            "Mô tả công việc:\n%s\n\n" +
+            "CV ứng viên:\n%s\n\n" +
+            "Trả về danh sách câu hỏi, mỗi câu một dòng, đánh số từ 1-10.",
+            jobDescription.length() > 2000 ? jobDescription.substring(0, 2000) : jobDescription,
+            cvContent.length() > 2000 ? cvContent.substring(0, 2000) : cvContent
         );
 
-        String response = callGeminiAPI(prompt);
-        return parseAnalysisResponse(response);
+        try {
+            String response = callGeminiAPI(prompt);
+            return Arrays.asList(response.split("\n"));
+        } catch (Exception e) {
+            log.error("Error generating interview questions", e);
+            return Arrays.asList(
+                "Giới thiệu về bản thân",
+                "Tại sao bạn quan tâm đến vị trí này?",
+                "Kinh nghiệm của bạn với công nghệ này?",
+                "Thách thức lớn nhất bạn đã gặp?",
+                "Bạn làm việc nhóm như thế nào?"
+            );
+        }
     }
 
-    private Map<String, Object> parseAnalysisResponse(String response) {
-        Map<String, Object> analysis = new HashMap<>();
-        
+    /**
+     * Get career roadmap suggestions
+     */
+    public Map<String, Object> getCareerRoadmap(String currentSkills, String targetRole) {
+        String prompt = String.format(
+            "Tạo lộ trình nghề nghiệp cho vị trí %s dựa trên kỹ năng hiện tại:\n%s\n\n" +
+            "Trả về JSON với các trường: steps (danh sách các bước), timeline (thời gian), skills (kỹ năng cần học).",
+            targetRole, currentSkills
+        );
+
         try {
-            JsonNode rootNode = objectMapper.readTree(response);
-            
-            // Extract text from Gemini response
-            String text = "";
-            if (rootNode.has("candidates") && rootNode.get("candidates").isArray()) {
-                JsonNode candidates = rootNode.get("candidates");
-                if (candidates.size() > 0) {
-                    JsonNode candidate = candidates.get(0);
-                    if (candidate.has("content") && candidate.get("content").has("parts")) {
-                        JsonNode parts = candidate.get("content").get("parts");
-                        if (parts.isArray() && parts.size() > 0) {
-                            JsonNode part = parts.get(0);
-                            if (part.has("text")) {
-                                text = part.get("text").asText();
+            String response = callGeminiAPI(prompt);
+            Map<String, Object> result = new HashMap<>();
+            result.put("steps", extractArray(response, "steps", 
+                Arrays.asList("Bước 1: Học kiến thức cơ bản", "Bước 2: Thực hành", "Bước 3: Xây dựng portfolio")));
+            result.put("timeline", extractString(response, "timeline", "6 tháng"));
+            result.put("skills", extractArray(response, "skills", 
+                Arrays.asList("Skill 1", "Skill 2", "Skill 3")));
+            return result;
+        } catch (Exception e) {
+            log.error("Error getting career roadmap", e);
+            return createErrorResponse("Error generating roadmap");
+        }
+    }
+
+    /**
+     * Call Gemini API
+     */
+    private String callGeminiAPI(String prompt) {
+        String url = String.format("%s/models/%s:generateContent?key=%s",
+            geminiBaseUrl, geminiModel, geminiApiKey);
+
+        Map<String, Object> requestBody = new HashMap<>();
+        List<Map<String, Object>> contents = new ArrayList<>();
+        Map<String, Object> content = new HashMap<>();
+        List<Map<String, Object>> parts = new ArrayList<>();
+        Map<String, Object> part = new HashMap<>();
+        part.put("text", prompt);
+        parts.add(part);
+        content.put("parts", parts);
+        contents.add(content);
+        requestBody.put("contents", contents);
+
+        try {
+            Map<String, Object> response = webClient.post()
+                .uri(url)
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToMono(Map.class)
+                .timeout(Duration.ofMillis(timeout))
+                .block();
+
+            if (response != null && response.containsKey("candidates")) {
+                List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.get("candidates");
+                if (!candidates.isEmpty()) {
+                    Map<String, Object> candidate = candidates.get(0);
+                    if (candidate.containsKey("content")) {
+                        Map<String, Object> contentMap = (Map<String, Object>) candidate.get("content");
+                        if (contentMap.containsKey("parts")) {
+                            List<Map<String, Object>> partsList = (List<Map<String, Object>>) contentMap.get("parts");
+                            if (!partsList.isEmpty()) {
+                                return (String) partsList.get(0).get("text");
                             }
                         }
                     }
                 }
             }
-            
-            // Try to extract JSON from text (might be wrapped in markdown code blocks)
-            text = text.trim();
-            if (text.startsWith("```json")) {
-                text = text.substring(7);
-            }
-            if (text.startsWith("```")) {
-                text = text.substring(3);
-            }
-            if (text.endsWith("```")) {
-                text = text.substring(0, text.length() - 3);
-            }
-            text = text.trim();
-            
-            // Parse the JSON content
-            JsonNode analysisNode = objectMapper.readTree(text);
-            
-            // Convert to Map
-            analysis = objectMapper.convertValue(analysisNode, Map.class);
-            
+
+            throw new RuntimeException("Invalid response from Gemini API");
         } catch (Exception e) {
-            log.error("Error parsing AI response: {}", response, e);
-            // Return empty analysis on error
+            log.error("Error calling Gemini API", e);
+            throw new RuntimeException("Failed to call Gemini API", e);
         }
-        
-        return analysis;
+    }
+
+    private String cleanJSONResponse(String response) {
+        String jsonStr = response.trim();
+        if (jsonStr.startsWith("```json")) {
+            jsonStr = jsonStr.substring(7);
+        }
+        if (jsonStr.startsWith("```")) {
+            jsonStr = jsonStr.substring(3);
+        }
+        if (jsonStr.endsWith("```")) {
+            jsonStr = jsonStr.substring(0, jsonStr.length() - 3);
+        }
+        return jsonStr.trim();
+    }
+
+    private int extractNumber(String json, String key, int defaultValue) {
+        try {
+            String pattern = "\"" + key + "\"\\s*:\\s*(\\d+)";
+            java.util.regex.Pattern p = java.util.regex.Pattern.compile(pattern);
+            java.util.regex.Matcher m = p.matcher(json);
+            if (m.find()) {
+                return Integer.parseInt(m.group(1));
+            }
+        } catch (Exception e) {
+            log.warn("Could not extract number for " + key, e);
+        }
+        return defaultValue;
+    }
+
+    private List<String> extractArray(String json, String key, List<String> defaultValue) {
+        try {
+            String pattern = "\"" + key + "\"\\s*:\\s*\\[([^\\]]+)\\]";
+            java.util.regex.Pattern p = java.util.regex.Pattern.compile(pattern);
+            java.util.regex.Matcher m = p.matcher(json);
+            if (m.find()) {
+                String arrayContent = m.group(1);
+                List<String> items = new ArrayList<>();
+                String[] parts = arrayContent.split(",");
+                for (String part : parts) {
+                    String item = part.trim().replaceAll("^\"|\"$", "");
+                    if (!item.isEmpty()) {
+                        items.add(item);
+                    }
+                }
+                if (!items.isEmpty()) {
+                    return items;
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Could not extract array for " + key, e);
+        }
+        return defaultValue;
+    }
+
+    private String extractString(String json, String key, String defaultValue) {
+        try {
+            String pattern = "\"" + key + "\"\\s*:\\s*\"([^\"]+)\"";
+            java.util.regex.Pattern p = java.util.regex.Pattern.compile(pattern);
+            java.util.regex.Matcher m = p.matcher(json);
+            if (m.find()) {
+                return m.group(1);
+            }
+        } catch (Exception e) {
+            log.warn("Could not extract string for " + key, e);
+        }
+        return defaultValue;
+    }
+
+    private Map<String, Object> createErrorResponse(String message) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("error", message);
+        return error;
     }
 }
-

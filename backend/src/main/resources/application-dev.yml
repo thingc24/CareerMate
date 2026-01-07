@@ -5,7 +5,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/careermate_db
     username: postgres
-    password: postgres  # Thay đổi theo password của bạn
+    password: Aa1234
     driver-class-name: org.postgresql.Driver
   
   jpa:

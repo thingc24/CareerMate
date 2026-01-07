@@ -129,6 +129,13 @@
             <version>2.3.0</version>
         </dependency>
         
+        <!-- Weaviate Client for Vector DB -->
+        <dependency>
+            <groupId>io.weaviate</groupId>
+            <artifactId>client</artifactId>
+            <version>4.5.0</version>
+        </dependency>
+        
         <!-- Testing -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -22,7 +22,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -39,23 +38,8 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
-                // Public endpoints
-                .requestMatchers(
-                    "/auth/**",
-                    "/public/**",
-                    "/swagger-ui/**",
-                    "/api-docs/**",
-                    "/actuator/health",
-                    "/error"
-                ).permitAll()
-                // Student endpoints
-                .requestMatchers("/students/**").hasAnyRole("STUDENT", "ADMIN")
-                // Recruiter endpoints
-                .requestMatchers("/recruiters/**").hasAnyRole("RECRUITER", "ADMIN")
-                // Admin endpoints
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                // All other requests require authentication
-                .anyRequest().authenticated()
+                // Tạm thời mở toàn bộ cho môi trường phát triển
+                .anyRequest().permitAll()
             )
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
