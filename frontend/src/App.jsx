@@ -14,7 +14,12 @@ import Register from './pages/auth/Register';
 import StudentDashboard from './pages/student/Dashboard';
 import JobList from './pages/student/JobList';
 import JobDetail from './pages/student/JobDetail';
+import JobRecommendations from './pages/student/JobRecommendations';
 import CVUpload from './pages/student/CVUpload';
+import CVAnalysis from './pages/student/CVAnalysis';
+import CareerCoach from './pages/student/CareerCoach';
+import CareerRoadmap from './pages/student/CareerRoadmap';
+import Quiz from './pages/student/Quiz';
 import Applications from './pages/student/Applications';
 import Profile from './pages/student/Profile';
 
@@ -71,7 +76,12 @@ function AppRoutes() {
                 <Route path="dashboard" element={<StudentDashboard />} />
                 <Route path="jobs" element={<JobList />} />
                 <Route path="jobs/:id" element={<JobDetail />} />
+                <Route path="recommendations" element={<JobRecommendations />} />
                 <Route path="cv" element={<CVUpload />} />
+                <Route path="cv/:cvId/analysis" element={<CVAnalysis />} />
+                <Route path="coach" element={<CareerCoach />} />
+                <Route path="roadmap" element={<CareerRoadmap />} />
+                <Route path="quiz" element={<Quiz />} />
                 <Route path="applications" element={<Applications />} />
                 <Route path="profile" element={<Profile />} />
                 <Route path="" element={<Navigate to="dashboard" replace />} />

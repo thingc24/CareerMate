@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import ChatWidget from '../components/ChatWidget';
 
 export default function RecruiterLayout({ children }) {
   const { user, logout } = useAuth();
@@ -130,6 +131,7 @@ export default function RecruiterLayout({ children }) {
           </main>
         </div>
       </div>
+      <ChatWidget role="RECRUITER" />
     </div>
   );
 }

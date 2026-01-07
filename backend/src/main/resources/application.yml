@@ -77,8 +77,8 @@ jwt:
 # AI Service Configuration
 ai:
   gemini:
-    api-key: ${GEMINI_API_KEY:}
-    model: gemini-2.5-flash
+    api-key: ${GEMINI_API_KEY:AIzaSyDDhMiEFOVFBR_aUzkgZI72QMflFJ2qWus}
+    model: gemini-2.5-flash # Tested and working model
     base-url: https://generativelanguage.googleapis.com/v1beta
     timeout: 30000 # 30 seconds
   

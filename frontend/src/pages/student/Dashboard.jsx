@@ -28,7 +28,7 @@ export default function StudentDashboard() {
       setStats(prev => ({ ...prev, cvs: cvs.length || 0 }));
 
       // Load recent jobs
-      const jobs = await api.getJobs(0, 6);
+      const jobs = await api.searchJobs('', '', 0, 6);
       setRecentJobs(jobs.content || jobs || []);
 
     } catch (error) {
@@ -46,101 +46,178 @@ export default function StudentDashboard() {
     }).format(amount);
   };
 
+  const StatCard = ({ icon, label, value, gradient, delay = 0 }) => (
+    <div 
+      className="card card-hover p-6 animate-slide-up"
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <div className="flex items-center justify-between mb-4">
+        <div className={`h-14 w-14 rounded-xl ${gradient} flex items-center justify-center shadow-lg`}>
+          <i className={`${icon} text-white text-xl`}></i>
+        </div>
+        <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse"></div>
+      </div>
+      <p className="text-sm font-medium text-gray-600 mb-2">{label}</p>
+      <p className="text-4xl font-bold gradient-text">{value}</p>
+    </div>
+  );
+
+  const QuickActionCard = ({ to, icon, label, gradient, delay = 0 }) => (
+    <Link
+      to={to}
+      className="card card-hover p-6 text-center group animate-scale-in"
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <div className={`inline-flex h-16 w-16 rounded-2xl ${gradient} items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+        <i className={`${icon} text-white text-2xl`}></i>
+      </div>
+      <p className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">{label}</p>
+    </Link>
+  );
+
   return (
-    <div className="max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Dashboard</h1>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">
+          Chào mừng trở lại! 👋
+        </h1>
+        <p className="text-lg text-gray-600">
+          Quản lý sự nghiệp của bạn một cách thông minh
+        </p>
+      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center">
-              <i className="fas fa-briefcase text-blue-600 text-xl"></i>
-            </div>
-          </div>
-          <p className="text-sm text-gray-500 mb-1">Đơn ứng tuyển</p>
-          <p className="text-3xl font-bold text-gray-900">{stats.applications}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="h-12 w-12 rounded-lg bg-green-100 flex items-center justify-center">
-              <i className="fas fa-file-pdf text-green-600 text-xl"></i>
-            </div>
-          </div>
-          <p className="text-sm text-gray-500 mb-1">CV đã tải</p>
-          <p className="text-3xl font-bold text-gray-900">{stats.cvs}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="h-12 w-12 rounded-lg bg-purple-100 flex items-center justify-center">
-              <i className="fas fa-trophy text-purple-600 text-xl"></i>
-            </div>
-          </div>
-          <p className="text-sm text-gray-500 mb-1">Thách thức hoàn thành</p>
-          <p className="text-3xl font-bold text-gray-900">{stats.challenges}</p>
-        </div>
+        <StatCard
+          icon="fas fa-briefcase"
+          label="Đơn ứng tuyển"
+          value={stats.applications}
+          gradient="bg-gradient-to-br from-blue-500 to-blue-600"
+          delay={0}
+        />
+        <StatCard
+          icon="fas fa-file-pdf"
+          label="CV đã tải"
+          value={stats.cvs}
+          gradient="bg-gradient-to-br from-green-500 to-emerald-600"
+          delay={100}
+        />
+        <StatCard
+          icon="fas fa-trophy"
+          label="Thách thức hoàn thành"
+          value={stats.challenges}
+          gradient="bg-gradient-to-br from-purple-500 to-pink-600"
+          delay={200}
+        />
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <Link
-          to="/student/jobs"
-          className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition"
-        >
-          <i className="fas fa-search text-3xl text-blue-500 mb-3"></i>
-          <p className="font-semibold text-gray-900">Tìm việc làm</p>
-        </Link>
-        <Link
-          to="/student/cv"
-          className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition"
-        >
-          <i className="fas fa-file-upload text-3xl text-green-500 mb-3"></i>
-          <p className="font-semibold text-gray-900">Tải CV</p>
-        </Link>
-        <Link
-          to="/student/applications"
-          className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition"
-        >
-          <i className="fas fa-clipboard-list text-3xl text-purple-500 mb-3"></i>
-          <p className="font-semibold text-gray-900">Đơn ứng tuyển</p>
-        </Link>
-        <Link
-          to="/student/profile"
-          className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition"
-        >
-          <i className="fas fa-user text-3xl text-orange-500 mb-3"></i>
-          <p className="font-semibold text-gray-900">Hồ sơ</p>
-        </Link>
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Thao tác nhanh</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <QuickActionCard
+            to="/student/jobs"
+            icon="fas fa-search"
+            label="Tìm việc làm"
+            gradient="bg-gradient-to-br from-blue-500 to-indigo-600"
+            delay={0}
+          />
+          <QuickActionCard
+            to="/student/cv"
+            icon="fas fa-file-upload"
+            label="Tải CV"
+            gradient="bg-gradient-to-br from-green-500 to-teal-600"
+            delay={50}
+          />
+          <QuickActionCard
+            to="/student/coach"
+            icon="fas fa-robot"
+            label="AI Coach"
+            gradient="bg-gradient-to-br from-indigo-500 to-purple-600"
+            delay={100}
+          />
+          <QuickActionCard
+            to="/student/roadmap"
+            icon="fas fa-route"
+            label="Lộ trình"
+            gradient="bg-gradient-to-br from-pink-500 to-rose-600"
+            delay={150}
+          />
+        </div>
       </div>
 
       {/* Recent Jobs */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900">Việc làm gợi ý</h2>
-          <Link to="/student/jobs" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-            Xem tất cả →
+      <div className="card p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Việc làm gợi ý</h2>
+            <p className="text-gray-600 mt-1">Các cơ hội việc làm phù hợp với bạn</p>
+          </div>
+          <Link 
+            to="/student/jobs" 
+            className="btn-secondary flex items-center gap-2"
+          >
+            Xem tất cả
+            <i className="fas fa-arrow-right"></i>
           </Link>
         </div>
+        
         {loading ? (
-          <div className="text-center py-8">
-            <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
+            <p className="mt-4 text-gray-600 font-medium">Đang tải dữ liệu...</p>
           </div>
         ) : recentJobs.length === 0 ? (
-          <p className="text-gray-600 text-center py-8">Chưa có việc làm nào</p>
+          <div className="text-center py-12">
+            <div className="inline-flex h-20 w-20 rounded-full bg-gray-100 items-center justify-center mb-4">
+              <i className="fas fa-briefcase text-gray-400 text-3xl"></i>
+            </div>
+            <p className="text-gray-600 font-medium">Chưa có việc làm nào</p>
+            <Link to="/student/jobs" className="text-blue-600 hover:text-blue-700 font-medium mt-2 inline-block">
+              Khám phá việc làm ngay →
+            </Link>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {recentJobs.map((job) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {recentJobs.map((job, index) => (
               <Link
                 key={job.id}
                 to={`/student/jobs/${job.id}`}
-                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
+                className="card card-hover p-5 group animate-slide-up"
+                style={{ animationDelay: `${index * 50}ms` }}
               >
-                <h3 className="font-semibold text-gray-900 mb-2">{job.title}</h3>
-                <p className="text-sm text-gray-600 mb-2">{job.company?.name || 'Công ty'}</p>
-                <div className="flex flex-wrap gap-2 text-xs text-gray-500">
-                  <span><i className="fas fa-map-marker-alt mr-1"></i>{job.location}</span>
-                  <span><i className="fas fa-dollar-sign mr-1"></i>
-                    {formatCurrency(job.minSalary, job.currency)}
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <h3 className="font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+                      {job.title}
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-3">{job.company?.name || 'Công ty'}</p>
+                  </div>
+                  <span className="badge badge-success ml-2 flex-shrink-0">
+                    {job.status === 'ACTIVE' ? 'Đang tuyển' : 'Đã đóng'}
+                  </span>
+                </div>
+                
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center text-sm text-gray-600">
+                    <i className="fas fa-map-marker-alt text-gray-400 mr-2 w-4"></i>
+                    <span className="truncate">{job.location}</span>
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <i className="fas fa-dollar-sign text-gray-400 mr-2 w-4"></i>
+                    <span>{formatCurrency(job.minSalary, job.currency)}</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                  <span className="text-xs text-gray-500">
+                    <i className="far fa-clock mr-1"></i>
+                    {new Date(job.createdAt).toLocaleDateString('vi-VN')}
+                  </span>
+                  <span className="text-blue-600 text-sm font-medium group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                    Xem chi tiết
+                    <i className="fas fa-arrow-right text-xs"></i>
                   </span>
                 </div>
               </Link>

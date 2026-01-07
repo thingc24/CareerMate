@@ -1,6 +1,7 @@
 package vn.careermate.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class StudentService {
@@ -28,23 +30,52 @@ public class StudentService {
     private final AIService aiService;
     private final FileStorageService fileStorageService;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public StudentProfile getCurrentStudentProfile() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (auth == null || auth.getName() == null || "anonymousUser".equals(auth.getName())) {
+            log.warn("Authentication not found or anonymous user");
+            throw new RuntimeException("Authentication required. Please login first.");
+        }
+        
+        try {
+            String email = auth.getName();
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found: " + email));
 
-        StudentProfile profile = studentProfileRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new RuntimeException("Student profile not found"));
+            StudentProfile profile = studentProfileRepository.findByUserId(user.getId())
+                    .orElse(null);
 
-        // Tránh lỗi lazy proxy khi serialize: bỏ reference tới các entity quan hệ
-        profile.setUser(null);
-        profile.setSkills(null);
-        profile.setCvs(null);
-        profile.setApplications(null);
+            // Tạo profile mới nếu chưa có
+            if (profile == null) {
+                log.info("Creating default profile for user: {}", email);
+                profile = createDefaultProfile(user);
+            }
 
-        return profile;
+            // Tránh lỗi lazy proxy khi serialize: bỏ reference tới các entity quan hệ
+            if (profile != null) {
+                profile.setUser(null);
+                profile.setSkills(null);
+                profile.setCvs(null);
+                profile.setApplications(null);
+            }
+
+            return profile;
+        } catch (RuntimeException e) {
+            log.error("Error getting student profile: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error getting student profile", e);
+            throw new RuntimeException("Error getting student profile: " + e.getMessage(), e);
+        }
+    }
+
+    @Transactional
+    private StudentProfile createDefaultProfile(User user) {
+        StudentProfile profile = new StudentProfile();
+        profile.setUser(user);
+        profile.setCurrentStatus("STUDENT");
+        return studentProfileRepository.save(profile);
     }
 
     @Transactional
@@ -103,17 +134,66 @@ public class StudentService {
     }
 
     public List<CV> getCVs() {
-        StudentProfile student = getCurrentStudentProfile();
-        return cvRepository.findByStudentId(student.getId());
+        try {
+            StudentProfile student = getCurrentStudentProfile();
+            if (student == null || student.getId() == null) {
+                log.warn("Student profile not found or ID is null");
+                return List.of();
+            }
+            List<CV> cvs = cvRepository.findByStudentId(student.getId());
+            // Detach lazy-loaded relations
+            if (cvs != null) {
+                cvs.forEach(cv -> {
+                    if (cv != null && cv.getStudent() != null) {
+                        cv.setStudent(null);
+                    }
+                });
+            }
+            return cvs != null ? cvs : List.of();
+        } catch (RuntimeException e) {
+            log.error("Runtime error getting CVs: {}", e.getMessage(), e);
+            return List.of();
+        } catch (Exception e) {
+            log.error("Unexpected error getting CVs", e);
+            return List.of();
+        }
     }
 
     public Page<Job> searchJobs(String keyword, String location, Pageable pageable) {
-        return jobRepository.searchJobs(keyword, location, pageable);
+        try {
+            // Normalize null/empty strings
+            String normalizedKeyword = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
+            String normalizedLocation = (location != null && !location.trim().isEmpty()) ? location.trim() : null;
+            
+            Page<Job> jobs = jobRepository.searchJobs(normalizedKeyword, normalizedLocation, pageable);
+            return jobs != null ? jobs : Page.empty(pageable);
+        } catch (RuntimeException e) {
+            log.error("Runtime error searching jobs: keyword={}, location={}, error={}", keyword, location, e.getMessage());
+            return Page.empty(pageable);
+        } catch (Exception e) {
+            log.error("Unexpected error searching jobs: keyword={}, location={}", keyword, location, e);
+            return Page.empty(pageable);
+        }
     }
 
     public Job getJob(UUID jobId) {
-        return jobRepository.findById(jobId)
-                .orElseThrow(() -> new RuntimeException("Job not found"));
+        try {
+            Job job = jobRepository.findById(jobId)
+                    .orElseThrow(() -> new RuntimeException("Job not found"));
+            // Detach lazy-loaded relations
+            if (job != null) {
+                job.setRecruiter(null);
+                job.setSkills(null);
+                job.setApplications(null);
+            }
+            return job;
+        } catch (RuntimeException e) {
+            log.error("Runtime error getting job: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error getting job", e);
+            throw new RuntimeException("Error getting job: " + e.getMessage(), e);
+        }
     }
 
     @Transactional
@@ -160,8 +240,20 @@ public class StudentService {
     }
 
     public Page<Application> getApplications(Pageable pageable) {
-        StudentProfile student = getCurrentStudentProfile();
-        return applicationRepository.findByStudentId(student.getId(), pageable);
+        try {
+            StudentProfile student = getCurrentStudentProfile();
+            if (student == null || student.getId() == null) {
+                log.warn("Student profile not found or ID is null");
+                return Page.empty(pageable);
+            }
+            return applicationRepository.findByStudentId(student.getId(), pageable);
+        } catch (RuntimeException e) {
+            log.error("Runtime error getting applications: {}", e.getMessage());
+            return Page.empty(pageable);
+        } catch (Exception e) {
+            log.error("Unexpected error getting applications", e);
+            return Page.empty(pageable);
+        }
     }
 }
 

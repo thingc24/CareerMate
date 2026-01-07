@@ -11,6 +11,8 @@ import vn.careermate.repository.StudentProfileRepository;
 
 import java.util.*;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -29,14 +31,20 @@ public class CareerRoadmapService {
         String studentInfo = buildStudentInfo(student);
         Map<String, Object> roadmapData = aiService.getCareerRoadmap(studentInfo, careerGoal);
 
+        @SuppressWarnings("unchecked")
+        List<String> skillsGap = (List<String>) roadmapData.getOrDefault("skillsGap", new ArrayList<>());
+        
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> recommendedCourses = (List<Map<String, Object>>) roadmapData.getOrDefault("recommendedCourses", new ArrayList<>());
+        
         CareerRoadmap roadmap = CareerRoadmap.builder()
                 .student(student)
                 .careerGoal(careerGoal)
                 .currentLevel(currentLevel)
                 .targetLevel("ADVANCED") // Default
                 .roadmapData(roadmapData)
-                .skillsGap((List<String>) roadmapData.getOrDefault("skillsGap", new ArrayList<>()))
-                .recommendedCourses((List<Map<String, Object>>) roadmapData.getOrDefault("recommendedCourses", new ArrayList<>()))
+                .skillsGap(skillsGap)
+                .recommendedCourses(recommendedCourses)
                 .estimatedDurationMonths((Integer) roadmapData.getOrDefault("estimatedDurationMonths", 6))
                 .progressPercentage(0)
                 .build();
@@ -59,15 +67,37 @@ public class CareerRoadmapService {
 
     private String buildStudentInfo(StudentProfile student) {
         StringBuilder info = new StringBuilder();
-        info.append("University: ").append(student.getUniversity() != null ? student.getUniversity() : "N/A").append("\n");
-        info.append("Major: ").append(student.getMajor() != null ? student.getMajor() : "N/A").append("\n");
-        info.append("Current Status: ").append(student.getCurrentStatus() != null ? student.getCurrentStatus() : "N/A").append("\n");
+        info.append("=== THÔNG TIN SINH VIÊN ===\n");
+        info.append("Trường đại học: ").append(student.getUniversity() != null ? student.getUniversity() : "Chưa cập nhật").append("\n");
+        info.append("Chuyên ngành: ").append(student.getMajor() != null ? student.getMajor() : "Chưa cập nhật").append("\n");
+        info.append("Năm tốt nghiệp: ").append(student.getGraduationYear() != null ? student.getGraduationYear() : "Chưa xác định").append("\n");
+        info.append("GPA: ").append(student.getGpa() != null ? student.getGpa() : "Chưa cập nhật").append("\n");
+        info.append("Trạng thái hiện tại: ").append(student.getCurrentStatus() != null ? student.getCurrentStatus() : "STUDENT").append("\n");
+        
+        if (student.getBio() != null && !student.getBio().trim().isEmpty()) {
+            info.append("Giới thiệu: ").append(student.getBio()).append("\n");
+        }
         
         if (student.getSkills() != null && !student.getSkills().isEmpty()) {
-            info.append("Skills: ");
-            student.getSkills().forEach(skill -> 
-                info.append(skill.getSkillName()).append(" (").append(skill.getProficiencyLevel()).append("), ")
-            );
+            info.append("\n=== KỸ NĂNG HIỆN TẠI ===\n");
+            student.getSkills().forEach(skill -> {
+                info.append("- ").append(skill.getSkillName());
+                if (skill.getProficiencyLevel() != null) {
+                    info.append(" (Mức độ: ").append(skill.getProficiencyLevel()).append(")");
+                }
+                if (skill.getYearsOfExperience() != null) {
+                    info.append(" - Kinh nghiệm: ").append(skill.getYearsOfExperience()).append(" năm");
+                }
+                info.append("\n");
+            });
+        } else {
+            info.append("\nKỹ năng: Chưa cập nhật\n");
+        }
+        
+        // Add CV information if available
+        if (student.getCvs() != null && !student.getCvs().isEmpty()) {
+            info.append("\n=== CV ===\n");
+            info.append("Đã có ").append(student.getCvs().size()).append(" CV trong hệ thống\n");
         }
         
         return info.toString();

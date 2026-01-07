@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../../services/api';
 
 export default function CVUpload() {
@@ -26,8 +27,9 @@ export default function CVUpload() {
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.type !== 'application/pdf' && !file.name.endsWith('.docx')) {
-        alert('Chỉ chấp nhận file PDF hoặc DOCX');
+      if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf') && 
+          !file.name.endsWith('.docx') && !file.name.endsWith('.doc')) {
+        alert('Chỉ chấp nhận file PDF, DOCX hoặc DOC');
         return;
       }
       if (file.size > 10 * 1024 * 1024) {
@@ -49,7 +51,8 @@ export default function CVUpload() {
       await api.uploadCV(selectedFile);
       alert('Tải CV thành công!');
       setSelectedFile(null);
-      document.getElementById('cvFileInput').value = '';
+      const fileInput = document.getElementById('cvFileInput');
+      if (fileInput) fileInput.value = '';
       loadCVs();
     } catch (error) {
       alert('Lỗi: ' + (error.response?.data?.message || 'Không thể tải CV'));
@@ -58,65 +61,87 @@ export default function CVUpload() {
     }
   };
 
-  const handleAnalyze = async (cvId) => {
-    try {
-      const analysis = await api.analyzeCV(cvId);
-      // Show analysis results in modal or navigate to analysis page
-      alert(`Điểm số CV: ${analysis.score || 'N/A'}\nĐang phân tích...`);
-    } catch (error) {
-      alert('Lỗi: ' + (error.response?.data?.message || 'Không thể phân tích CV'));
-    }
-  };
-
   const formatDate = (dateStr) => {
     if (!dateStr) return 'N/A';
-    return new Date(dateStr).toLocaleDateString('vi-VN');
+    return new Date(dateStr).toLocaleDateString('vi-VN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const formatFileSize = (bytes) => {
+    if (!bytes) return 'N/A';
+    return (bytes / 1024 / 1024).toFixed(2) + ' MB';
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Quản lý CV</h1>
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Quản lý CV</h1>
+          <p className="text-lg text-gray-600">Tải lên và quản lý CV của bạn</p>
+        </div>
         <button
-          onClick={() => document.getElementById('cvFileInput').click()}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          onClick={() => document.getElementById('cvFileInput')?.click()}
+          className="btn-primary"
         >
-          <i className="fas fa-upload mr-2"></i>Tải CV mới
+          <i className="fas fa-upload mr-2"></i>
+          Tải CV mới
         </button>
       </div>
 
       <input
         id="cvFileInput"
         type="file"
-        accept=".pdf,.docx"
+        accept=".pdf,.docx,.doc"
         className="hidden"
         onChange={handleFileSelect}
       />
 
+      {/* Upload Preview */}
       {selectedFile && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div className="card p-6 mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 animate-slide-up">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-blue-900">{selectedFile.name}</p>
-              <p className="text-sm text-blue-700">
-                {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-              </p>
+            <div className="flex items-center gap-4">
+              <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                <i className="fas fa-file-pdf text-white text-2xl"></i>
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">{selectedFile.name}</p>
+                <p className="text-sm text-gray-600">
+                  {formatFileSize(selectedFile.size)} • {selectedFile.type || 'PDF/DOCX'}
+                </p>
+              </div>
             </div>
             <div className="flex gap-2">
               <button
                 onClick={handleUpload}
                 disabled={uploading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                className="btn-primary"
               >
-                {uploading ? 'Đang tải...' : 'Tải lên'}
+                {uploading ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin mr-2"></i>
+                    Đang tải...
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-upload mr-2"></i>
+                    Tải lên
+                  </>
+                )}
               </button>
               <button
                 onClick={() => {
                   setSelectedFile(null);
-                  document.getElementById('cvFileInput').value = '';
+                  const fileInput = document.getElementById('cvFileInput');
+                  if (fileInput) fileInput.value = '';
                 }}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                className="btn-secondary"
               >
+                <i className="fas fa-times mr-2"></i>
                 Hủy
               </button>
             </div>
@@ -124,58 +149,97 @@ export default function CVUpload() {
         </div>
       )}
 
+      {/* CV List */}
       {loading ? (
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Đang tải...</p>
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="card p-6">
+              <div className="skeleton h-6 w-1/3 mb-4"></div>
+              <div className="skeleton h-4 w-1/4 mb-2"></div>
+              <div className="skeleton h-4 w-1/2"></div>
+            </div>
+          ))}
         </div>
       ) : cvs.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-          <i className="fas fa-file-pdf text-6xl text-gray-400 mb-4"></i>
-          <p className="text-gray-600 mb-4">Bạn chưa có CV nào</p>
+        <div className="card p-12 text-center">
+          <div className="inline-flex h-24 w-24 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 items-center justify-center mb-6">
+            <i className="fas fa-file-pdf text-gray-400 text-4xl"></i>
+          </div>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">Bạn chưa có CV nào</h3>
+          <p className="text-gray-600 mb-6">Tải lên CV đầu tiên để bắt đầu ứng tuyển</p>
           <button
-            onClick={() => document.getElementById('cvFileInput').click()}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            onClick={() => document.getElementById('cvFileInput')?.click()}
+            className="btn-primary"
           >
-            <i className="fas fa-upload mr-2"></i>Tải CV đầu tiên
+            <i className="fas fa-upload mr-2"></i>
+            Tải CV đầu tiên
           </button>
         </div>
       ) : (
         <div className="space-y-4">
-          {cvs.map((cv) => (
+          {cvs.map((cv, index) => (
             <div
               key={cv.id}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+              className="card card-hover p-6 animate-slide-up"
+              style={{ animationDelay: `${index * 50}ms` }}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 bg-red-100 rounded-lg flex items-center justify-center">
-                    <i className="fas fa-file-pdf text-3xl text-red-600"></i>
+                  <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-red-500 to-pink-600 flex items-center justify-center shadow-lg">
+                    <i className="fas fa-file-pdf text-white text-2xl"></i>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">
-                      {cv.name || `CV ${cv.id.substring(0, 8)}`}
+                    <h3 className="font-bold text-gray-900 text-lg mb-1">
+                      {cv.fileName || `CV ${cv.id?.substring(0, 8) || 'Unknown'}`}
                     </h3>
-                    <p className="text-sm text-gray-500">
-                      Tải lên: {formatDate(cv.createdAt)}
-                    </p>
+                    <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                      <span className="flex items-center">
+                        <i className="far fa-calendar text-gray-400 mr-2"></i>
+                        {formatDate(cv.createdAt)}
+                      </span>
+                      {cv.fileSize && (
+                        <span className="flex items-center">
+                          <i className="fas fa-weight text-gray-400 mr-2"></i>
+                          {formatFileSize(cv.fileSize)}
+                        </span>
+                      )}
+                      {cv.isDefault && (
+                        <span className="badge badge-info">
+                          <i className="fas fa-star mr-1"></i>
+                          Mặc định
+                        </span>
+                      )}
+                    </div>
+                    {cv.aiScore && (
+                      <div className="mt-2">
+                        <span className="text-sm font-medium text-gray-700">Điểm AI: </span>
+                        <span className={`text-sm font-bold ${
+                          cv.aiScore >= 80 ? 'text-green-600' :
+                          cv.aiScore >= 60 ? 'text-yellow-600' : 'text-red-600'
+                        }`}>
+                          {cv.aiScore}/100
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => handleAnalyze(cv.id)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                  <Link
+                    to={`/student/cv/${cv.id}/analysis`}
+                    className="btn-secondary"
                   >
-                    <i className="fas fa-chart-line mr-2"></i>Phân tích AI
-                  </button>
+                    <i className="fas fa-chart-line mr-2"></i>
+                    Phân tích AI
+                  </Link>
                   {cv.fileUrl && (
                     <a
                       href={cv.fileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                      className="btn-primary"
                     >
-                      <i className="fas fa-eye mr-2"></i>Xem
+                      <i className="fas fa-eye mr-2"></i>
+                      Xem
                     </a>
                   )}
                 </div>

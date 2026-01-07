@@ -6,27 +6,25 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "cvs", indexes = {
-    @Index(name = "idx_cvs_student", columnList = "student_id"),
-    @Index(name = "idx_cvs_default", columnList = "student_id,is_default")
+@Table(name = "ai_chat_conversations", indexes = {
+    @Index(name = "idx_ai_chat_student", columnList = "student_id"),
+    @Index(name = "idx_ai_chat_created", columnList = "created_at")
 })
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-public class CV {
+public class AIChatConversation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -37,28 +35,14 @@ public class CV {
     @JsonIgnore
     private StudentProfile student;
 
-    @Column(name = "file_url", nullable = false, columnDefinition = "TEXT")
-    private String fileUrl;
+    @Column(name = "conversation_title")
+    private String conversationTitle; // Auto-generated from first message
 
-    @Column(name = "file_name", nullable = false)
-    private String fileName;
+    @Column(name = "role")
+    private String role; // CAREER_COACH, CV_ADVISOR, INTERVIEW_PREP, etc.
 
-    @Column(name = "file_size")
-    private Long fileSize;
-
-    @Column(name = "file_type")
-    private String fileType;
-
-    @Builder.Default
-    @Column(name = "is_default")
-    private Boolean isDefault = false;
-
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "ai_analysis", columnDefinition = "jsonb")
-    private Map<String, Object> aiAnalysis;
-
-    @Column(name = "ai_score", precision = 5, scale = 2)
-    private java.math.BigDecimal aiScore;
+    @Column(name = "context", columnDefinition = "TEXT")
+    private String context; // Additional context for the conversation
 
     @CreatedDate
     @Column(name = "created_at", updatable = false)
@@ -67,5 +51,8 @@ public class CV {
     @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AIChatMessage> messages;
 }
 

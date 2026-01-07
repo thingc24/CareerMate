@@ -53,11 +53,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Cho phép tất cả các origin localhost (port 80, 3000, 8080, etc.)
+        // Cho phép tất cả các origin localhost (port 80, 3000, 5173, 8080, etc.)
         configuration.setAllowedOrigins(Arrays.asList(
             "http://localhost",
             "http://localhost:80",
             "http://localhost:3000",
+            "http://localhost:5173",
             "http://localhost:8080"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));

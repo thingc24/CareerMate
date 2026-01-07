@@ -206,5 +206,39 @@ public class AIController {
         Map<String, Object> roadmap = aiService.getCareerRoadmap(currentSkills, targetRole);
         return ResponseEntity.ok(roadmap);
     }
+
+    /**
+     * AI Chat endpoint
+     * POST /ai/chat
+     */
+    @PostMapping("/chat")
+    public ResponseEntity<Map<String, Object>> chat(@RequestBody Map<String, String> request) {
+        try {
+            String message = request.get("message");
+            String context = request.getOrDefault("context", "general");
+            String role = request.getOrDefault("role", "STUDENT");
+            
+            if (message == null || message.trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Message is required"));
+            }
+            
+            String response = aiService.chat(message, context, role);
+            
+            return ResponseEntity.ok(Map.of(
+                "response", response,
+                "context", context,
+                "role", role
+            ));
+        } catch (RuntimeException e) {
+            log.error("Error in chat", e);
+            return ResponseEntity.status(500)
+                .body(Map.of("error", "Error processing chat: " + e.getMessage()));
+        } catch (Exception e) {
+            log.error("Unexpected error in chat", e);
+            return ResponseEntity.status(500)
+                .body(Map.of("error", "Internal server error: " + e.getClass().getSimpleName()));
+        }
+    }
 }
 

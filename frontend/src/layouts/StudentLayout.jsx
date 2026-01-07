@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import ChatWidget from '../components/ChatWidget';
 
 export default function StudentLayout({ children }) {
   const { user, logout } = useAuth();
@@ -71,13 +72,35 @@ export default function StudentLayout({ children }) {
             <Link
               to="/student/cv"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                isActive('/student/cv')
+                isActive('/student/cv') || location.pathname.startsWith('/student/cv/')
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               <i className="fas fa-file-alt text-sm" />
               <span>CV của tôi</span>
+            </Link>
+            <Link
+              to="/student/coach"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                isActive('/student/coach')
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <i className="fas fa-robot text-sm" />
+              <span>AI Coach</span>
+            </Link>
+            <Link
+              to="/student/roadmap"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                isActive('/student/roadmap')
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <i className="fas fa-route text-sm" />
+              <span>Lộ trình nghề nghiệp</span>
             </Link>
             <Link
               to="/student/profile"
@@ -131,6 +154,7 @@ export default function StudentLayout({ children }) {
           </main>
         </div>
       </div>
+      <ChatWidget role="STUDENT" />
     </div>
   );
 }

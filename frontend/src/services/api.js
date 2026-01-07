@@ -63,9 +63,15 @@ class CareerMateAPI {
         refreshToken: this.refreshToken,
       });
       
-      if (response.data.token) {
-        this.token = response.data.token;
+      // Backend returns 'accessToken', not 'token'
+      const token = response.data.accessToken || response.data.token;
+      if (token) {
+        this.token = token;
         localStorage.setItem('token', this.token);
+        if (response.data.refreshToken) {
+          this.refreshToken = response.data.refreshToken;
+          localStorage.setItem('refreshToken', this.refreshToken);
+        }
         return this.token;
       }
     } catch (error) {
@@ -86,8 +92,10 @@ class CareerMateAPI {
   // Auth APIs
   async login(email, password) {
     const response = await this.client.post('/auth/login', { email, password });
-    if (response.data.token) {
-      this.token = response.data.token;
+    // Backend returns 'accessToken', not 'token'
+    const token = response.data.accessToken || response.data.token;
+    if (token) {
+      this.token = token;
       this.refreshToken = response.data.refreshToken;
       localStorage.setItem('token', this.token);
       localStorage.setItem('refreshToken', this.refreshToken);
@@ -103,8 +111,8 @@ class CareerMateAPI {
 
   // Student APIs
   async getJobs(page = 0, size = 10) {
-    const response = await this.client.get(`/jobs?page=${page}&size=${size}`);
-    return response.data;
+    // Use searchJobs with empty filters to get all jobs
+    return this.searchJobs('', '', page, size);
   }
 
   async searchJobs(keyword = '', location = '', page = 0, size = 10) {
@@ -114,25 +122,37 @@ class CareerMateAPI {
     params.append('page', page);
     params.append('size', size);
     
-    const response = await this.client.get(`/jobs?${params}`);
+    const response = await this.client.get(`/students/jobs?${params}`);
     return response.data;
   }
 
   async getJobById(jobId) {
-    const response = await this.client.get(`/jobs/${jobId}`);
+    const response = await this.client.get(`/students/jobs/${jobId}`);
     return response.data;
   }
 
   async applyForJob(jobId, cvId, coverLetter) {
-    const response = await this.client.post(`/students/jobs/${jobId}/apply`, {
-      cvId,
-      coverLetter,
-    });
+    const params = new URLSearchParams();
+    params.append('jobId', jobId);
+    if (cvId) params.append('cvId', cvId);
+    if (coverLetter) params.append('coverLetter', coverLetter);
+    
+    const response = await this.client.post(`/students/applications?${params}`);
     return response.data;
   }
 
   async getApplications(page = 0, size = 10) {
     const response = await this.client.get(`/students/applications?page=${page}&size=${size}`);
+    return response.data;
+  }
+
+  async getStudentProfile() {
+    const response = await this.client.get('/students/profile');
+    return response.data;
+  }
+
+  async updateStudentProfile(profileData) {
+    const response = await this.client.put('/students/profile', profileData);
     return response.data;
   }
 
@@ -183,11 +203,16 @@ class CareerMateAPI {
   }
 
   // CV APIs
+  async getCVs() {
+    const response = await this.client.get('/students/cv');
+    return response.data;
+  }
+
   async uploadCV(file) {
     const formData = new FormData();
     formData.append('file', file);
     
-    const response = await this.client.post('/students/cvs', formData, {
+    const response = await this.client.post('/students/cv/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -195,8 +220,15 @@ class CareerMateAPI {
     return response.data;
   }
 
-  async getCVs() {
-    const response = await this.client.get('/students/cvs');
+  async uploadCV(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await this.client.post('/students/cv/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   }
 
@@ -213,6 +245,23 @@ class CareerMateAPI {
 
   async startMockInterview(jobId, cvId) {
     const response = await this.client.post('/ai/interview/start', { jobId, cvId });
+    return response.data;
+  }
+
+  async getCareerRoadmap(currentSkills, targetRole) {
+    const response = await this.client.post('/ai/career/roadmap', {
+      currentSkills,
+      targetRole,
+    });
+    return response.data;
+  }
+
+  async chatAI(message, context, role) {
+    const response = await this.client.post('/ai/chat', {
+      message,
+      context,
+      role,
+    });
     return response.data;
   }
 }
