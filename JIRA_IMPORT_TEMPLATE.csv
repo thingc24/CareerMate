@@ -1,0 +1,186 @@
+Issue Type,Summary,Description,Assignee,Priority,Epic Link,Story Points,Labels
+Epic,Giai đoạn 1: Setup & Database,Setup project infrastructure và thiết kế database schema,Member 5,High,,
+Epic,Giai đoạn 2: Backend Core - Models & Repositories,Phát triển Entity models và Repository layer,Member 1,High,,
+Epic,Giai đoạn 3: Backend Services & Controllers,Phát triển Service layer và REST API Controllers,Member 2,High,,
+Epic,Giai đoạn 4: AI Integration,Tích hợp Google Gemini API cho các tính năng AI,Member 4,High,,
+Epic,Giai đoạn 5: Security & Configuration,Implement JWT authentication và cấu hình hệ thống,Member 1,High,,
+Epic,Giai đoạn 6: Frontend Development,Phát triển React frontend cho tất cả modules,Member 3,High,,
+Epic,Giai đoạn 7: Testing & Documentation,Viết tests và tài liệu dự án,Member 5,High,,
+Story,Project Initialization,Setup Spring Boot và React project structure,Member 5,High,Giai đoạn 1: Setup & Database,3,Setup
+Story,Database Configuration,Install PostgreSQL và tạo database scripts,Member 5,High,Giai đoạn 1: Setup & Database,5,Database
+Story,Core Database Tables,Thiết kế bảng Users Authentication và Student Profile,Member 1,High,Giai đoạn 1: Setup & Database,8,Database
+Story,Business Logic Tables,Thiết kế bảng Jobs Applications và Learning,Member 1,High,Giai đoạn 1: Setup & Database,8,Database
+Story,Student Feature Tables,Thiết kế bảng AI Chat Saved Jobs Mock Interviews,Member 1,High,Giai đoạn 1: Setup & Database,5,Database
+Story,AI & System Tables,Thiết kế bảng AI Services và System tables,Member 1,High,Giai đoạn 1: Setup & Database,5,Database
+Story,Database Triggers & Functions,Tạo triggers và initial data scripts,Member 1,Medium,Giai đoạn 1: Setup & Database,3,Database
+Story,Core Entity Models,Tạo User Student Recruiter models,Member 1,High,Giai đoạn 2: Backend Core - Models & Repositories,8,Backend
+Story,Business Logic Models,Tạo Job Application Learning Gamification models,Member 2,High,Giai đoạn 2: Backend Core - Models & Repositories,8,Backend
+Story,Student Feature Models,Tạo AI Chat Saved Jobs Mock Interview models,Member 1,High,Giai đoạn 2: Backend Core - Models & Repositories,5,Backend
+Story,AI & System Models,Tạo AI Service và System models,Member 2,High,Giai đoạn 2: Backend Core - Models & Repositories,5,Backend
+Story,Core Repositories,Tạo User Student Recruiter repositories,Member 1,High,Giai đoạn 2: Backend Core - Models & Repositories,5,Backend
+Story,Business Logic Repositories,Tạo Job Application Learning repositories,Member 2,High,Giai đoạn 2: Backend Core - Models & Repositories,5,Backend
+Story,Student Feature Repositories,Tạo AI Chat Job Management repositories,Member 1,High,Giai đoạn 2: Backend Core - Models & Repositories,3,Backend
+Story,AI & System Repositories,Tạo AI Service và System repositories,Member 2,High,Giai đoạn 2: Backend Core - Models & Repositories,3,Backend
+Story,Core Services,Implement AuthService StudentService RecruiterService,Member 1,High,Giai đoạn 3: Backend Services & Controllers,8,Backend
+Story,Business Logic Services,Implement Job Application Learning Services,Member 2,High,Giai đoạn 3: Backend Services & Controllers,8,Backend
+Story,Student Feature Services,Implement AI Chat Job Management Mock Interview Services,Member 1,High,Giai đoạn 3: Backend Services & Controllers,5,Backend
+Story,AI & System Services,Implement File Storage System Admin Services,Member 2,High,Giai đoạn 3: Backend Services & Controllers,5,Backend
+Story,Authentication & User APIs,Implement AuthController và StudentController,Member 2,High,Giai đoạn 3: Backend Services & Controllers,5,API
+Story,Job & Application APIs,Implement Job search và Application APIs,Member 2,High,Giai đoạn 3: Backend Services & Controllers,5,API
+Story,Student Feature APIs,Implement AI Chat Job Management Mock Interview APIs,Member 2,High,Giai đoạn 3: Backend Services & Controllers,8,API
+Story,Recruiter & Admin APIs,Implement RecruiterController và AdminController,Member 2,High,Giai đoạn 3: Backend Services & Controllers,5,API
+Story,Learning & Gamification APIs,Implement Course Quiz Challenge APIs,Member 2,Medium,Giai đoạn 3: Backend Services & Controllers,5,API
+Story,Google Gemini API Setup,Configure Gemini API client và test connection,Member 4,High,Giai đoạn 4: AI Integration,3,AI
+Story,CV Analysis AI Service,Implement CV extraction và AI analysis,Member 4,High,Giai đoạn 4: AI Integration,8,AI
+Story,Career Coach Chatbot,Implement chat service với Gemini API,Member 4,High,Giai đoạn 4: AI Integration,8,AI
+Story,Job Matching AI,Implement job matching algorithm với AI,Member 4,High,Giai đoạn 4: AI Integration,5,AI
+Story,Mock Interview AI,Implement question generation và answer evaluation,Member 4,High,Giai đoạn 4: AI Integration,8,AI
+Story,Vector Database Integration,Setup vector DB và semantic search,Member 4,Medium,Giai đoạn 4: AI Integration,5,AI
+Story,JWT Authentication,Implement JWT service filter và security config,Member 1,High,Giai đoạn 5: Security & Configuration,5,Security
+Story,OAuth2 Integration,Configure OAuth2 client và callback handler,Member 1,Medium,Giai đoạn 5: Security & Configuration,3,Security
+Story,User Details Service,Implement UserDetailsService cho authentication,Member 1,High,Giai đoạn 5: Security & Configuration,2,Security
+Story,Application Configuration,Setup application.yml và environment configs,Member 5,High,Giai đoạn 5: Security & Configuration,3,Config
+Story,OpenAPI Documentation,Configure Swagger/OpenAPI documentation,Member 5,Medium,Giai đoạn 5: Security & Configuration,2,Documentation
+Story,Exception Handling,Implement global exception handler,Member 5,High,Giai đoạn 5: Security & Configuration,2,Backend
+Story,Frontend Setup & Core,Setup React project routing và core components,Member 3,High,Giai đoạn 6: Frontend Development,5,Frontend
+Story,Authentication Pages,Implement Login và Register pages,Member 3,High,Giai đoạn 6: Frontend Development,3,Frontend
+Story,Student Dashboard,Implement Dashboard và Profile pages,Member 3,High,Giai đoạn 6: Frontend Development,5,Frontend
+Story,CV Management,Implement CV Upload và Analysis pages,Member 3,High,Giai đoạn 6: Frontend Development,5,Frontend
+Story,Job Features,Implement Job List Detail Recommendations pages,Member 3,High,Giai đoạn 6: Frontend Development,8,Frontend
+Story,AI Features,Implement Career Coach và Chat Widget,Member 3,High,Giai đoạn 6: Frontend Development,5,Frontend
+Story,Learning Features,Implement Career Roadmap và Quiz pages,Member 3,Medium,Giai đoạn 6: Frontend Development,5,Frontend
+Story,Applications,Implement Applications page,Member 3,Medium,Giai đoạn 6: Frontend Development,3,Frontend
+Story,Recruiter Pages,Implement Recruiter Dashboard PostJob Applicants,Member 3,High,Giai đoạn 6: Frontend Development,8,Frontend
+Story,Admin Pages,Implement Admin Dashboard UserManagement JobManagement,Member 3,High,Giai đoạn 6: Frontend Development,5,Frontend
+Story,Unit Testing,Write unit tests cho Services Repositories Controllers,Member 5,High,Giai đoạn 7: Testing & Documentation,8,Testing
+Story,Integration Testing,Write integration tests cho API và E2E flows,Member 5,High,Giai đoạn 7: Testing & Documentation,8,Testing
+Story,Frontend Testing,Write component và integration tests cho frontend,Member 5,Medium,Giai đoạn 7: Testing & Documentation,5,Testing
+Story,Technical Documentation,Write API và Database documentation,Member 1,High,Giai đoạn 7: Testing & Documentation,5,Documentation
+Story,User Documentation,Write Installation Guide và User Manual,Member 3,High,Giai đoạn 7: Testing & Documentation,5,Documentation
+Story,Project Documentation,Write Architecture và Deployment documentation,Member 5,High,Giai đoạn 7: Testing & Documentation,5,Documentation
+Task,Setup Spring Boot project structure,Tạo Maven project với Spring Boot 3.2.0 và cấu hình pom.xml,Member 5,High,Project Initialization,2,Setup
+Task,Setup React frontend project,Tạo Vite + React project với Tailwind CSS,Member 5,High,Project Initialization,2,Frontend
+Task,Setup Docker environment,Tạo Dockerfile và docker-compose.yml,Member 5,High,Project Initialization,3,Docker
+Task,Install & configure PostgreSQL,Cài đặt PostgreSQL port 5433 và tạo database,Member 5,High,Database Configuration,3,Database
+Task,Create database scripts,Tạo TAO_DATABASE.sql và PowerShell scripts,Member 5,High,Database Configuration,2,Database
+Task,Design Users & Authentication tables,Tạo bảng users oauth_providers với indexes,Member 1,High,Core Database Tables,3,Database
+Task,Design Student Profile tables,Tạo bảng student_profiles student_skills cvs,Member 1,High,Core Database Tables,3,Database
+Task,Design Recruiter & Company tables,Tạo bảng companies recruiter_profiles company_ratings,Member 1,High,Core Database Tables,2,Database
+Task,Design Jobs & Applications tables,Tạo bảng jobs applications với status workflows,Member 1,High,Business Logic Tables,3,Database
+Task,Design Learning & Gamification tables,Tạo bảng courses challenges badges,Member 1,High,Business Logic Tables,3,Database
+Task,Design Student Feature tables,Tạo bảng AI chat saved jobs mock interviews,Member 1,High,Student Feature Tables,3,Database
+Task,Design AI Service tables,Tạo bảng cv_analyses job_matches với JSONB,Member 1,High,AI & System Tables,2,Database
+Task,Design System tables,Tạo bảng system_logs articles packages,Member 1,High,AI & System Tables,2,Database
+Task,Create auto-update triggers,Tạo trigger update_updated_at_column cho tất cả bảng,Member 1,Medium,Database Triggers & Functions,2,Database
+Task,Create initial data scripts,Insert default admin user packages badges,Member 1,Medium,Database Triggers & Functions,1,Database
+Task,Create User & Authentication models,Tạo User.java OAuthProvider.java với JPA annotations,Member 1,High,Core Entity Models,3,Backend
+Task,Create Student Profile models,Tạo StudentProfile.java StudentSkill.java CV.java,Member 1,High,Core Entity Models,3,Backend
+Task,Create Recruiter models,Tạo RecruiterProfile.java Company.java CompanyRating.java,Member 1,High,Core Entity Models,2,Backend
+Task,Create Job & Application models,Tạo Job.java Application.java với relationships,Member 2,High,Business Logic Models,5,Backend
+Task,Create Learning models,Tạo Course.java Quiz.java với all related models,Member 2,High,Business Logic Models,5,Backend
+Task,Create Gamification models,Tạo Challenge.java Badge.java Leaderboard.java,Member 2,High,Business Logic Models,3,Backend
+Task,Create AI Chat models,Tạo AIChatConversation.java AIChatMessage.java,Member 1,High,Student Feature Models,3,Backend
+Task,Create Job Management models,Tạo SavedJob.java JobRecommendation.java,Member 1,High,Student Feature Models,2,Backend
+Task,Create Mock Interview models,Tạo MockInterview.java MockInterviewQuestion.java,Member 1,High,Student Feature Models,3,Backend
+Task,Create AI Service models,Tạo CVAnalysis.java JobMatch.java,Member 2,High,AI & System Models,2,Backend
+Task,Create System models,Tạo Article.java CVTemplate.java Package.java,Member 2,High,AI & System Models,3,Backend
+Task,Create User repositories,Tạo UserRepository với custom queries,Member 1,High,Core Repositories,2,Backend
+Task,Create Student repositories,Tạo StudentProfileRepository CVRepository,Member 1,High,Core Repositories,2,Backend
+Task,Create Recruiter repositories,Tạo RecruiterProfileRepository CompanyRepository,Member 1,High,Core Repositories,2,Backend
+Task,Create Job repositories,Tạo JobRepository ApplicationRepository với search,Member 2,High,Business Logic Repositories,5,Backend
+Task,Create Learning repositories,Tạo CourseRepository QuizRepository,Member 2,High,Business Logic Repositories,3,Backend
+Task,Create Gamification repositories,Tạo ChallengeRepository BadgeRepository,Member 2,High,Business Logic Repositories,2,Backend
+Task,Create AI Chat repositories,Tạo AIChatConversationRepository AIChatMessageRepository,Member 1,High,Student Feature Repositories,2,Backend
+Task,Create Job Management repositories,Tạo SavedJobRepository JobRecommendationRepository,Member 1,High,Student Feature Repositories,2,Backend
+Task,Create Mock Interview repositories,Tạo MockInterviewRepository MockInterviewQuestionRepository,Member 1,High,Student Feature Repositories,2,Backend
+Task,Create AI Service repositories,Tạo CVAnalysisRepository JobMatchRepository,Member 2,High,AI & System Repositories,2,Backend
+Task,Create System repositories,Tạo ArticleRepository CVTemplateRepository PackageRepository,Member 2,High,AI & System Repositories,2,Backend
+Task,Implement AuthService,User registration login JWT token generation,Member 1,High,Core Services,5,Backend
+Task,Implement StudentService,Profile CRUD skills management CV upload,Member 1,High,Core Services,5,Backend
+Task,Implement RecruiterService,Recruiter profile company management ratings,Member 1,High,Core Services,3,Backend
+Task,Implement Job & Application Services,Job posting search application submission matching,Member 2,High,Business Logic Services,8,Backend
+Task,Implement Learning Services,CourseService QuizService enrollment tracking,Member 2,High,Business Logic Services,5,Backend
+Task,Implement Gamification Services,ChallengeService badge system leaderboard,Member 2,High,Business Logic Services,3,Backend
+Task,Implement AI Chat Service,Conversation management message history context,Member 1,High,Student Feature Services,5,Backend
+Task,Implement Job Management Services,SavedJobService JobRecommendationService,Member 1,High,Student Feature Services,3,Backend
+Task,Implement Mock Interview Service,Interview session question generation evaluation,Member 1,High,Student Feature Services,5,Backend
+Task,Implement File Storage Service,File upload handling PDF DOCX images validation,Member 2,High,AI & System Services,3,Backend
+Task,Implement System Services,ArticleService CVTemplateService PackageService CareerRoadmapService,Member 2,High,AI & System Services,5,Backend
+Task,Implement Admin Service,User management content approval system monitoring,Member 2,High,AI & System Services,3,Backend
+Task,Implement AuthController,POST /api/auth/register /api/auth/login endpoints,Member 2,High,Authentication & User APIs,3,API
+Task,Implement StudentController,GET/PUT /api/students/profile POST /api/students/cvs,Member 2,High,Authentication & User APIs,3,API
+Task,Implement Job Search APIs,GET /api/jobs POST /api/jobs/{id}/apply,Member 2,High,Job & Application APIs,5,API
+Task,Implement Application APIs,GET /api/applications PUT /api/applications/{id}/status,Member 2,High,Job & Application APIs,3,API
+Task,Implement AI Chat APIs,POST /api/ai/chat/conversations POST /api/ai/chat/messages,Member 2,High,Student Feature APIs,5,API
+Task,Implement Job Management APIs,POST /api/jobs/{id}/save GET /api/jobs/recommendations,Member 2,High,Student Feature APIs,3,API
+Task,Implement Mock Interview APIs,POST /api/mock-interviews POST /api/mock-interviews/{id}/answer,Member 2,High,Student Feature APIs,5,API
+Task,Implement RecruiterController,POST /api/recruiters/jobs GET /api/recruiters/applications,Member 2,High,Recruiter & Admin APIs,5,API
+Task,Implement AdminController,GET /api/admin/users GET /api/admin/jobs approval,Member 2,High,Recruiter & Admin APIs,5,API
+Task,Implement Learning APIs,GET /api/courses POST /api/courses/{id}/enroll GET /api/quizzes,Member 2,Medium,Learning & Gamification APIs,5,API
+Task,Implement Gamification APIs,GET /api/challenges POST /api/challenges/{id}/join GET /api/leaderboard,Member 2,Medium,Learning & Gamification APIs,3,API
+Task,Configure Gemini API client,Setup API key management WebClient error handling,Member 4,High,Google Gemini API Setup,3,AI
+Task,Test Gemini API connection,Test API connectivity different models test utilities,Member 4,High,Google Gemini API Setup,2,AI
+Task,Implement CV text extraction,PDF extraction DOCX extraction text preprocessing,Member 4,High,CV Analysis AI Service,5,AI
+Task,Implement CV Analysis with AI,Send CV to Gemini parse response calculate score,Member 4,High,CV Analysis AI Service,5,AI
+Task,Create CV Analysis endpoints,POST /api/ai/cv/analyze GET /api/ai/cv/{cvId}/analysis,Member 4,High,CV Analysis AI Service,3,API
+Task,Implement Chat Service,Conversation context message history role-based prompts,Member 4,High,Career Coach Chatbot,5,AI
+Task,Integrate with Gemini API,Send messages handle streaming token tracking,Member 4,High,Career Coach Chatbot,5,AI
+Task,Create Chat Widget,Frontend ChatWidget.jsx real-time messaging,Member 4,High,Career Coach Chatbot,3,Frontend
+Task,Implement Job Matching Algorithm,Compare profile with job skill experience education matching,Member 4,High,Job Matching AI,5,AI
+Task,AI-powered Recommendations,Use Gemini analyze job descriptions generate reasons,Member 4,High,Job Matching AI,3,AI
+Task,Recommendation Service,Generate recommendations update periodically track status,Member 4,High,Job Matching AI,3,Backend
+Task,Implement Question Generation,Generate questions based on job CV using Gemini,Member 4,High,Mock Interview AI,5,AI
+Task,Implement Answer Evaluation,Send answers to Gemini get feedback scoring,Member 4,High,Mock Interview AI,5,AI
+Task,Mock Interview Flow,Interview session management question-answer flow results,Member 4,High,Mock Interview AI,3,Backend
+Task,Setup Vector Database,Configure vector DB service embedding generation,Member 4,Medium,Vector Database Integration,5,AI
+Task,Implement Semantic Search,Create embeddings for jobs semantic search recommendations,Member 4,Medium,Vector Database Integration,3,AI
+Task,Implement JWT Service,JWT token generation validation refresh mechanism,Member 1,High,JWT Authentication,3,Security
+Task,Implement JWT Filter,JwtAuthenticationFilter request authentication token extraction,Member 1,High,JWT Authentication,3,Security
+Task,Configure Spring Security,SecurityConfig public protected endpoints role-based access,Member 1,High,JWT Authentication,3,Security
+Task,Configure OAuth2 Client,Google OAuth2 setup provider configuration,Member 1,Medium,OAuth2 Integration,3,Security
+Task,Implement OAuth2 Callback,Handle callback create update user generate JWT,Member 1,Medium,OAuth2 Integration,3,Security
+Task,Implement UserDetailsService,UserDetailsServiceImpl load user by email password auth,Member 1,High,User Details Service,2,Security
+Task,Setup application.yml,Database JWT AI API file upload configuration,Member 5,High,Application Configuration,3,Config
+Task,Environment-specific configs,application-dev.yml application-prod.yml environment variables,Member 5,High,Application Configuration,2,Config
+Task,Configure OpenAPI,OpenAPIConfig.java API documentation Swagger UI,Member 5,Medium,OpenAPI Documentation,2,Documentation
+Task,Global Exception Handler,GlobalExceptionHandler.java custom exceptions error format,Member 5,High,Exception Handling,2,Backend
+Task,Initialize React project,Setup Vite React Tailwind CSS project structure,Member 3,High,Frontend Setup & Core,3,Frontend
+Task,Setup Routing,React Router configuration protected routes route guards,Member 3,High,Frontend Setup & Core,2,Frontend
+Task,Create Layout Components,StudentLayout RecruiterLayout AdminLayout,Member 3,High,Frontend Setup & Core,3,Frontend
+Task,Create Auth Context,AuthContext.jsx authentication state token storage,Member 3,High,Frontend Setup & Core,2,Frontend
+Task,Create API Service,api.js Axios configuration endpoints interceptors,Member 3,High,Frontend Setup & Core,3,Frontend
+Task,Login Page,Login.jsx login form OAuth2 buttons error handling,Member 3,High,Authentication Pages,2,Frontend
+Task,Register Page,Register.jsx registration form validation role selection,Member 3,High,Authentication Pages,2,Frontend
+Task,Dashboard Page,Dashboard.jsx statistics recent jobs quick actions,Member 3,High,Student Dashboard,3,Frontend
+Task,Profile Management,Profile.jsx ProfileView.jsx edit view skills management,Member 3,High,Student Dashboard,3,Frontend
+Task,CV Upload Page,CVUpload.jsx file upload CV list set default,Member 3,High,CV Management,3,Frontend
+Task,CV Analysis Page,CVAnalysis.jsx display results score visualization suggestions,Member 3,High,CV Management,3,Frontend
+Task,Job List Page,JobList.jsx search filters job cards pagination,Member 3,High,Job Features,5,Frontend
+Task,Job Detail Page,JobDetail.jsx job details apply button save button,Member 3,High,Job Features,3,Frontend
+Task,Job Recommendations,JobRecommendations.jsx AI recommendations match score apply,Member 3,High,Job Features,3,Frontend
+Task,Career Coach Page,CareerCoach.jsx chat interface conversation history,Member 3,High,AI Features,5,Frontend
+Task,Chat Widget Component,ChatWidget.jsx floating widget real-time messaging,Member 3,High,AI Features,3,Frontend
+Task,Career Roadmap,CareerRoadmap.jsx roadmap visualization milestone tracking,Member 3,Medium,Learning Features,3,Frontend
+Task,Quiz Page,Quiz.jsx quiz interface question display results,Member 3,Medium,Learning Features,3,Frontend
+Task,Applications Page,Applications.jsx application list status tracking details,Member 3,Medium,Applications,3,Frontend
+Task,Recruiter Dashboard,Dashboard.jsx statistics recent applications,Member 3,High,Recruiter Pages,3,Frontend
+Task,Post Job Page,PostJob.jsx job posting form job management,Member 3,High,Recruiter Pages,3,Frontend
+Task,Applicants Page,Applicants.jsx application pipeline candidate profiles status,Member 3,High,Recruiter Pages,5,Frontend
+Task,Company & Profile,Company.jsx Profile.jsx company management recruiter profile,Member 3,High,Recruiter Pages,3,Frontend
+Task,Admin Dashboard,Dashboard.jsx system statistics quick actions,Member 3,High,Admin Pages,3,Frontend
+Task,User Management,UserManagement.jsx user list actions activate suspend,Member 3,High,Admin Pages,3,Frontend
+Task,Job Management,JobManagement.jsx job approval content moderation,Member 3,High,Admin Pages,3,Frontend
+Task,Service Layer Tests,Test all service methods mock dependencies edge cases,Member 5,High,Unit Testing,8,Testing
+Task,Repository Tests,Test custom queries CRUD operations,Member 5,High,Unit Testing,5,Testing
+Task,Controller Tests,Test API endpoints authentication authorization,Member 5,High,Unit Testing,5,Testing
+Task,API Integration Tests,Test complete API flows database AI integration,Member 5,High,Integration Testing,8,Testing
+Task,End-to-End Tests,Test user journeys cross-module flows,Member 5,High,Integration Testing,5,Testing
+Task,Component Tests,Test React components user interactions,Member 5,Medium,Frontend Testing,5,Testing
+Task,Frontend Integration Tests,Test API integration routing,Member 5,Medium,Frontend Testing,3,Testing
+Task,API Documentation,Swagger OpenAPI endpoint descriptions examples,Member 1,High,Technical Documentation,5,Documentation
+Task,Database Documentation,ERD diagrams table descriptions relationships,Member 1,High,Technical Documentation,3,Documentation
+Task,Installation Guide,Setup instructions environment database configuration,Member 3,High,User Documentation,3,Documentation
+Task,User Manual,Student Recruiter Admin user guides,Member 3,High,User Documentation,5,Documentation
+Task,Architecture Documentation,System architecture technology stack design decisions,Member 5,High,Project Documentation,5,Documentation
+Task,Deployment Guide,Docker deployment production setup environment variables,Member 5,High,Project Documentation,3,Documentation
+

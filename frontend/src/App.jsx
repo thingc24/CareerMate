@@ -22,6 +22,7 @@ import CareerRoadmap from './pages/student/CareerRoadmap';
 import Quiz from './pages/student/Quiz';
 import Applications from './pages/student/Applications';
 import Profile from './pages/student/Profile';
+import ProfileView from './pages/student/ProfileView';
 
 // Recruiter Pages
 import RecruiterDashboard from './pages/recruiter/Dashboard';
@@ -83,7 +84,9 @@ function AppRoutes() {
                 <Route path="roadmap" element={<CareerRoadmap />} />
                 <Route path="quiz" element={<Quiz />} />
                 <Route path="applications" element={<Applications />} />
-                <Route path="profile" element={<Profile />} />
+                <Route path="profile" element={<ProfileView />} />
+                <Route path="profile/view" element={<ProfileView />} />
+                <Route path="profile/edit" element={<Profile />} />
                 <Route path="" element={<Navigate to="dashboard" replace />} />
               </Routes>
             </StudentLayout>

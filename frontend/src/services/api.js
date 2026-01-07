@@ -9,8 +9,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080
 class CareerMateAPI {
   constructor() {
     this.baseURL = API_BASE_URL;
-    this.token = localStorage.getItem('token');
-    this.refreshToken = localStorage.getItem('refreshToken');
+    this.loadTokens();
     
     // Setup axios instance
     this.client = axios.create({
@@ -23,8 +22,20 @@ class CareerMateAPI {
     // Request interceptor
     this.client.interceptors.request.use(
       (config) => {
+        // Reload token from localStorage on each request
+        this.loadTokens();
         if (this.token) {
           config.headers.Authorization = `Bearer ${this.token}`;
+          // Log for profile endpoints
+          if (config.url && config.url.includes('/students/profile')) {
+            console.log('API Request - URL:', config.url);
+            console.log('API Request - Token:', this.token.substring(0, 20) + '...');
+          }
+        } else {
+          console.warn('No token found in localStorage');
+          if (config.url && config.url.includes('/students/profile')) {
+            console.error('API Request - Missing token for profile endpoint!');
+          }
         }
         return config;
       },
@@ -55,6 +66,11 @@ class CareerMateAPI {
         return Promise.reject(error);
       }
     );
+  }
+
+  loadTokens() {
+    this.token = localStorage.getItem('token');
+    this.refreshToken = localStorage.getItem('refreshToken');
   }
 
   async refreshAccessToken() {
@@ -100,6 +116,9 @@ class CareerMateAPI {
       localStorage.setItem('token', this.token);
       localStorage.setItem('refreshToken', this.refreshToken);
       localStorage.setItem('user', JSON.stringify(response.data.user));
+      console.log('Login successful. Token saved:', this.token.substring(0, 20) + '...');
+    } else {
+      console.error('Login response missing accessToken:', response.data);
     }
     return response.data;
   }
@@ -146,13 +165,89 @@ class CareerMateAPI {
     return response.data;
   }
 
-  async getStudentProfile() {
-    const response = await this.client.get('/students/profile');
-    return response.data;
+  async getStudentProfile(forceRefresh = false) {
+    try {
+      if (!this.token) {
+        throw new Error('No authentication token found. Please login first.');
+      }
+      console.log('Getting student profile with token:', this.token.substring(0, 20) + '...');
+      // Add cache busting parameter if force refresh
+      const url = forceRefresh 
+        ? `/students/profile?t=${Date.now()}`
+        : '/students/profile';
+      const response = await this.client.get(url);
+      console.log('=== PROFILE API RESPONSE ===');
+      console.log('Full response:', response.data);
+      console.log('Profile details:', {
+        gender: response.data?.gender,
+        address: response.data?.address,
+        city: response.data?.city,
+        university: response.data?.university,
+        major: response.data?.major
+      });
+      
+      // Check if response has error
+      if (response.data && response.data.error) {
+        throw new Error(response.data.error);
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error getting student profile:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      
+      if (error.response?.status === 401) {
+        // Try to refresh token
+        try {
+          console.log('Attempting to refresh token...');
+          await this.refreshAccessToken();
+          const response = await this.client.get('/students/profile');
+          return response.data;
+        } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError);
+          this.logout();
+          throw new Error('Session expired. Please login again.');
+        }
+      }
+      
+      // Return error object with message
+      const errorMessage = error.response?.data?.error || error.message || 'Unknown error';
+      throw new Error(errorMessage);
+    }
   }
 
   async updateStudentProfile(profileData) {
-    const response = await this.client.put('/students/profile', profileData);
+    try {
+      console.log('Updating profile with data:', profileData);
+      const response = await this.client.put('/students/profile', profileData);
+      console.log('Update response:', response.data);
+      
+      // Check if response has error
+      if (response.data && response.data.error) {
+        throw new Error(response.data.error);
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      
+      const errorMessage = error.response?.data?.error || error.message || 'Unknown error';
+      throw new Error(errorMessage);
+    }
+  }
+
+  async uploadAvatar(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await this.client.post('/students/profile/avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   }
 

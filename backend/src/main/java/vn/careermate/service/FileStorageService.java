@@ -39,7 +39,13 @@ public class FileStorageService {
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
         log.info("File saved: {}", filePath.toString());
-        return filePath.toString();
+        
+        // Return web-accessible relative path (e.g., /uploads/avatars/filename.jpg)
+        // This path will be used in frontend to construct full URL: http://localhost:8080/uploads/avatars/filename.jpg
+        String relativePath = "/uploads/" + subdirectory + "/" + fileName;
+        
+        log.info("Returning relative path for web: {}", relativePath);
+        return relativePath;
     }
 
     public void deleteFile(String filePath) {

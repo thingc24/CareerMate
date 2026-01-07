@@ -1,11 +1,58 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import ChatWidget from '../components/ChatWidget';
+import api from '../services/api';
 
 export default function StudentLayout({ children }) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [avatarUrl, setAvatarUrl] = useState(null);
+
+  useEffect(() => {
+    loadAvatar();
+    
+    // Listen for avatar update events
+    const handleAvatarUpdate = () => {
+      console.log('Avatar update event received, reloading avatar...');
+      loadAvatar();
+    };
+    
+    window.addEventListener('avatarUpdated', handleAvatarUpdate);
+    
+    // Reload avatar every 5 seconds to catch updates (or use event listener)
+    const interval = setInterval(() => {
+      loadAvatar();
+    }, 5000);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('avatarUpdated', handleAvatarUpdate);
+    };
+  }, []);
+
+  const loadAvatar = async () => {
+    try {
+      // Force refresh to get latest avatar
+      const data = await api.getStudentProfile(true);
+      if (data && !data.error && data.avatarUrl) {
+        let url = data.avatarUrl.startsWith('http') 
+          ? data.avatarUrl 
+          : `http://localhost:8080/${data.avatarUrl}`;
+        // Add cache busting timestamp to force reload
+        url = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
+        console.log('Loading avatar URL:', url);
+        setAvatarUrl(url);
+      } else {
+        // Clear avatar if not found
+        setAvatarUrl(null);
+      }
+    } catch (error) {
+      // Silently fail for avatar - not critical
+      console.debug('Error loading avatar (non-critical):', error.message);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -13,6 +60,11 @@ export default function StudentLayout({ children }) {
   };
 
   const isActive = (path) => location.pathname === path;
+
+  const getAvatarUrl = () => {
+    if (avatarUrl) return avatarUrl;
+    return null;
+  };
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
@@ -136,16 +188,41 @@ export default function StudentLayout({ children }) {
 
         {/* Main area */}
         <div className="flex-1 flex flex-col">
-          {/* Top bar (mobile & page title area) */}
-          <header className="md:hidden h-16 px-4 flex items-center justify-between bg-white border-b border-slate-200 shadow-sm">
-            <Link to="/student/dashboard" className="text-lg font-semibold text-slate-900">
-              CareerMate
-            </Link>
+          {/* Top bar with avatar */}
+          <header className="h-16 px-4 md:px-6 flex items-center justify-between bg-white border-b border-slate-200 shadow-sm">
+            <button
+              onClick={() => navigate('/student/profile/view')}
+              className="flex items-center gap-3 hover:bg-slate-50 rounded-lg px-3 py-2 transition-colors"
+            >
+              {getAvatarUrl() ? (
+                <img
+                  src={getAvatarUrl()}
+                  alt="Avatar"
+                  className="w-10 h-10 rounded-full border-2 border-slate-200 object-cover"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full border-2 border-slate-200 bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                  <i className="fas fa-user text-white text-sm"></i>
+                </div>
+              )}
+              <div className="hidden md:flex flex-col items-start">
+                <span className="text-sm font-semibold text-slate-900">
+                  {user?.fullName || user?.email || 'Sinh viên'}
+                </span>
+                <span className="text-xs text-slate-500">Xem hồ sơ</span>
+              </div>
+            </button>
+            <div className="md:hidden">
+              <Link to="/student/dashboard" className="text-lg font-semibold text-slate-900">
+                CareerMate
+              </Link>
+            </div>
             <button
               onClick={handleLogout}
-              className="text-xs font-medium text-slate-600 border border-slate-200 rounded-full px-3 py-1"
+              className="text-xs font-medium text-slate-600 border border-slate-200 rounded-full px-3 py-1 hover:bg-slate-50 transition-colors"
             >
-              Đăng xuất
+              <i className="fas fa-sign-out-alt md:hidden"></i>
+              <span className="hidden md:inline">Đăng xuất</span>
             </button>
           </header>
 

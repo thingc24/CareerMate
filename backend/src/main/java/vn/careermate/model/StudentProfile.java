@@ -68,6 +68,9 @@ public class StudentProfile {
     @Column(name = "portfolio_url")
     private String portfolioUrl;
 
+    @Column(name = "avatar_url", columnDefinition = "TEXT")
+    private String avatarUrl; // URL to profile avatar image
+
     @Column(name = "current_status")
     private String currentStatus; // STUDYING, GRADUATED, LOOKING_FOR_JOB
 

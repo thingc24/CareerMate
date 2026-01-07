@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 
-export default function Profile() {
+export default function ProfileEdit() {
+  const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   const [profile, setProfile] = useState({
     dateOfBirth: '',
     gender: '',
@@ -16,11 +19,14 @@ export default function Profile() {
     linkedinUrl: '',
     githubUrl: '',
     portfolioUrl: '',
+    avatarUrl: '',
     currentStatus: 'STUDENT',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [message, setMessage] = useState('');
+  const [avatarPreview, setAvatarPreview] = useState(null);
 
   useEffect(() => {
     loadProfile();
@@ -29,29 +35,118 @@ export default function Profile() {
   const loadProfile = async () => {
     try {
       setLoading(true);
-      const data = await api.getStudentProfile();
-      if (data) {
-        setProfile({
+      setMessage('');
+      // Force refresh to get latest data from database
+      const data = await api.getStudentProfile(true);
+      console.log('ProfileEdit - Loaded data from server:', data);
+      if (data && !data.error) {
+        const newProfile = {
           dateOfBirth: data.dateOfBirth || '',
           gender: data.gender || '',
           address: data.address || '',
           city: data.city || '',
-          country: data.country || 'Việt Nam',
+          country: data.country || 'Vietnam',
           university: data.university || '',
           major: data.major || '',
-          graduationYear: data.graduationYear || '',
-          gpa: data.gpa || '',
+          graduationYear: data.graduationYear ? String(data.graduationYear) : '',
+          gpa: data.gpa ? String(data.gpa) : '',
           bio: data.bio || '',
           linkedinUrl: data.linkedinUrl || '',
           githubUrl: data.githubUrl || '',
           portfolioUrl: data.portfolioUrl || '',
+          avatarUrl: data.avatarUrl || '',
           currentStatus: data.currentStatus || 'STUDENT',
-        });
+        };
+        console.log('ProfileEdit - Setting profile state:', newProfile);
+        setProfile(newProfile);
+        if (data.avatarUrl) {
+          setAvatarPreview(getAvatarUrl(data.avatarUrl));
+        }
+      } else if (data?.error) {
+        setMessage('Lỗi: ' + data.error);
+        console.error('Profile API error:', data.error);
       }
     } catch (error) {
       console.error('Error loading profile:', error);
+      const errorMsg = error.response?.data?.error || error.message || 'Không thể tải thông tin hồ sơ';
+      setMessage('Lỗi: ' + errorMsg);
+      
+      // If 401, redirect to login
+      if (error.response?.status === 401) {
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 2000);
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getAvatarUrl = (avatarUrl) => {
+    if (!avatarUrl) return null;
+    if (avatarUrl.startsWith('http')) return avatarUrl;
+    return `http://localhost:8080/${avatarUrl}`;
+  };
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setMessage('Lỗi: Chỉ chấp nhận file ảnh');
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage('Lỗi: Kích thước file không được vượt quá 5MB');
+      return;
+    }
+
+    try {
+      setUploadingAvatar(true);
+      setMessage('');
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+
+      // Upload avatar
+      const response = await api.uploadAvatar(file);
+      if (response && response.avatarUrl) {
+        // Update profile state with new avatar URL
+        setProfile(prev => ({ ...prev, avatarUrl: response.avatarUrl }));
+        // Update preview
+        setAvatarPreview(getAvatarUrl(response.avatarUrl));
+        setMessage('Cập nhật ảnh đại diện thành công!');
+        
+        // Trigger avatar reload in StudentLayout
+        window.dispatchEvent(new CustomEvent('avatarUpdated', { 
+          detail: { avatarUrl: response.avatarUrl } 
+        }));
+        
+        // Reload profile to get updated data
+        setTimeout(() => {
+          loadProfile();
+        }, 500);
+      } else {
+        setMessage('Cập nhật ảnh đại diện thành công!');
+        // Trigger avatar reload anyway
+        window.dispatchEvent(new CustomEvent('avatarUpdated'));
+        // Reload profile anyway
+        setTimeout(() => {
+          loadProfile();
+        }, 500);
+      }
+      setTimeout(() => setMessage(''), 3000);
+    } catch (error) {
+      setMessage('Lỗi: ' + (error.response?.data?.error || 'Không thể tải ảnh lên'));
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -60,11 +155,122 @@ export default function Profile() {
     try {
       setSaving(true);
       setMessage('');
-      await api.updateStudentProfile(profile);
-      setMessage('Cập nhật hồ sơ thành công!');
-      setTimeout(() => setMessage(''), 3000);
+      
+      // Prepare data - convert empty strings to null for optional fields
+      const profileData = {
+        dateOfBirth: profile.dateOfBirth && profile.dateOfBirth.trim() !== '' ? profile.dateOfBirth : null,
+        gender: profile.gender && profile.gender.trim() !== '' ? profile.gender : null,
+        address: profile.address && profile.address.trim() !== '' ? profile.address : null,
+        city: profile.city && profile.city.trim() !== '' ? profile.city : null,
+        country: profile.country && profile.country.trim() !== '' ? profile.country : 'Vietnam',
+        university: profile.university && profile.university.trim() !== '' ? profile.university : null,
+        major: profile.major && profile.major.trim() !== '' ? profile.major : null,
+        graduationYear: profile.graduationYear && profile.graduationYear.toString().trim() !== '' 
+          ? parseInt(profile.graduationYear) : null,
+        gpa: profile.gpa && profile.gpa.toString().trim() !== '' 
+          ? parseFloat(profile.gpa) : null,
+        bio: profile.bio && profile.bio.trim() !== '' ? profile.bio : null,
+        linkedinUrl: profile.linkedinUrl && profile.linkedinUrl.trim() !== '' ? profile.linkedinUrl : null,
+        githubUrl: profile.githubUrl && profile.githubUrl.trim() !== '' ? profile.githubUrl : null,
+        portfolioUrl: profile.portfolioUrl && profile.portfolioUrl.trim() !== '' ? profile.portfolioUrl : null,
+        avatarUrl: profile.avatarUrl && profile.avatarUrl.trim() !== '' ? profile.avatarUrl : null,
+        currentStatus: profile.currentStatus && profile.currentStatus.trim() !== '' ? profile.currentStatus : 'STUDENT',
+      };
+      
+      console.log('Sending profile update:', profileData);
+      console.log('Profile data details:', {
+        gender: profileData.gender,
+        address: profileData.address,
+        city: profileData.city,
+        university: profileData.university,
+        major: profileData.major
+      });
+      
+      const response = await api.updateStudentProfile(profileData);
+      console.log('Profile update response:', response);
+      
+      if (response && response.error) {
+        throw new Error(response.error);
+      }
+      
+      setMessage(response.message || 'Cập nhật hồ sơ thành công!');
+      
+      // Update state immediately with response data
+      if (response && !response.error) {
+        console.log('Updating profile state with response:', response);
+        setProfile({
+          dateOfBirth: response.dateOfBirth || '',
+          gender: response.gender || '',
+          address: response.address || '',
+          city: response.city || '',
+          country: response.country || 'Vietnam',
+          university: response.university || '',
+          major: response.major || '',
+          graduationYear: response.graduationYear ? String(response.graduationYear) : '',
+          gpa: response.gpa ? String(response.gpa) : '',
+          bio: response.bio || '',
+          linkedinUrl: response.linkedinUrl || '',
+          githubUrl: response.githubUrl || '',
+          portfolioUrl: response.portfolioUrl || '',
+          avatarUrl: response.avatarUrl || '',
+          currentStatus: response.currentStatus || 'STUDENT',
+        });
+        if (response.avatarUrl) {
+          setAvatarPreview(getAvatarUrl(response.avatarUrl));
+        }
+      }
+      
+      // Force reload from server to ensure we have latest data
+      console.log('Reloading profile from server after update...');
+      await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms for backend to finish
+      const freshData = await api.getStudentProfile(true); // Force refresh with cache busting
+      console.log('Fresh profile data after update:', freshData);
+      
+      if (freshData && !freshData.error) {
+        // Update state with fresh data
+        setProfile({
+          dateOfBirth: freshData.dateOfBirth || '',
+          gender: freshData.gender || '',
+          address: freshData.address || '',
+          city: freshData.city || '',
+          country: freshData.country || 'Vietnam',
+          university: freshData.university || '',
+          major: freshData.major || '',
+          graduationYear: freshData.graduationYear ? String(freshData.graduationYear) : '',
+          gpa: freshData.gpa ? String(freshData.gpa) : '',
+          bio: freshData.bio || '',
+          linkedinUrl: freshData.linkedinUrl || '',
+          githubUrl: freshData.githubUrl || '',
+          portfolioUrl: freshData.portfolioUrl || '',
+          avatarUrl: freshData.avatarUrl || '',
+          currentStatus: freshData.currentStatus || 'STUDENT',
+        });
+        if (freshData.avatarUrl) {
+          setAvatarPreview(getAvatarUrl(freshData.avatarUrl));
+        }
+        console.log('Profile state updated with fresh data');
+      }
+      
+      setTimeout(() => {
+        setMessage('');
+        // Navigate to view page with refresh state to force reload
+        navigate('/student/profile/view', { 
+          replace: true, 
+          state: { refresh: Date.now() } 
+        });
+      }, 1500);
     } catch (error) {
-      setMessage('Lỗi: ' + (error.response?.data?.message || 'Không thể cập nhật hồ sơ'));
+      console.error('Error updating profile:', error);
+      console.error('Error response data:', error.response?.data);
+      const errorMessage = error.message || error.response?.data?.error || 'Không thể cập nhật hồ sơ';
+      setMessage('Lỗi: ' + errorMessage);
+      
+      // If 401, redirect to login
+      if (error.response?.status === 401) {
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 3000);
+      }
     } finally {
       setSaving(false);
     }
@@ -85,15 +291,49 @@ export default function Profile() {
     );
   }
 
+  // Show error state if profile failed to load
+  if (!profile || Object.keys(profile).length === 0) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <i className="fas fa-exclamation-circle text-red-600 text-4xl mb-4"></i>
+          <h2 className="text-xl font-bold text-red-900 mb-2">Không thể tải hồ sơ</h2>
+          <p className="text-red-700 mb-4">{message || 'Vui lòng đăng nhập lại hoặc thử lại sau.'}</p>
+          <div className="flex gap-4 justify-center">
+            <button
+              onClick={loadProfile}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            >
+              <i className="fas fa-redo mr-2"></i>Thử lại
+            </button>
+            <button
+              onClick={() => window.location.href = '/login'}
+              className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition"
+            >
+              Đăng nhập lại
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
       {/* Header */}
       <div className="mb-8">
+        <button
+          onClick={() => navigate('/student/profile/view')}
+          className="mb-4 text-gray-600 hover:text-gray-900 flex items-center gap-2"
+        >
+          <i className="fas fa-arrow-left"></i>
+          <span>Quay lại</span>
+        </button>
         <h1 className="text-4xl font-bold text-gray-900 mb-2">
-          Hồ sơ cá nhân
+          Cập nhật hồ sơ
         </h1>
         <p className="text-lg text-gray-600">
-          Quản lý thông tin cá nhân và học vấn của bạn
+          Chỉnh sửa thông tin cá nhân và học vấn của bạn
         </p>
       </div>
 
@@ -115,6 +355,57 @@ export default function Profile() {
 
       <form onSubmit={handleSubmit}>
         <div className="space-y-6">
+          {/* Avatar Upload */}
+          <div className="card p-6 animate-slide-up">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center">
+                <i className="fas fa-image text-white"></i>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900">Ảnh đại diện</h2>
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="relative">
+                {avatarPreview ? (
+                  <img
+                    src={avatarPreview}
+                    alt="Avatar preview"
+                    className="w-32 h-32 rounded-full border-4 border-gray-200 object-cover"
+                  />
+                ) : (
+                  <div className="w-32 h-32 rounded-full border-4 border-gray-200 bg-gray-100 flex items-center justify-center">
+                    <i className="fas fa-user text-gray-400 text-4xl"></i>
+                  </div>
+                )}
+                {uploadingAvatar && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
+                    <div className="animate-spin rounded-full h-8 w-8 border-4 border-white border-t-transparent"></div>
+                  </div>
+                )}
+              </div>
+              <div className="flex-1">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleAvatarChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 flex items-center gap-2"
+                >
+                  <i className="fas fa-upload"></i>
+                  <span>{uploadingAvatar ? 'Đang tải...' : 'Chọn ảnh'}</span>
+                </button>
+                <p className="text-sm text-gray-500 mt-2">
+                  Chấp nhận: JPG, PNG, GIF (tối đa 5MB)
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Personal Information */}
           <div className="card p-6 animate-slide-up">
             <div className="flex items-center gap-3 mb-6">
