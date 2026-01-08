@@ -1,7 +1,7 @@
 # Kết quả Test Gemini API Models
 
 ## API Key đã test:
-- API Key: `AIzaSyDDhMiEFOVFBR_aUzkgZI72QMflFJ2qWus`
+- API Key: `AIzaSyC1IPPXNyTgxYvLNFLnJ8jfGa001S_F7kg`
 
 ## Kết quả test:
 

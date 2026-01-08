@@ -20,7 +20,7 @@ spring:
 # AI Service Configuration
 ai:
   gemini:
-    api-key: AIzaSyDDhMiEFOVFBR_aUzkgZI72QMflFJ2qWus
+    api-key: AIzaSyC1IPPXNyTgxYvLNFLnJ8jfGa001S_F7kg
     model: gemini-2.5-flash # Tested and working model
     base-url: https://generativelanguage.googleapis.com/v1beta
     timeout: 30000

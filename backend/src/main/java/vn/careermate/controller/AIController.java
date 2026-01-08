@@ -12,6 +12,7 @@ import vn.careermate.repository.CVRepository;
 import vn.careermate.repository.JobRepository;
 import vn.careermate.repository.JobSkillRepository;
 import vn.careermate.service.AIService;
+import vn.careermate.service.FileStorageService;
 import vn.careermate.service.VectorDBService;
 import vn.careermate.util.DOCXExtractor;
 import vn.careermate.util.PDFExtractor;
@@ -36,6 +37,7 @@ public class AIController {
     private final CVRepository cvRepository;
     private final JobRepository jobRepository;
     private final JobSkillRepository jobSkillRepository;
+    private final FileStorageService fileStorageService;
 
     /**
      * Analyze CV
@@ -53,13 +55,18 @@ public class AIController {
             String cvContent = "";
             if (cv.getFileUrl() != null) {
                 try {
+                    // Resolve web path to actual file system path
+                    String actualFilePath = fileStorageService.resolveFilePath(cv.getFileUrl());
+                    log.info("Extracting CV content from file: {} (resolved from: {})", actualFilePath, cv.getFileUrl());
+                    
                     if (cv.getFileUrl().endsWith(".pdf")) {
-                        cvContent = PDFExtractor.extractText(cv.getFileUrl());
+                        cvContent = PDFExtractor.extractText(actualFilePath);
                     } else if (cv.getFileUrl().endsWith(".docx")) {
-                        cvContent = DOCXExtractor.extractText(cv.getFileUrl());
+                        cvContent = DOCXExtractor.extractText(actualFilePath);
                     }
                 } catch (Exception e) {
-                    log.error("Error extracting CV content", e);
+                    log.error("Error extracting CV content from file: {}", cv.getFileUrl(), e);
+                    throw new RuntimeException("Không thể đọc nội dung CV: " + e.getMessage(), e);
                 }
             }
 
@@ -167,13 +174,17 @@ public class AIController {
             String cvContent = "";
             if (cv != null && cv.getFileUrl() != null) {
                 try {
+                    // Resolve web path to actual file system path
+                    String actualFilePath = fileStorageService.resolveFilePath(cv.getFileUrl());
+                    log.info("Extracting CV content for interview from file: {} (resolved from: {})", actualFilePath, cv.getFileUrl());
+                    
                     if (cv.getFileUrl().endsWith(".pdf")) {
-                        cvContent = PDFExtractor.extractText(cv.getFileUrl());
+                        cvContent = PDFExtractor.extractText(actualFilePath);
                     } else if (cv.getFileUrl().endsWith(".docx")) {
-                        cvContent = DOCXExtractor.extractText(cv.getFileUrl());
+                        cvContent = DOCXExtractor.extractText(actualFilePath);
                     }
                 } catch (Exception e) {
-                    log.error("Error extracting CV content for interview", e);
+                    log.error("Error extracting CV content for interview from file: {}", cv.getFileUrl(), e);
                 }
             }
             

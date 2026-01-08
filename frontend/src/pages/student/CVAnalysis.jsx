@@ -20,9 +20,23 @@ export default function CVAnalysis() {
       setLoading(true);
       // Try to get existing analysis or trigger new analysis
       const data = await api.analyzeCV(cvId);
+      console.log('CV Analysis response:', data);
+      
+      // Check if response has error
+      if (data && data.error) {
+        console.error('CV Analysis error:', data.error);
+        // Don't set analysis if there's an error, let user see error message
+        return;
+      }
+      
       setAnalysis(data);
     } catch (error) {
       console.error('Error loading analysis:', error);
+      const errorMsg = error.response?.data?.error || 
+                      error.response?.data?.message || 
+                      error.message || 
+                      'Không thể phân tích CV';
+      alert('❌ Lỗi: ' + errorMsg);
     } finally {
       setLoading(false);
     }

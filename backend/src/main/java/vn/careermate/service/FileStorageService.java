@@ -63,5 +63,34 @@ public class FileStorageService {
     public boolean fileExists(String filePath) {
         return Files.exists(Paths.get(filePath));
     }
+
+    /**
+     * Resolve web path to actual file system path
+     * Converts /uploads/cvs/filename.pdf to actual file system path
+     */
+    public String resolveFilePath(String webPath) {
+        if (webPath == null || webPath.isEmpty()) {
+            return null;
+        }
+        
+        // If already an absolute path, return as is
+        if (Paths.get(webPath).isAbsolute()) {
+            return webPath;
+        }
+        
+        // Remove leading slash if present (web path)
+        String cleanPath = webPath.startsWith("/") ? webPath.substring(1) : webPath;
+        
+        // Remove "uploads/" prefix if present (already included in uploadPath)
+        if (cleanPath.startsWith("uploads/")) {
+            cleanPath = cleanPath.substring("uploads/".length());
+        }
+        
+        // Resolve against uploadPath
+        Path resolvedPath = Paths.get(uploadPath).resolve(cleanPath).normalize();
+        
+        log.info("Resolving web path '{}' to file system path '{}'", webPath, resolvedPath.toString());
+        return resolvedPath.toString();
+    }
 }
 

@@ -66,12 +66,39 @@ export default function ChatWidget({ role = 'STUDENT' }) {
       // Analyze CV
       const analysis = await api.analyzeCV(cv.id);
       
-      const assistantMessage = {
-        role: 'assistant',
-        content: `✅ Đã phân tích CV của bạn!\n\n📊 Điểm số: ${analysis.score || analysis.overallScore || 'N/A'}/100\n\n${analysis.summary || 'CV của bạn có tiềm năng nhưng cần cải thiện một số điểm.'}\n\n💡 Gợi ý:\n${(analysis.suggestions || []).slice(0, 3).map((s, i) => `${i + 1}. ${s}`).join('\n')}\n\nXem chi tiết tại trang CV của bạn.`,
-      };
-      
-      setMessages((prev) => [...prev, assistantMessage]);
+      // Check if analysis has error
+      if (analysis.error) {
+        const errorMessage = {
+          role: 'assistant',
+          content: `❌ Lỗi phân tích CV: ${analysis.error}\n\nVui lòng thử lại sau hoặc kiểm tra:\n• File CV có đúng định dạng PDF không\n• Kết nối mạng có ổn định không\n• Dịch vụ AI có đang hoạt động không`,
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      } else {
+        const score = analysis.score || analysis.overallScore;
+        const summary = analysis.summary || 'CV của bạn có tiềm năng nhưng cần cải thiện một số điểm.';
+        const suggestions = analysis.suggestions || [];
+        
+        let content = `✅ Đã phân tích CV của bạn!\n\n`;
+        if (score !== null && score !== undefined) {
+          content += `📊 Điểm số: ${score}/100\n\n`;
+        } else {
+          content += `📊 Điểm số: Đang xử lý...\n\n`;
+        }
+        content += `${summary}\n\n`;
+        
+        if (suggestions.length > 0) {
+          content += `💡 Gợi ý:\n${suggestions.slice(0, 3).map((s, i) => `${i + 1}. ${s}`).join('\n')}\n\n`;
+        }
+        
+        content += `Xem chi tiết tại trang CV của bạn.`;
+        
+        const assistantMessage = {
+          role: 'assistant',
+          content: content,
+        };
+        
+        setMessages((prev) => [...prev, assistantMessage]);
+      }
       setSelectedFile(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';

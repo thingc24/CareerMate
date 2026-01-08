@@ -271,15 +271,40 @@ public class StudentService {
         return cv;
     }
 
+    @Transactional(readOnly = true)
     public List<CV> getCVs() {
         try {
-            StudentProfile student = getCurrentStudentProfile();
-            if (student == null || student.getId() == null) {
-                log.warn("Student profile not found or ID is null");
+            // Get current user from security context
+            org.springframework.security.core.Authentication auth = 
+                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            
+            if (auth == null || auth.getName() == null || "anonymousUser".equals(auth.getName())) {
+                log.warn("No authentication found when getting CVs");
                 return List.of();
             }
+            
+            // Find user by email
+            User user = userRepository.findByEmail(auth.getName())
+                .orElse(null);
+            
+            if (user == null) {
+                log.warn("User not found: {}", auth.getName());
+                return List.of();
+            }
+            
+            // Find student profile
+            StudentProfile student = studentProfileRepository.findByUserId(user.getId())
+                .orElse(null);
+            
+            if (student == null || student.getId() == null) {
+                log.warn("Student profile not found for user: {}", auth.getName());
+                return List.of();
+            }
+            
+            // Get CVs directly without calling getCurrentStudentProfile() to avoid transaction issues
             List<CV> cvs = cvRepository.findByStudentId(student.getId());
-            // Detach lazy-loaded relations
+            
+            // Detach lazy-loaded relations to prevent serialization issues
             if (cvs != null) {
                 cvs.forEach(cv -> {
                     if (cv != null && cv.getStudent() != null) {
@@ -287,6 +312,7 @@ public class StudentService {
                     }
                 });
             }
+            
             return cvs != null ? cvs : List.of();
         } catch (RuntimeException e) {
             log.error("Runtime error getting CVs: {}", e.getMessage(), e);

@@ -48,14 +48,27 @@ export default function CVUpload() {
 
     try {
       setUploading(true);
-      await api.uploadCV(selectedFile);
-      alert('Tải CV thành công!');
-      setSelectedFile(null);
-      const fileInput = document.getElementById('cvFileInput');
-      if (fileInput) fileInput.value = '';
-      loadCVs();
+      console.log('Uploading CV file:', selectedFile.name);
+      const response = await api.uploadCV(selectedFile);
+      console.log('CV upload response:', response);
+      
+      if (response && response.id) {
+        alert('✅ Tải CV thành công!');
+        setSelectedFile(null);
+        const fileInput = document.getElementById('cvFileInput');
+        if (fileInput) fileInput.value = '';
+        // Reload CVs list after successful upload
+        await loadCVs();
+      } else {
+        throw new Error('Không nhận được phản hồi từ server');
+      }
     } catch (error) {
-      alert('Lỗi: ' + (error.response?.data?.message || 'Không thể tải CV'));
+      console.error('CV upload error:', error);
+      const errorMsg = error.response?.data?.error || 
+                      error.response?.data?.message || 
+                      error.message || 
+                      'Không thể tải CV. Vui lòng thử lại.';
+      alert('❌ Lỗi: ' + errorMsg);
     } finally {
       setUploading(false);
     }
@@ -233,10 +246,16 @@ export default function CVUpload() {
                   </Link>
                   {cv.fileUrl && (
                     <a
-                      href={cv.fileUrl}
+                      href={cv.fileUrl.startsWith('http') ? cv.fileUrl : `http://localhost:8080${cv.fileUrl}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="btn-primary"
+                      onClick={(e) => {
+                        // Log để debug
+                        console.log('Opening CV file:', cv.fileUrl);
+                        const fullUrl = cv.fileUrl.startsWith('http') ? cv.fileUrl : `http://localhost:8080${cv.fileUrl}`;
+                        console.log('Full URL:', fullUrl);
+                      }}
                     >
                       <i className="fas fa-eye mr-2"></i>
                       Xem

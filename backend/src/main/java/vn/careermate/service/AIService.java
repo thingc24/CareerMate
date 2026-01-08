@@ -91,6 +91,18 @@ public class AIService {
                 "CV có tiềm năng nhưng cần cải thiện một số điểm."));
             
             return result;
+        } catch (RuntimeException e) {
+            log.error("Error analyzing CV", e);
+            String errorMsg = e.getMessage();
+            // Provide more user-friendly error messages for common API errors
+            if (errorMsg != null && errorMsg.contains("503")) {
+                return createErrorResponse("Dịch vụ AI tạm thời không khả dụng (503). Vui lòng thử lại sau vài phút. Nếu vấn đề vẫn tiếp tục, có thể do:\n• Quota API đã hết\n• Dịch vụ Gemini đang bảo trì\n• Kết nối mạng không ổn định");
+            } else if (errorMsg != null && errorMsg.contains("403")) {
+                return createErrorResponse("API key không hợp lệ hoặc không có quyền truy cập (403). Vui lòng liên hệ quản trị viên.");
+            } else if (errorMsg != null && errorMsg.contains("429")) {
+                return createErrorResponse("Đã vượt quá giới hạn sử dụng API (429). Vui lòng thử lại sau.");
+            }
+            return createErrorResponse("Error analyzing CV: " + errorMsg);
         } catch (Exception e) {
             log.error("Error analyzing CV", e);
             return createErrorResponse("Error analyzing CV: " + e.getMessage());
@@ -609,7 +621,11 @@ public class AIService {
                     log.error("Gemini API HTTP error: {}", clientResponse.statusCode());
                     return clientResponse.bodyToMono(String.class)
                         .doOnNext(body -> log.error("Error response body: {}", body))
-                        .then(Mono.error(new RuntimeException("Gemini API returned error: " + clientResponse.statusCode())));
+                        .then(Mono.error(new RuntimeException("Gemini API returned error: " + clientResponse.statusCode() + 
+                            (clientResponse.statusCode().value() == 503 ? " SERVICE_UNAVAILABLE - Dịch vụ AI tạm thời không khả dụng. Vui lòng thử lại sau." :
+                             clientResponse.statusCode().value() == 403 ? " FORBIDDEN - API key không hợp lệ hoặc không có quyền truy cập." :
+                             clientResponse.statusCode().value() == 429 ? " RATE_LIMIT - Đã vượt quá giới hạn sử dụng. Vui lòng thử lại sau." :
+                             ""))));
                 })
                 .bodyToMono(Map.class)
                 .timeout(Duration.ofMillis(timeout))
