@@ -303,6 +303,11 @@ class CareerMateAPI {
     return response.data;
   }
 
+  async deleteCV(cvId) {
+    const response = await this.client.delete(`/students/cv/${cvId}`);
+    return response.data;
+  }
+
   async uploadCV(file) {
     const formData = new FormData();
     formData.append('file', file);

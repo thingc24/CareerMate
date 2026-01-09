@@ -338,6 +338,24 @@ public class StudentController {
         }
     }
 
+    @DeleteMapping("/cv/{cvId}")
+    public ResponseEntity<?> deleteCV(@PathVariable UUID cvId) {
+        try {
+            log.info("DELETE /students/cv/{} - Request received", cvId);
+            studentService.deleteCV(cvId);
+            log.info("DELETE /students/cv/{} - CV deleted successfully", cvId);
+            return ResponseEntity.ok(Map.of("message", "CV deleted successfully"));
+        } catch (RuntimeException e) {
+            log.error("DELETE /students/cv/{} - Runtime error: {}", cvId, e.getMessage(), e);
+            return ResponseEntity.status(400)
+                .body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            log.error("DELETE /students/cv/{} - Unexpected error", cvId, e);
+            return ResponseEntity.status(500)
+                .body(Map.of("error", "Error deleting CV: " + e.getMessage()));
+        }
+    }
+
     @GetMapping("/jobs")
     public ResponseEntity<Page<Job>> searchJobs(
             @RequestParam(required = false) String keyword,

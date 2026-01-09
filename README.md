@@ -64,6 +64,39 @@ Project sử dụng OpenRouter API. Cấu hình trong:
 - `backend/src/main/resources/application.yml`
 - `backend/src/main/resources/application-dev.yml`
 
+## 📋 Xem Log
+
+### Xem log cơ bản:
+```powershell
+.\XEM_LOG.ps1                    # Xem 50 dòng cuối
+.\XEM_LOG.ps1 -Lines 100         # Xem 100 dòng cuối
+.\XEM_LOG.ps1 -Follow            # Theo dõi real-time
+.\XEM_LOG.ps1 -Error              # Chỉ xem lỗi
+.\XEM_LOG.ps1 -Filter "CV"        # Lọc theo keyword
+```
+
+### Xem lỗi:
+```powershell
+.\XEM_LOG_ERROR.ps1              # Chỉ xem lỗi và exceptions
+```
+
+### Theo dõi real-time:
+```powershell
+.\XEM_LOG_THEO_DOI.ps1           # Theo dõi log mới (Ctrl+C để dừng)
+```
+
+### Tìm kiếm:
+```powershell
+.\TIM_KIEM_LOG.ps1 -Keyword "CV" # Tìm kiếm trong log
+```
+
+### Xóa log cũ:
+```powershell
+.\XOA_LOG_CU.ps1                 # Xóa các file log cũ (giữ lại log hiện tại)
+```
+
+**Log file location:** `backend/logs/careermate.log`
+
 ## 📝 License
 
 MIT

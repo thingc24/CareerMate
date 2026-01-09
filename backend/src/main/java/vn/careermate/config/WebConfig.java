@@ -46,11 +46,18 @@ public class WebConfig implements WebMvcConfigurer {
             }
         }
         
-        log.info("Configuring static resource handler: /uploads/** -> {}", fileUrl);
+        log.info("Configuring static resource handler: /uploads/** and /api/uploads/** -> {}", fileUrl);
         
+        // Map both /uploads/** and /api/uploads/** to handle context-path
+        // Also map without /api prefix for direct access
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations(fileUrl)
                 .setCachePeriod(3600); // Cache for 1 hour
+        
+        // Map /api/uploads/** for context-path compatibility
+        registry.addResourceHandler("/api/uploads/**")
+                .addResourceLocations(fileUrl)
+                .setCachePeriod(3600);
     }
 }
 

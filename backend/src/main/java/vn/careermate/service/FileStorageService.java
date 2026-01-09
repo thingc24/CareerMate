@@ -50,13 +50,45 @@ public class FileStorageService {
 
     public void deleteFile(String filePath) {
         try {
-            Path path = Paths.get(filePath);
+            if (filePath == null || filePath.isEmpty()) {
+                log.warn("Cannot delete file: path is null or empty");
+                return;
+            }
+            
+            // If it's a web path, resolve it first
+            String actualPath = resolveFilePath(filePath);
+            if (actualPath == null) {
+                // Try direct path if resolve fails
+                actualPath = filePath;
+                log.warn("Could not resolve file path, trying direct path: {}", actualPath);
+            }
+            
+            Path path = Paths.get(actualPath);
+            
+            // Check if file exists
+            if (!Files.exists(path)) {
+                log.warn("File not found for deletion: {} (resolved: {})", filePath, actualPath);
+                // Try alternative paths
+                if (filePath.startsWith("/uploads/")) {
+                    String altPath = filePath.substring(1); // Remove leading /
+                    Path alt = Paths.get(uploadPath).resolve(altPath.replace("uploads/", "")).normalize();
+                    if (Files.exists(alt)) {
+                        path = alt;
+                        actualPath = alt.toString();
+                        log.info("Found file at alternative path: {}", actualPath);
+                    }
+                }
+            }
+            
             if (Files.exists(path)) {
                 Files.delete(path);
-                log.info("File deleted: {}", filePath);
+                log.info("File deleted successfully: {} (resolved from: {})", actualPath, filePath);
+            } else {
+                log.error("File not found for deletion after all attempts: {} (resolved: {})", filePath, actualPath);
             }
         } catch (IOException e) {
-            log.error("Error deleting file: {}", filePath, e);
+            log.error("Error deleting file: {} - {}", filePath, e.getMessage(), e);
+            throw new RuntimeException("Failed to delete file: " + e.getMessage(), e);
         }
     }
 

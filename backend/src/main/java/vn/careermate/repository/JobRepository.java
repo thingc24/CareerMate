@@ -15,9 +15,11 @@ import java.util.UUID;
 public interface JobRepository extends JpaRepository<Job, UUID> {
     Page<Job> findByStatus(Job.JobStatus status, Pageable pageable);
     
-    @Query("SELECT j FROM Job j WHERE j.status = 'ACTIVE' AND " +
-           "(:location IS NULL OR LOWER(j.location) LIKE LOWER(CONCAT('%', :location, '%'))) AND " +
-           "(:keyword IS NULL OR LOWER(j.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(j.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    // Use native query to avoid bytea casting issues
+    @Query(value = "SELECT * FROM jobs j WHERE j.status = 'ACTIVE' AND " +
+           "(:location IS NULL OR LOWER(j.location::text) LIKE LOWER(CONCAT('%', :location, '%'))) AND " +
+           "(:keyword IS NULL OR LOWER(j.title::text) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(j.description::text) LIKE LOWER(CONCAT('%', :keyword, '%')))",
+           nativeQuery = true)
     Page<Job> searchJobs(@Param("keyword") String keyword, 
                         @Param("location") String location, 
                         Pageable pageable);

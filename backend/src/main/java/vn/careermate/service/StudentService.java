@@ -271,6 +271,60 @@ public class StudentService {
         return cv;
     }
 
+    @Transactional
+    public void deleteCV(UUID cvId) {
+        try {
+            // Get current user from security context
+            org.springframework.security.core.Authentication auth = 
+                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            
+            if (auth == null || auth.getName() == null || "anonymousUser".equals(auth.getName())) {
+                throw new RuntimeException("Authentication required");
+            }
+            
+            // Find user by email
+            User user = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+            
+            // Find student profile
+            StudentProfile student = studentProfileRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new RuntimeException("Student profile not found"));
+            
+            // Find CV and verify ownership
+            CV cv = cvRepository.findById(cvId)
+                .orElseThrow(() -> new RuntimeException("CV not found"));
+            
+            if (!cv.getStudent().getId().equals(student.getId())) {
+                throw new RuntimeException("You don't have permission to delete this CV");
+            }
+            
+            // Delete file from storage
+            if (cv.getFileUrl() != null && !cv.getFileUrl().isEmpty()) {
+                try {
+                    log.info("Attempting to delete CV file: {}", cv.getFileUrl());
+                    fileStorageService.deleteFile(cv.getFileUrl());
+                    log.info("CV file deleted successfully: {}", cv.getFileUrl());
+                } catch (Exception e) {
+                    log.error("Could not delete CV file: {} - {}", cv.getFileUrl(), e.getMessage(), e);
+                    // Continue with database deletion even if file deletion fails
+                }
+            } else {
+                log.warn("CV has no file URL to delete: {}", cvId);
+            }
+            
+            // Delete CV record from database
+            cvRepository.delete(cv);
+            
+            log.info("CV deleted successfully: {}", cvId);
+        } catch (RuntimeException e) {
+            log.error("Error deleting CV: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error deleting CV", e);
+            throw new RuntimeException("Failed to delete CV: " + e.getMessage(), e);
+        }
+    }
+
     @Transactional(readOnly = true)
     public List<CV> getCVs() {
         try {

@@ -88,6 +88,25 @@ export default function CVUpload() {
     return (bytes / 1024 / 1024).toFixed(2) + ' MB';
   };
 
+  const handleDeleteCV = async (cvId, fileName) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa CV "${fileName || 'này'}"?`)) {
+      return;
+    }
+
+    try {
+      await api.deleteCV(cvId);
+      alert('✅ Đã xóa CV thành công!');
+      await loadCVs();
+    } catch (error) {
+      console.error('Error deleting CV:', error);
+      const errorMsg = error.response?.data?.error || 
+                      error.response?.data?.message || 
+                      error.message || 
+                      'Không thể xóa CV. Vui lòng thử lại.';
+      alert('❌ Lỗi: ' + errorMsg);
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
       {/* Header */}
@@ -246,14 +265,30 @@ export default function CVUpload() {
                   </Link>
                   {cv.fileUrl && (
                     <a
-                      href={cv.fileUrl.startsWith('http') ? cv.fileUrl : `http://localhost:8080${cv.fileUrl}`}
+                      href={(() => {
+                        if (cv.fileUrl.startsWith('http')) {
+                          return cv.fileUrl;
+                        }
+                        // Use /api prefix because context-path is /api
+                        // If fileUrl already starts with /api, use as is, otherwise add it
+                        if (cv.fileUrl.startsWith('/api')) {
+                          return `http://localhost:8080${cv.fileUrl}`;
+                        }
+                        return `http://localhost:8080/api${cv.fileUrl}`;
+                      })()}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="btn-primary"
                       onClick={(e) => {
-                        // Log để debug
                         console.log('Opening CV file:', cv.fileUrl);
-                        const fullUrl = cv.fileUrl.startsWith('http') ? cv.fileUrl : `http://localhost:8080${cv.fileUrl}`;
+                        let fullUrl;
+                        if (cv.fileUrl.startsWith('http')) {
+                          fullUrl = cv.fileUrl;
+                        } else if (cv.fileUrl.startsWith('/api')) {
+                          fullUrl = `http://localhost:8080${cv.fileUrl}`;
+                        } else {
+                          fullUrl = `http://localhost:8080/api${cv.fileUrl}`;
+                        }
                         console.log('Full URL:', fullUrl);
                       }}
                     >
@@ -261,6 +296,13 @@ export default function CVUpload() {
                       Xem
                     </a>
                   )}
+                  <button
+                    onClick={() => handleDeleteCV(cv.id, cv.fileName)}
+                    className="btn-danger"
+                    title="Xóa CV"
+                  >
+                    <i className="fas fa-times"></i>
+                  </button>
                 </div>
               </div>
             </div>
