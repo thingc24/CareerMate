@@ -1,8 +1,8 @@
-# Kết quả Test AI API Models
+# Thông Tin AI API - OpenRouter
 
-## ⚠️ ĐÃ CHUYỂN SANG OPENROUTER API
+## ✅ ĐANG SỬ DỤNG OPENROUTER API
 
-Project đã chuyển từ Gemini API sang OpenRouter API.
+Project sử dụng OpenRouter API để truy cập các AI models.
 
 ## OpenRouter API Configuration
 
