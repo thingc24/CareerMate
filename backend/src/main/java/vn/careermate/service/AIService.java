@@ -14,22 +14,22 @@ import java.util.*;
 
 /**
  * AI Service for CV Analysis, Job Matching, and Mock Interview
- * Integrates with Gemini API
+ * Integrates with OpenRouter API (OpenAI-compatible)
  */
 @Slf4j
 @Service
 public class AIService {
 
-    @Value("${ai.gemini.api-key:}")
-    private String geminiApiKey;
+    @Value("${ai.openrouter.api-key:}")
+    private String openRouterApiKey;
 
-    @Value("${ai.gemini.base-url:https://generativelanguage.googleapis.com/v1beta}")
-    private String geminiBaseUrl;
+    @Value("${ai.openrouter.base-url:https://openrouter.ai/api/v1}")
+    private String openRouterBaseUrl;
 
-    @Value("${ai.gemini.model:gemini-2.5-flash}")
-    private String geminiModel;
+    @Value("${ai.openrouter.model:meta-llama/llama-3.2-3b-instruct:free}")
+    private String openRouterModel;
 
-    @Value("${ai.gemini.timeout:30000}")
+    @Value("${ai.openrouter.timeout:30000}")
     private int timeout;
 
     private final WebClient webClient;
@@ -37,8 +37,10 @@ public class AIService {
 
     public AIService(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder
-            .baseUrl("https://generativelanguage.googleapis.com")
+            .baseUrl("https://openrouter.ai/api/v1")
             .defaultHeader("Content-Type", "application/json")
+            .defaultHeader("HTTP-Referer", "http://localhost:8080") // Optional: for analytics
+            .defaultHeader("X-Title", "CareerMate") // Optional: for analytics
             .build();
         this.objectMapper = new ObjectMapper();
     }
@@ -47,9 +49,9 @@ public class AIService {
      * Analyze CV and return structured feedback
      */
     public Map<String, Object> analyzeCV(String cvContent) {
-        if (geminiApiKey == null || geminiApiKey.isEmpty()) {
-            log.warn("Gemini API key not configured");
-            return createErrorResponse("AI service not configured");
+        if (openRouterApiKey == null || openRouterApiKey.isEmpty() || openRouterApiKey.equals("YOUR_OPENROUTER_API_KEY_HERE")) {
+            log.warn("OpenRouter API key not configured");
+            return createErrorResponse("AI service not configured. Please set OPENROUTER_API_KEY in application.yml");
         }
 
         String prompt = String.format(
@@ -69,7 +71,7 @@ public class AIService {
         );
 
         try {
-            String response = callGeminiAPI(prompt);
+            String response = callOpenRouterAPI(prompt);
             
             // Try to parse JSON from response
             String jsonStr = cleanJSONResponse(response);
@@ -96,7 +98,7 @@ public class AIService {
             String errorMsg = e.getMessage();
             // Provide more user-friendly error messages for common API errors
             if (errorMsg != null && errorMsg.contains("503")) {
-                return createErrorResponse("Dịch vụ AI tạm thời không khả dụng (503). Vui lòng thử lại sau vài phút. Nếu vấn đề vẫn tiếp tục, có thể do:\n• Quota API đã hết\n• Dịch vụ Gemini đang bảo trì\n• Kết nối mạng không ổn định");
+                return createErrorResponse("Dịch vụ AI tạm thời không khả dụng (503). Vui lòng thử lại sau vài phút. Nếu vấn đề vẫn tiếp tục, có thể do:\n• Quota API đã hết\n• Dịch vụ OpenRouter đang bảo trì\n• Kết nối mạng không ổn định");
             } else if (errorMsg != null && errorMsg.contains("403")) {
                 return createErrorResponse("API key không hợp lệ hoặc không có quyền truy cập (403). Vui lòng liên hệ quản trị viên.");
             } else if (errorMsg != null && errorMsg.contains("429")) {
@@ -153,7 +155,7 @@ public class AIService {
         );
 
         try {
-            String response = callGeminiAPI(prompt);
+            String response = callOpenRouterAPI(prompt);
             return Arrays.asList(response.split("\n"));
         } catch (Exception e) {
             log.error("Error generating interview questions", e);
@@ -220,7 +222,7 @@ public class AIService {
         );
 
         try {
-            String response = callGeminiAPI(prompt);
+            String response = callOpenRouterAPI(prompt);
             log.info("Raw AI response for roadmap (first 1000 chars): {}", 
                 response.length() > 1000 ? response.substring(0, 1000) + "..." : response);
             
@@ -587,41 +589,39 @@ public class AIService {
     }
 
     /**
-     * Call Gemini API
+     * Call OpenRouter API (OpenAI-compatible format)
      */
-    private String callGeminiAPI(String prompt) {
-        if (geminiApiKey == null || geminiApiKey.isEmpty()) {
-            throw new RuntimeException("Gemini API key is not configured");
+    private String callOpenRouterAPI(String prompt) {
+        if (openRouterApiKey == null || openRouterApiKey.isEmpty() || openRouterApiKey.equals("YOUR_OPENROUTER_API_KEY_HERE")) {
+            throw new RuntimeException("OpenRouter API key is not configured");
         }
 
-        // Build URL - Gemini API format
-        // URL format: https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={apiKey}
-        String url = String.format("/v1beta/models/%s:generateContent?key=%s",
-            geminiModel, geminiApiKey);
+        // OpenRouter uses OpenAI-compatible format
+        String url = "/chat/completions";
 
         Map<String, Object> requestBody = new HashMap<>();
-        List<Map<String, Object>> contents = new ArrayList<>();
-        Map<String, Object> content = new HashMap<>();
-        List<Map<String, Object>> parts = new ArrayList<>();
-        Map<String, Object> part = new HashMap<>();
-        part.put("text", prompt);
-        parts.add(part);
-        content.put("parts", parts);
-        contents.add(content);
-        requestBody.put("contents", contents);
+        requestBody.put("model", openRouterModel);
+        
+        List<Map<String, Object>> messages = new ArrayList<>();
+        Map<String, Object> message = new HashMap<>();
+        message.put("role", "user");
+        message.put("content", prompt);
+        messages.add(message);
+        requestBody.put("messages", messages);
 
         try {
-            log.info("Calling Gemini API with model: {}, API key present: {}", geminiModel, geminiApiKey != null && !geminiApiKey.isEmpty());
+            log.info("Calling OpenRouter API with model: {}, API key present: {}", openRouterModel, openRouterApiKey != null && !openRouterApiKey.isEmpty());
             Map<String, Object> response = webClient.post()
                 .uri(url)
+                .header("Authorization", "Bearer " + openRouterApiKey)
                 .header("Content-Type", "application/json")
                 .bodyValue(requestBody)
                 .retrieve()
                 .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(), clientResponse -> {
-                    log.error("Gemini API HTTP error: {}", clientResponse.statusCode());
+                    log.error("OpenRouter API HTTP error: {}", clientResponse.statusCode());
                     return clientResponse.bodyToMono(String.class)
                         .doOnNext(body -> log.error("Error response body: {}", body))
-                        .then(Mono.error(new RuntimeException("Gemini API returned error: " + clientResponse.statusCode() + 
+                        .then(Mono.error(new RuntimeException("OpenRouter API returned error: " + clientResponse.statusCode() + 
                             (clientResponse.statusCode().value() == 503 ? " SERVICE_UNAVAILABLE - Dịch vụ AI tạm thời không khả dụng. Vui lòng thử lại sau." :
                              clientResponse.statusCode().value() == 403 ? " FORBIDDEN - API key không hợp lệ hoặc không có quyền truy cập." :
                              clientResponse.statusCode().value() == 429 ? " RATE_LIMIT - Đã vượt quá giới hạn sử dụng. Vui lòng thử lại sau." :
@@ -629,27 +629,25 @@ public class AIService {
                 })
                 .bodyToMono(Map.class)
                 .timeout(Duration.ofMillis(timeout))
-                .doOnError(error -> log.error("Gemini API error: {}", error.getMessage(), error))
+                .doOnError(error -> log.error("OpenRouter API error: {}", error.getMessage(), error))
                 .block();
 
             if (response == null) {
-                log.error("Gemini API returned null response");
-                throw new RuntimeException("Invalid response from Gemini API: null");
+                log.error("OpenRouter API returned null response");
+                throw new RuntimeException("Invalid response from OpenRouter API: null");
             }
 
-            if (response.containsKey("candidates")) {
-                List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.get("candidates");
-                if (candidates != null && !candidates.isEmpty()) {
-                    Map<String, Object> candidate = candidates.get(0);
-                    if (candidate.containsKey("content")) {
-                        Map<String, Object> contentMap = (Map<String, Object>) candidate.get("content");
-                        if (contentMap.containsKey("parts")) {
-                            List<Map<String, Object>> partsList = (List<Map<String, Object>>) contentMap.get("parts");
-                            if (partsList != null && !partsList.isEmpty()) {
-                                Object textObj = partsList.get(0).get("text");
-                                if (textObj != null) {
-                                    return textObj.toString();
-                                }
+            // Parse OpenAI-compatible response format
+            if (response.containsKey("choices")) {
+                List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
+                if (choices != null && !choices.isEmpty()) {
+                    Map<String, Object> choice = choices.get(0);
+                    if (choice.containsKey("message")) {
+                        Map<String, Object> messageMap = (Map<String, Object>) choice.get("message");
+                        if (messageMap.containsKey("content")) {
+                            Object contentObj = messageMap.get("content");
+                            if (contentObj != null) {
+                                return contentObj.toString();
                             }
                         }
                     }
@@ -657,14 +655,14 @@ public class AIService {
             }
 
             // Log full response for debugging
-            log.error("Invalid response structure from Gemini API: {}", response);
-            throw new RuntimeException("Invalid response from Gemini API: unexpected structure");
+            log.error("Invalid response structure from OpenRouter API: {}", response);
+            throw new RuntimeException("Invalid response from OpenRouter API: unexpected structure");
         } catch (org.springframework.web.reactive.function.client.WebClientException e) {
-            log.error("WebClient error calling Gemini API", e);
-            throw new RuntimeException("Failed to call Gemini API: " + e.getMessage(), e);
+            log.error("WebClient error calling OpenRouter API", e);
+            throw new RuntimeException("Failed to call OpenRouter API: " + e.getMessage(), e);
         } catch (Exception e) {
-            log.error("Error calling Gemini API", e);
-            throw new RuntimeException("Failed to call Gemini API: " + e.getMessage(), e);
+            log.error("Error calling OpenRouter API", e);
+            throw new RuntimeException("Failed to call OpenRouter API: " + e.getMessage(), e);
         }
     }
 
@@ -757,8 +755,8 @@ public class AIService {
      * Chat with AI based on role and context
      */
     public String chat(String message, String context, String role) {
-        if (geminiApiKey == null || geminiApiKey.isEmpty()) {
-            log.warn("Gemini API key not configured");
+        if (openRouterApiKey == null || openRouterApiKey.isEmpty() || openRouterApiKey.equals("YOUR_OPENROUTER_API_KEY_HERE")) {
+            log.warn("OpenRouter API key not configured");
             return "Xin lỗi, dịch vụ AI chưa được cấu hình. Vui lòng liên hệ quản trị viên.";
         }
 
@@ -800,7 +798,7 @@ public class AIService {
         String prompt = systemPrompt + "\n\nCâu hỏi của người dùng: " + message;
 
         try {
-            return callGeminiAPI(prompt);
+            return callOpenRouterAPI(prompt);
         } catch (Exception e) {
             log.error("Error in chat", e);
             return "Xin lỗi, có lỗi xảy ra khi xử lý câu hỏi của bạn. Vui lòng thử lại sau.";

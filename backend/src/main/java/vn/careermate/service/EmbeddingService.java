@@ -12,27 +12,34 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Service for generating embeddings using Gemini API
+ * Service for generating embeddings using OpenRouter API
  * Used for Vector DB storage
+ * Note: Embedding functionality is currently disabled - can be enabled when needed
  */
 @Slf4j
 @Service
 public class EmbeddingService {
 
-    @Value("${ai.gemini.api-key:}")
-    private String geminiApiKey;
+    @Value("${ai.openrouter.api-key:}")
+    private String openRouterApiKey;
 
-    @Value("${ai.gemini.base-url:https://generativelanguage.googleapis.com/v1beta}")
-    private String geminiBaseUrl;
+    @Value("${ai.openrouter.base-url:https://openrouter.ai/api/v1}")
+    private String openRouterBaseUrl;
 
-    @Value("${ai.gemini.embedding-model:models/text-embedding-004}")
+    @Value("${ai.openrouter.embedding-model:text-embedding-ada-002}")
     private String embeddingModel;
 
-    private final WebClient webClient;
+    private final WebClient.Builder webClientBuilder;
 
     public EmbeddingService(WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder
-            .baseUrl("https://generativelanguage.googleapis.com/v1beta")
+        this.webClientBuilder = webClientBuilder;
+        // WebClient will be built per request with current API key
+    }
+    
+    private WebClient getWebClient() {
+        return webClientBuilder
+            .baseUrl("https://openrouter.ai/api/v1")
+            .defaultHeader("Content-Type", "application/json")
             .build();
     }
 
@@ -42,39 +49,38 @@ public class EmbeddingService {
      * @return List of floats representing the embedding vector
      */
     public List<Float> generateEmbedding(String text) {
-        if (geminiApiKey == null || geminiApiKey.isEmpty()) {
-            log.warn("Gemini API key not configured for embeddings");
+        if (openRouterApiKey == null || openRouterApiKey.isEmpty() || openRouterApiKey.equals("YOUR_OPENROUTER_API_KEY_HERE")) {
+            log.warn("OpenRouter API key not configured for embeddings");
             return new ArrayList<>();
         }
 
         try {
-            String url = String.format("%s/%s:embedContent?key=%s",
-                geminiBaseUrl, embeddingModel, geminiApiKey);
-
+            // OpenRouter uses OpenAI-compatible embedding format
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("taskType", "RETRIEVAL_DOCUMENT");
-            
-            Map<String, Object> content = new HashMap<>();
-            content.put("parts", List.of(Map.of("text", text)));
-            requestBody.put("content", content);
+            requestBody.put("model", embeddingModel);
+            requestBody.put("input", text);
 
-            Map<String, Object> response = webClient.post()
-                .uri(url)
+            Map<String, Object> response = getWebClient().post()
+                .uri("/embeddings")
+                .header("Authorization", "Bearer " + openRouterApiKey)
                 .bodyValue(requestBody)
                 .retrieve()
                 .bodyToMono(Map.class)
                 .timeout(Duration.ofSeconds(10))
                 .block();
 
-            if (response != null && response.containsKey("embedding")) {
-                Map<String, Object> embedding = (Map<String, Object>) response.get("embedding");
-                if (embedding.containsKey("values")) {
-                    List<Double> values = (List<Double>) embedding.get("values");
-                    List<Float> floatValues = new ArrayList<>();
-                    for (Double value : values) {
-                        floatValues.add(value.floatValue());
+            if (response != null && response.containsKey("data")) {
+                List<Map<String, Object>> data = (List<Map<String, Object>>) response.get("data");
+                if (data != null && !data.isEmpty()) {
+                    Map<String, Object> embeddingData = data.get(0);
+                    if (embeddingData.containsKey("embedding")) {
+                        List<Double> values = (List<Double>) embeddingData.get("embedding");
+                        List<Float> floatValues = new ArrayList<>();
+                        for (Double value : values) {
+                            floatValues.add(value.floatValue());
+                        }
+                        return floatValues;
                     }
-                    return floatValues;
                 }
             }
 

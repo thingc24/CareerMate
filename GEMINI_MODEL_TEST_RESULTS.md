@@ -1,7 +1,34 @@
-# Kết quả Test Gemini API Models
+# Kết quả Test AI API Models
 
-## API Key đã test:
-- API Key: `AIzaSyC1IPPXNyTgxYvLNFLnJ8jfGa001S_F7kg`
+## ⚠️ ĐÃ CHUYỂN SANG OPENROUTER API
+
+Project đã chuyển từ Gemini API sang OpenRouter API.
+
+## OpenRouter API Configuration
+
+### API Key:
+- Cấu hình trong: `backend/src/main/resources/application.yml`
+- Environment variable: `OPENROUTER_API_KEY`
+
+### Model mặc định:
+- `google/gemini-2.0-flash-exp` (qua OpenRouter)
+
+### Test API Key:
+```powershell
+.\TEST_OPENROUTER_API.ps1
+```
+
+### Cập nhật API Key:
+```powershell
+.\CAP_NHAT_API_KEY.ps1 -ApiKey "YOUR_API_KEY"
+```
+
+---
+
+## Lịch sử (Gemini API - Đã ngừng sử dụng)
+
+### API Key đã test (cũ):
+- API Key: `AIzaSyC1IPPXNyTgxYvLNFLnJ8jfGa001S_F7kg` (không còn sử dụng)
 
 ## Kết quả test:
 

@@ -74,12 +74,12 @@ jwt:
   expiration: 86400000 # 24 hours in milliseconds
   refresh-expiration: 604800000 # 7 days in milliseconds
 
-# AI Service Configuration
+# AI Service Configuration - OpenRouter
 ai:
-  gemini:
-    api-key: ${GEMINI_API_KEY:AIzaSyC1IPPXNyTgxYvLNFLnJ8jfGa001S_F7kg}
-    model: gemini-2.5-flash # Tested and working model
-    base-url: https://generativelanguage.googleapis.com/v1beta
+  openrouter:
+    api-key: ${OPENROUTER_API_KEY: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}
+    model: ${OPENROUTER_MODEL:meta-llama/llama-3.2-3b-instruct:free} # OpenRouter model format: provider/model-name (free model)
+    base-url: https://openrouter.ai/api/v1
     timeout: 30000 # 30 seconds
   
   # Vector DB Configuration (for job matching)
