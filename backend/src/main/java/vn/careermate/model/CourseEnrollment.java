@@ -1,5 +1,7 @@
 package vn.careermate.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,6 +23,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class CourseEnrollment {
 
     @Id
@@ -29,9 +32,10 @@ public class CourseEnrollment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id", nullable = false)
+    @JsonIgnore
     private StudentProfile student;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
 

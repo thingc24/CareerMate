@@ -1,5 +1,7 @@
 package vn.careermate.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,26 +11,27 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "courses")
+@Table(name = "lessons")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@JsonIgnoreProperties({"modules", "hibernateLazyInitializer", "handler"})
-public class Course {
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+public class Lesson {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "module_id", nullable = false)
+    @JsonIgnore
+    private CourseModule module;
 
     @Column(nullable = false)
     private String title;
@@ -36,29 +39,26 @@ public class Course {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    private String instructor;
-
-    private String category;
-
     @Enumerated(EnumType.STRING)
-    private CourseLevel level;
-
-    @Column(name = "duration_hours")
-    private Integer durationHours;
-
-    @Column(precision = 10, scale = 2)
-    private BigDecimal price;
-
     @Builder.Default
-    @Column(name = "is_premium")
-    private Boolean isPremium = false;
+    private LessonType type = LessonType.VIDEO;
 
-    @Column(name = "thumbnail_url")
-    private String thumbnailUrl;
+    @Column(name = "video_url")
+    private String videoUrl;
 
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<CourseModule> modules;
+    @Column(name = "content", columnDefinition = "TEXT")
+    private String content;
+
+    @Column(name = "duration_minutes")
+    private Integer durationMinutes;
+
+    @Column(name = "order_index")
+    @Builder.Default
+    private Integer orderIndex = 0;
+
+    @Column(name = "is_preview")
+    @Builder.Default
+    private Boolean isPreview = false;
 
     @CreatedDate
     @Column(name = "created_at", updatable = false)
@@ -68,8 +68,7 @@ public class Course {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public enum CourseLevel {
-        BEGINNER, INTERMEDIATE, ADVANCED
+    public enum LessonType {
+        VIDEO, TEXT, QUIZ, ASSIGNMENT
     }
 }
-

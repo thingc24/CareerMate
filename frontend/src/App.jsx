@@ -22,6 +22,18 @@ import Quiz from './pages/student/Quiz';
 import Applications from './pages/student/Applications';
 import Profile from './pages/student/Profile';
 import ProfileView from './pages/student/ProfileView';
+import Articles from './pages/student/Articles';
+import ArticleDetail from './pages/student/ArticleDetail';
+import Companies from './pages/student/Companies';
+import CompanyDetail from './pages/student/CompanyDetail';
+import CVTemplates from './pages/student/CVTemplates';
+import CVTemplateEditor from './pages/student/CVTemplateEditor';
+import Courses from './pages/student/Courses';
+import CourseDetail from './pages/student/CourseDetail';
+import CoursePlayer from './pages/student/CoursePlayer';
+import Challenges from './pages/student/Challenges';
+import ChallengeDetail from './pages/student/ChallengeDetail';
+import Packages from './pages/student/Packages';
 
 // Recruiter Pages
 import RecruiterDashboard from './pages/recruiter/Dashboard';
@@ -82,6 +94,18 @@ function AppRoutes() {
                 <Route path="roadmap" element={<CareerRoadmap />} />
                 <Route path="quiz" element={<Quiz />} />
                 <Route path="applications" element={<Applications />} />
+                <Route path="articles" element={<Articles />} />
+                <Route path="articles/:id" element={<ArticleDetail />} />
+                <Route path="companies" element={<Companies />} />
+                <Route path="companies/:id" element={<CompanyDetail />} />
+                <Route path="cv-templates" element={<CVTemplates />} />
+                <Route path="cv-templates/:id" element={<CVTemplateEditor />} />
+                <Route path="courses" element={<Courses />} />
+                <Route path="courses/:id" element={<CourseDetail />} />
+                <Route path="courses/:courseId/learn/:enrollmentId/:lessonId" element={<CoursePlayer />} />
+                <Route path="challenges" element={<Challenges />} />
+                <Route path="challenges/:id" element={<ChallengeDetail />} />
+                <Route path="packages" element={<Packages />} />
                 <Route path="profile" element={<ProfileView />} />
                 <Route path="profile/view" element={<ProfileView />} />
                 <Route path="profile/edit" element={<Profile />} />

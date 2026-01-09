@@ -308,6 +308,255 @@ class CareerMateAPI {
     return response.data;
   }
 
+  // Articles APIs
+  async getArticles(keyword = '', category = '', page = 0, size = 20) {
+    const params = new URLSearchParams();
+    if (keyword) params.append('keyword', keyword);
+    if (category) params.append('category', category);
+    params.append('page', page);
+    params.append('size', size);
+    const response = await this.client.get(`/articles?${params.toString()}`);
+    return response.data;
+  }
+
+  async getArticle(articleId) {
+    const response = await this.client.get(`/articles/${articleId}`);
+    return response.data;
+  }
+
+  // Company APIs
+  async getCompanies(page = 0, size = 20, keyword = '') {
+    const params = new URLSearchParams();
+    params.append('page', page);
+    params.append('size', size);
+    if (keyword) params.append('keyword', keyword);
+    const response = await this.client.get(`/companies?${params.toString()}`);
+    return response.data;
+  }
+
+  async getCompany(companyId) {
+    const response = await this.client.get(`/companies/${companyId}`);
+    return response.data;
+  }
+
+  async getCompanyRatings(companyId) {
+    const response = await this.client.get(`/companies/${companyId}/ratings`);
+    return response.data;
+  }
+
+  async submitCompanyRating(companyId, rating) {
+    // Backend expects rating and reviewText as request params
+    const params = new URLSearchParams();
+    params.append('rating', rating.rating);
+    if (rating.comment) params.append('reviewText', rating.comment);
+    const response = await this.client.post(`/companies/${companyId}/ratings?${params.toString()}`);
+    return response.data;
+  }
+
+  // CV Template APIs
+  async getCVTemplates(category = '') {
+    const params = category ? `?category=${category}` : '';
+    const response = await this.client.get(`/cv-templates${params}`);
+    return response.data;
+  }
+
+  async getFreeCVTemplates() {
+    const response = await this.client.get('/cv-templates/free');
+    return response.data;
+  }
+
+  async getCVTemplate(templateId) {
+    const response = await this.client.get(`/cv-templates/${templateId}`);
+    return response.data;
+  }
+
+  async createCVFromTemplate(templateId, cvData) {
+    const response = await this.client.post(`/cv-templates/${templateId}/create-cv`, cvData);
+    return response.data;
+  }
+
+  // Course APIs
+  async getCourses(category = '') {
+    try {
+      const params = category ? `?category=${category}` : '';
+      console.log('API: Getting courses from /courses' + params);
+      const response = await this.client.get(`/courses${params}`);
+      console.log('API: Courses response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('API Error getting courses:', error);
+      throw error;
+    }
+  }
+
+  async getFreeCourses() {
+    try {
+      console.log('API: Getting free courses from /courses/free');
+      const response = await this.client.get('/courses/free');
+      console.log('API: Free courses response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('API Error getting free courses:', error);
+      throw error;
+    }
+  }
+
+  async getCourse(courseId) {
+    const response = await this.client.get(`/courses/${courseId}`);
+    return response.data;
+  }
+
+  async enrollCourse(courseId) {
+    const response = await this.client.post(`/courses/${courseId}/enroll`);
+    return response.data;
+  }
+
+  async getMyEnrollments() {
+    const response = await this.client.get('/courses/my-enrollments');
+    return response.data;
+  }
+
+  async getEnrollment(enrollmentId) {
+    const response = await this.client.get(`/courses/enrollments/${enrollmentId}`);
+    return response.data;
+  }
+
+  // Course Content APIs
+  async getCourseModules(courseId) {
+    try {
+      console.log('API: Getting course modules from /course-content/courses/' + courseId + '/modules');
+      const response = await this.client.get(`/course-content/courses/${courseId}/modules`);
+      console.log('API: Course modules response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('API Error getting course modules:', error);
+      throw error;
+    }
+  }
+
+  async getModuleLessons(moduleId) {
+    try {
+      console.log('API: Getting module lessons from /course-content/modules/' + moduleId + '/lessons');
+      const response = await this.client.get(`/course-content/modules/${moduleId}/lessons`);
+      console.log('API: Module lessons response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('API Error getting module lessons:', error);
+      throw error;
+    }
+  }
+
+  async getLesson(lessonId) {
+    try {
+      console.log('API: Getting lesson from /course-content/lessons/' + lessonId);
+      const response = await this.client.get(`/course-content/lessons/${lessonId}`);
+      console.log('API: Lesson response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('API Error getting lesson:', error);
+      throw error;
+    }
+  }
+
+  async getEnrollmentProgress(enrollmentId) {
+    try {
+      console.log('API: Getting enrollment progress from /course-content/enrollments/' + enrollmentId + '/progress');
+      const response = await this.client.get(`/course-content/enrollments/${enrollmentId}/progress`);
+      console.log('API: Enrollment progress response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('API Error getting enrollment progress:', error);
+      throw error;
+    }
+  }
+
+  async getLessonProgress(enrollmentId, lessonId) {
+    try {
+      console.log('API: Getting lesson progress from /course-content/enrollments/' + enrollmentId + '/lessons/' + lessonId + '/progress');
+      const response = await this.client.get(`/course-content/enrollments/${enrollmentId}/lessons/${lessonId}/progress`);
+      console.log('API: Lesson progress response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('API Error getting lesson progress:', error);
+      throw error;
+    }
+  }
+
+  async updateLessonProgress(enrollmentId, lessonId, currentTimeSeconds, completed) {
+    try {
+      console.log('API: Updating lesson progress:', { enrollmentId, lessonId, currentTimeSeconds, completed });
+      const body = {};
+      if (currentTimeSeconds !== undefined) body.currentTimeSeconds = currentTimeSeconds;
+      if (completed !== undefined) body.completed = completed;
+      const response = await this.client.put(`/course-content/enrollments/${enrollmentId}/lessons/${lessonId}/progress`, body);
+      console.log('API: Update lesson progress response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('API Error updating lesson progress:', error);
+      throw error;
+    }
+  }
+
+  async markLessonComplete(enrollmentId, lessonId) {
+    try {
+      console.log('API: Marking lesson complete:', { enrollmentId, lessonId });
+      const response = await this.client.post(`/course-content/enrollments/${enrollmentId}/lessons/${lessonId}/complete`);
+      console.log('API: Mark lesson complete response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('API Error marking lesson complete:', error);
+      throw error;
+    }
+  }
+
+  // Challenge APIs
+  async getChallenges(category = '') {
+    const params = category ? `?category=${category}` : '';
+    const response = await this.client.get(`/challenges${params}`);
+    return response.data;
+  }
+
+  async getChallenge(challengeId) {
+    const response = await this.client.get(`/challenges/${challengeId}`);
+    return response.data;
+  }
+
+  async joinChallenge(challengeId) {
+    const response = await this.client.post(`/challenges/${challengeId}/join`);
+    return response.data;
+  }
+
+  async completeChallenge(participationId) {
+    const response = await this.client.post(`/challenges/participations/${participationId}/complete`);
+    return response.data;
+  }
+
+  async getMyChallenges() {
+    const response = await this.client.get('/challenges/my-participations');
+    return response.data;
+  }
+
+  async getMyBadges() {
+    const response = await this.client.get('/challenges/my-badges');
+    return response.data;
+  }
+
+  // Package APIs
+  async getPackages() {
+    const response = await this.client.get('/packages');
+    return response.data;
+  }
+
+  async getMySubscription() {
+    const response = await this.client.get('/packages/my-subscription');
+    return response.data;
+  }
+
+  async subscribePackage(packageId) {
+    const response = await this.client.post(`/packages/${packageId}/subscribe`);
+    return response.data;
+  }
+
   async uploadCV(file) {
     const formData = new FormData();
     formData.append('file', file);

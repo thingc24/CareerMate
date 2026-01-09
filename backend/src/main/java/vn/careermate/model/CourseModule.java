@@ -1,5 +1,7 @@
 package vn.careermate.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,26 +11,28 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "courses")
+@Table(name = "course_modules")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@JsonIgnoreProperties({"modules", "hibernateLazyInitializer", "handler"})
-public class Course {
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+public class CourseModule {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "course_id", nullable = false)
+    @JsonIgnore
+    private Course course;
 
     @Column(nullable = false)
     private String title;
@@ -36,29 +40,12 @@ public class Course {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    private String instructor;
-
-    private String category;
-
-    @Enumerated(EnumType.STRING)
-    private CourseLevel level;
-
-    @Column(name = "duration_hours")
-    private Integer durationHours;
-
-    @Column(precision = 10, scale = 2)
-    private BigDecimal price;
-
+    @Column(name = "order_index")
     @Builder.Default
-    @Column(name = "is_premium")
-    private Boolean isPremium = false;
+    private Integer orderIndex = 0;
 
-    @Column(name = "thumbnail_url")
-    private String thumbnailUrl;
-
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<CourseModule> modules;
+    @OneToMany(mappedBy = "module", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private List<Lesson> lessons;
 
     @CreatedDate
     @Column(name = "created_at", updatable = false)
@@ -67,9 +54,4 @@ public class Course {
     @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    public enum CourseLevel {
-        BEGINNER, INTERMEDIATE, ADVANCED
-    }
 }
-

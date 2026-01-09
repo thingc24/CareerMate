@@ -1,6 +1,7 @@
 package vn.careermate.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,7 @@ import java.util.UUID;
 @RequestMapping("/courses")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
+@Slf4j
 public class CourseController {
 
     private final CourseService courseService;
@@ -24,12 +26,18 @@ public class CourseController {
     public ResponseEntity<List<Course>> getAllCourses(
             @RequestParam(required = false) String category
     ) {
-        return ResponseEntity.ok(courseService.getAllCourses(category));
+        log.info("GET /courses - category: {}", category);
+        List<Course> courses = courseService.getAllCourses(category);
+        log.info("GET /courses - Returning {} courses", courses.size());
+        return ResponseEntity.ok(courses);
     }
 
     @GetMapping("/free")
     public ResponseEntity<List<Course>> getFreeCourses() {
-        return ResponseEntity.ok(courseService.getFreeCourses());
+        log.info("GET /courses/free");
+        List<Course> courses = courseService.getFreeCourses();
+        log.info("GET /courses/free - Returning {} free courses", courses.size());
+        return ResponseEntity.ok(courses);
     }
 
     @GetMapping("/{courseId}")
@@ -46,7 +54,10 @@ public class CourseController {
     @GetMapping("/my-enrollments")
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<List<CourseEnrollment>> getMyEnrollments() {
-        return ResponseEntity.ok(courseService.getMyEnrollments());
+        log.info("GET /courses/my-enrollments");
+        List<CourseEnrollment> enrollments = courseService.getMyEnrollments();
+        log.info("GET /courses/my-enrollments - Returning {} enrollments", enrollments.size());
+        return ResponseEntity.ok(enrollments);
     }
 
     @PutMapping("/enrollments/{enrollmentId}/progress")
@@ -56,6 +67,12 @@ public class CourseController {
             @RequestParam BigDecimal progressPercentage
     ) {
         return ResponseEntity.ok(courseService.updateProgress(enrollmentId, progressPercentage));
+    }
+
+    @GetMapping("/enrollments/{enrollmentId}")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<CourseEnrollment> getEnrollment(@PathVariable UUID enrollmentId) {
+        return ResponseEntity.ok(courseService.getEnrollmentById(enrollmentId));
     }
 }
 

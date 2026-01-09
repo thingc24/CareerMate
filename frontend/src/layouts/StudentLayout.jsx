@@ -141,6 +141,17 @@ export default function StudentLayout({ children }) {
               <span>CV của tôi</span>
             </Link>
             <Link
+              to="/student/cv-templates"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                isActive('/student/cv-templates') || location.pathname.startsWith('/student/cv-templates/')
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <i className="fas fa-file-invoice text-sm" />
+              <span>Mẫu CV</span>
+            </Link>
+            <Link
               to="/student/roadmap"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                 isActive('/student/roadmap')
@@ -150,6 +161,61 @@ export default function StudentLayout({ children }) {
             >
               <i className="fas fa-route text-sm" />
               <span>Lộ trình nghề nghiệp</span>
+            </Link>
+            <Link
+              to="/student/articles"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                isActive('/student/articles')
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <i className="fas fa-newspaper text-sm" />
+              <span>Bài viết</span>
+            </Link>
+            <Link
+              to="/student/companies"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                isActive('/student/companies')
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <i className="fas fa-building text-sm" />
+              <span>Công ty</span>
+            </Link>
+            <Link
+              to="/student/courses"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                isActive('/student/courses')
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <i className="fas fa-graduation-cap text-sm" />
+              <span>Khóa học</span>
+            </Link>
+            <Link
+              to="/student/challenges"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                isActive('/student/challenges')
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <i className="fas fa-trophy text-sm" />
+              <span>Thử thách</span>
+            </Link>
+            <Link
+              to="/student/packages"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                isActive('/student/packages')
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <i className="fas fa-crown text-sm" />
+              <span>Premium</span>
             </Link>
             <Link
               to="/student/profile"
