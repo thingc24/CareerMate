@@ -17,7 +17,6 @@ import JobDetail from './pages/student/JobDetail';
 import JobRecommendations from './pages/student/JobRecommendations';
 import CVUpload from './pages/student/CVUpload';
 import CVAnalysis from './pages/student/CVAnalysis';
-import CareerCoach from './pages/student/CareerCoach';
 import CareerRoadmap from './pages/student/CareerRoadmap';
 import Quiz from './pages/student/Quiz';
 import Applications from './pages/student/Applications';
@@ -80,7 +79,6 @@ function AppRoutes() {
                 <Route path="recommendations" element={<JobRecommendations />} />
                 <Route path="cv" element={<CVUpload />} />
                 <Route path="cv/:cvId/analysis" element={<CVAnalysis />} />
-                <Route path="coach" element={<CareerCoach />} />
                 <Route path="roadmap" element={<CareerRoadmap />} />
                 <Route path="quiz" element={<Quiz />} />
                 <Route path="applications" element={<Applications />} />

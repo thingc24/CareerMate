@@ -131,13 +131,6 @@ export default function StudentDashboard() {
             delay={50}
           />
           <QuickActionCard
-            to="/student/coach"
-            icon="fas fa-robot"
-            label="AI Coach"
-            gradient="bg-gradient-to-br from-indigo-500 to-purple-600"
-            delay={100}
-          />
-          <QuickActionCard
             to="/student/roadmap"
             icon="fas fa-route"
             label="Lộ trình"

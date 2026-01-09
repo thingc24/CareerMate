@@ -133,17 +133,6 @@ export default function StudentLayout({ children }) {
               <span>CV của tôi</span>
             </Link>
             <Link
-              to="/student/coach"
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                isActive('/student/coach')
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <i className="fas fa-robot text-sm" />
-              <span>AI Coach</span>
-            </Link>
-            <Link
               to="/student/roadmap"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                 isActive('/student/roadmap')
