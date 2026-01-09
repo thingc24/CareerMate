@@ -85,7 +85,11 @@ export default function ProfileEdit() {
   const getAvatarUrl = (avatarUrl) => {
     if (!avatarUrl) return null;
     if (avatarUrl.startsWith('http')) return avatarUrl;
-    return `http://localhost:8080/${avatarUrl}`;
+    // Add /api prefix because context-path is /api
+    if (avatarUrl.startsWith('/api')) {
+      return `http://localhost:8080${avatarUrl}`;
+    }
+    return `http://localhost:8080/api${avatarUrl}`;
   };
 
   const handleAvatarChange = async (e) => {

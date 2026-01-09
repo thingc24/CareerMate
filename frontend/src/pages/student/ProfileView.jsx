@@ -73,7 +73,12 @@ export default function ProfileView() {
       if (profile.avatarUrl.startsWith('http')) {
         url = profile.avatarUrl;
       } else {
-        url = `http://localhost:8080/${profile.avatarUrl}`;
+        // Add /api prefix because context-path is /api
+        if (profile.avatarUrl.startsWith('/api')) {
+          url = `http://localhost:8080${profile.avatarUrl}`;
+        } else {
+          url = `http://localhost:8080/api${profile.avatarUrl}`;
+        }
       }
       // Add cache busting timestamp to force reload
       return url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();

@@ -37,9 +37,17 @@ export default function StudentLayout({ children }) {
       // Force refresh to get latest avatar
       const data = await api.getStudentProfile(true);
       if (data && !data.error && data.avatarUrl) {
-        let url = data.avatarUrl.startsWith('http') 
-          ? data.avatarUrl 
-          : `http://localhost:8080/${data.avatarUrl}`;
+        let url;
+        if (data.avatarUrl.startsWith('http')) {
+          url = data.avatarUrl;
+        } else {
+          // Add /api prefix because context-path is /api
+          if (data.avatarUrl.startsWith('/api')) {
+            url = `http://localhost:8080${data.avatarUrl}`;
+          } else {
+            url = `http://localhost:8080/api${data.avatarUrl}`;
+          }
+        }
         // Add cache busting timestamp to force reload
         url = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
         console.log('Loading avatar URL:', url);
