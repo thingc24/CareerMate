@@ -91,6 +91,39 @@ export default function AdminLayout({ children }) {
               <i className="fas fa-plus text-sm" />
               <span>Đăng bài viết</span>
             </Link>
+            <Link
+              to="/admin/cv-templates"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                isActive('/admin/cv-templates')
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <i className="fas fa-file-alt text-sm" />
+              <span>Quản lý CV Templates</span>
+            </Link>
+            <Link
+              to="/admin/packages"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                isActive('/admin/packages')
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <i className="fas fa-box text-sm" />
+              <span>Quản lý Gói Dịch Vụ</span>
+            </Link>
+            <Link
+              to="/admin/analytics"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                isActive('/admin/analytics')
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <i className="fas fa-chart-bar text-sm" />
+              <span>Phân Tích & Báo Cáo</span>
+            </Link>
           </nav>
 
           <div className="border-t border-slate-100 px-4 py-3 text-xs text-slate-500">

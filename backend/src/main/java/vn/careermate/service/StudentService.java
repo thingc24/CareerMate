@@ -384,6 +384,17 @@ public class StudentService {
             String normalizedLocation = (location != null && !location.trim().isEmpty()) ? location.trim() : null;
             
             Page<Job> jobs = jobRepository.searchJobs(normalizedKeyword, normalizedLocation, pageable);
+            
+            // Force load company for each job to avoid lazy loading issues
+            if (jobs != null && jobs.getContent() != null) {
+                jobs.getContent().forEach(job -> {
+                    if (job.getCompany() != null) {
+                        job.getCompany().getId(); // Force load
+                        job.getCompany().getName(); // Force load
+                    }
+                });
+            }
+            
             return jobs != null ? jobs : Page.empty(pageable);
         } catch (RuntimeException e) {
             log.error("Runtime error searching jobs: keyword={}, location={}, error={}", keyword, location, e.getMessage());

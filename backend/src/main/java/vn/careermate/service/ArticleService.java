@@ -27,7 +27,20 @@ public class ArticleService {
     private final RecruiterProfileRepository recruiterProfileRepository;
 
     public Page<Article> getPublishedArticles(String keyword, String category, Pageable pageable) {
-        return articleRepository.searchPublishedArticles(keyword, category, pageable);
+        Page<Article> articles = articleRepository.searchPublishedArticles(keyword, category, pageable);
+        
+        // Force load author for each article to avoid lazy loading issues
+        if (articles != null && articles.getContent() != null) {
+            articles.getContent().forEach(article -> {
+                if (article.getAuthor() != null) {
+                    article.getAuthor().getId(); // Force load
+                    article.getAuthor().getFullName(); // Force load
+                    article.getAuthor().getRole(); // Force load
+                }
+            });
+        }
+        
+        return articles;
     }
 
     public Page<Article> getPendingArticles(Pageable pageable) {
@@ -130,7 +143,9 @@ public class ArticleService {
         article.setApprovedBy(userRepository.findById(adminId).orElse(null));
         article.setApprovedAt(LocalDateTime.now());
         
-        return articleRepository.save(article);
+        article = articleRepository.save(article);
+        articleRepository.flush(); // Force flush to database immediately
+        return article;
     }
 
     @Transactional

@@ -18,7 +18,8 @@ public interface JobRepository extends JpaRepository<Job, UUID> {
     // Use native query to avoid bytea casting issues
     @Query(value = "SELECT * FROM jobs j WHERE j.status = 'ACTIVE' AND " +
            "(:location IS NULL OR LOWER(j.location::text) LIKE LOWER(CONCAT('%', :location, '%'))) AND " +
-           "(:keyword IS NULL OR LOWER(j.title::text) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(j.description::text) LIKE LOWER(CONCAT('%', :keyword, '%')))",
+           "(:keyword IS NULL OR LOWER(j.title::text) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(j.description::text) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "ORDER BY j.created_at DESC",
            nativeQuery = true)
     Page<Job> searchJobs(@Param("keyword") String keyword, 
                         @Param("location") String location, 
@@ -30,5 +31,7 @@ public interface JobRepository extends JpaRepository<Job, UUID> {
     Page<Job> findByRecruiterId(@Param("recruiterId") UUID recruiterId, Pageable pageable);
     
     long countByRecruiterIdAndStatus(UUID recruiterId, Job.JobStatus status);
+    
+    long countByStatus(Job.JobStatus status);
 }
 

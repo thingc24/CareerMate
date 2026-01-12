@@ -721,6 +721,99 @@ class CareerMateAPI {
     });
     return response.data;
   }
+
+  // Admin APIs
+  async getAdminDashboardStats() {
+    const response = await this.client.get('/admin/dashboard/stats');
+    return response.data;
+  }
+
+  async getAdminUsers(role = null, page = 0, size = 10) {
+    const params = new URLSearchParams({ page: page.toString(), size: size.toString() });
+    if (role) params.append('role', role);
+    const response = await this.client.get(`/admin/users?${params}`);
+    return response.data;
+  }
+
+  async updateUserStatus(userId, status) {
+    const response = await this.client.put(`/admin/users/${userId}/status?status=${status}`);
+    return response.data;
+  }
+
+  async getAdminJobs(status = null, page = 0, size = 10) {
+    const params = new URLSearchParams({ page: page.toString(), size: size.toString() });
+    if (status) params.append('status', status);
+    const response = await this.client.get(`/admin/jobs?${params}`);
+    return response.data;
+  }
+
+  async getPendingJobs(page = 0, size = 10) {
+    const response = await this.client.get(`/admin/jobs/pending?page=${page}&size=${size}`);
+    return response.data;
+  }
+
+  async approveJob(jobId) {
+    const response = await this.client.post(`/admin/jobs/${jobId}/approve`);
+    return response.data;
+  }
+
+  async rejectJob(jobId) {
+    const response = await this.client.post(`/admin/jobs/${jobId}/reject`);
+    return response.data;
+  }
+
+  // CV Templates Management
+  async getAdminCVTemplates() {
+    const response = await this.client.get('/admin/cv-templates');
+    return response.data;
+  }
+
+  async createCVTemplate(template) {
+    const response = await this.client.post('/admin/cv-templates', template);
+    return response.data;
+  }
+
+  async updateCVTemplate(templateId, template) {
+    const response = await this.client.put(`/admin/cv-templates/${templateId}`, template);
+    return response.data;
+  }
+
+  async deleteCVTemplate(templateId) {
+    const response = await this.client.delete(`/admin/cv-templates/${templateId}`);
+    return response.data;
+  }
+
+  // Packages Management
+  async getAdminPackages() {
+    const response = await this.client.get('/admin/packages');
+    return response.data;
+  }
+
+  async createPackage(packageData) {
+    const response = await this.client.post('/admin/packages', packageData);
+    return response.data;
+  }
+
+  async updatePackage(packageId, packageData) {
+    const response = await this.client.put(`/admin/packages/${packageId}`, packageData);
+    return response.data;
+  }
+
+  async deletePackage(packageId) {
+    const response = await this.client.delete(`/admin/packages/${packageId}`);
+    return response.data;
+  }
+
+  async getAdminSubscriptions() {
+    const response = await this.client.get('/admin/subscriptions');
+    return response.data;
+  }
+
+  // Analytics
+  async getAdminAnalytics() {
+    const response = await this.client.get('/admin/analytics');
+    return response.data;
+  }
 }
 
 // Export singleton instance

@@ -33,5 +33,25 @@ public class CVTemplateService {
         return templateRepository.findById(templateId)
                 .orElseThrow(() -> new RuntimeException("Template not found"));
     }
+
+    public CVTemplate createTemplate(CVTemplate template) {
+        return templateRepository.save(template);
+    }
+
+    public CVTemplate updateTemplate(UUID templateId, CVTemplate template) {
+        CVTemplate existing = getTemplateById(templateId);
+        existing.setName(template.getName());
+        existing.setDescription(template.getDescription());
+        existing.setTemplateHtml(template.getTemplateHtml());
+        existing.setTemplateCss(template.getTemplateCss());
+        existing.setCategory(template.getCategory());
+        existing.setIsPremium(template.getIsPremium());
+        existing.setPreviewImageUrl(template.getPreviewImageUrl());
+        return templateRepository.save(existing);
+    }
+
+    public void deleteTemplate(UUID templateId) {
+        templateRepository.deleteById(templateId);
+    }
 }
 

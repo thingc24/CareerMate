@@ -52,6 +52,9 @@ import UserManagement from './pages/admin/UserManagement';
 import JobManagement from './pages/admin/JobManagement';
 import AdminCreateArticle from './pages/admin/CreateArticle';
 import ArticleManagement from './pages/admin/ArticleManagement';
+import CVTemplatesManagement from './pages/admin/CVTemplatesManagement';
+import PackagesManagement from './pages/admin/PackagesManagement';
+import Analytics from './pages/admin/Analytics';
 
 // Context
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -157,6 +160,9 @@ function AppRoutes() {
                 <Route path="jobs" element={<JobManagement />} />
                 <Route path="articles" element={<ArticleManagement />} />
                 <Route path="articles/create" element={<AdminCreateArticle />} />
+                <Route path="cv-templates" element={<CVTemplatesManagement />} />
+                <Route path="packages" element={<PackagesManagement />} />
+                <Route path="analytics" element={<Analytics />} />
                 <Route path="" element={<Navigate to="dashboard" replace />} />
               </Routes>
             </AdminLayout>

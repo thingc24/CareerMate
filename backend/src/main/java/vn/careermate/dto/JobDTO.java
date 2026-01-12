@@ -31,8 +31,14 @@ public class JobDTO {
     private Integer applicationsCount;
     private LocalDateTime expiresAt;
     private LocalDateTime createdAt;
-    private CompanyDTO company;
+    private LocalDateTime updatedAt;
+    
+    // Company info
+    private UUID companyId;
+    private String companyName;
+    private String companyLogoUrl;
+    
+    // Skills
     private List<String> requiredSkills;
     private List<String> optionalSkills;
 }
-

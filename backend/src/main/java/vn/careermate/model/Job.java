@@ -39,9 +39,8 @@ public class Job {
     @JsonIgnore
     private RecruiterProfile recruiter;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "company_id", nullable = false)
-    @JsonIgnore
     private Company company;
 
     @Column(nullable = false)

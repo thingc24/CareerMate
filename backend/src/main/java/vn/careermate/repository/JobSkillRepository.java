@@ -10,5 +10,9 @@ import java.util.UUID;
 @Repository
 public interface JobSkillRepository extends JpaRepository<JobSkill, UUID> {
     List<JobSkill> findByJobId(UUID jobId);
+    
+    @org.springframework.data.jpa.repository.Query("SELECT js.skillName, COUNT(DISTINCT js.job.id) as jobCount " +
+           "FROM JobSkill js GROUP BY js.skillName ORDER BY jobCount DESC")
+    List<Object[]> findTopSkillsByJobCount();
 }
 

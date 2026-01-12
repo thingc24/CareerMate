@@ -79,5 +79,29 @@ public class PackageService {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
+
+    public Package createPackage(Package packageEntity) {
+        return packageRepository.save(packageEntity);
+    }
+
+    public Package updatePackage(UUID packageId, Package packageEntity) {
+        Package existing = packageRepository.findById(packageId)
+                .orElseThrow(() -> new RuntimeException("Package not found"));
+        existing.setName(packageEntity.getName());
+        existing.setDescription(packageEntity.getDescription());
+        existing.setPrice(packageEntity.getPrice());
+        existing.setDurationDays(packageEntity.getDurationDays());
+        existing.setFeatures(packageEntity.getFeatures());
+        existing.setIsActive(packageEntity.getIsActive());
+        return packageRepository.save(existing);
+    }
+
+    public void deletePackage(UUID packageId) {
+        packageRepository.deleteById(packageId);
+    }
+
+    public List<Subscription> getAllSubscriptions() {
+        return subscriptionRepository.findAll();
+    }
 }
 
