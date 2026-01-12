@@ -40,8 +40,29 @@ public class ArticleController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(articleService.getPublishedArticles(keyword, category, pageable));
+        try {
+            System.out.println("=== ArticleController.getPublishedArticles ===");
+            System.out.println("keyword: " + keyword + ", category: " + category + ", page: " + page + ", size: " + size);
+            
+            Pageable pageable = PageRequest.of(page, size);
+            System.out.println("Calling articleService.getPublishedArticles...");
+            
+            Page<Article> articles = articleService.getPublishedArticles(keyword, category, pageable);
+            
+            System.out.println("Articles retrieved: " + articles.getTotalElements() + " total, " + articles.getContent().size() + " in page");
+            
+            // Log first article if exists
+            if (!articles.getContent().isEmpty()) {
+                Article first = articles.getContent().get(0);
+                System.out.println("First article: id=" + first.getId() + ", title=" + first.getTitle() + ", author=" + (first.getAuthor() != null ? first.getAuthor().getFullName() : "null"));
+            }
+            
+            return ResponseEntity.ok(articles);
+        } catch (Exception e) {
+            System.err.println("ERROR in getPublishedArticles: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @GetMapping("/{articleId}")

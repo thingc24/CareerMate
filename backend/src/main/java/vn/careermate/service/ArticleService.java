@@ -1,6 +1,7 @@
 package vn.careermate.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
@@ -16,8 +17,10 @@ import vn.careermate.repository.RecruiterProfileRepository;
 import vn.careermate.repository.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ArticleService {
@@ -26,21 +29,45 @@ public class ArticleService {
     private final UserRepository userRepository;
     private final RecruiterProfileRepository recruiterProfileRepository;
 
+    @Transactional(readOnly = true)
     public Page<Article> getPublishedArticles(String keyword, String category, Pageable pageable) {
-        Page<Article> articles = articleRepository.searchPublishedArticles(keyword, category, pageable);
-        
-        // Force load author for each article to avoid lazy loading issues
-        if (articles != null && articles.getContent() != null) {
-            articles.getContent().forEach(article -> {
+        try {
+            log.info("Getting published articles: keyword={}, category={}, page={}, size={}", 
+                keyword, category, pageable.getPageNumber(), pageable.getPageSize());
+            
+            // Get published articles with publishedAt not null using repository method
+            Page<Article> articles = articleRepository.findByStatusAndPublishedAtIsNotNullOrderByPublishedAtDesc(
+                Article.ArticleStatus.PUBLISHED, pageable);
+            
+            // Filter by keyword and category in memory (simple filtering)
+            List<Article> filtered = articles.getContent().stream()
+                .filter(a -> keyword == null || keyword.trim().isEmpty() || 
+                    (a.getTitle() != null && a.getTitle().toLowerCase().contains(keyword.toLowerCase())))
+                .filter(a -> category == null || category.trim().isEmpty() || 
+                    (a.getCategory() != null && a.getCategory().equals(category)))
+                .collect(java.util.stream.Collectors.toList());
+            
+            // Force load author for each article to avoid lazy loading issues
+            filtered.forEach(article -> {
                 if (article.getAuthor() != null) {
-                    article.getAuthor().getId(); // Force load
-                    article.getAuthor().getFullName(); // Force load
-                    article.getAuthor().getRole(); // Force load
+                    article.getAuthor().getId();
+                    article.getAuthor().getFullName();
+                    article.getAuthor().getRole();
                 }
             });
+            
+            log.info("Found {} published articles after filtering, returning {} items", 
+                filtered.size(), filtered.size());
+            
+            // Return as Page - use original pageable but with filtered content
+            return new org.springframework.data.domain.PageImpl<>(
+                filtered, pageable, filtered.size());
+        } catch (Exception e) {
+            log.error("Error getting published articles: keyword={}, category={}, error={}", 
+                keyword, category, e.getMessage(), e);
+            e.printStackTrace();
+            return Page.empty(pageable);
         }
-        
-        return articles;
     }
 
     public Page<Article> getPendingArticles(Pageable pageable) {

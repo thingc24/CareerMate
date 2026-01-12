@@ -1,5 +1,6 @@
 package vn.careermate.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -49,6 +50,7 @@ public class Article {
 
     @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(columnDefinition = "text[]")
+    @JsonIgnore
     private List<String> tags;
 
     @Column(name = "thumbnail_url")
@@ -87,6 +89,7 @@ public class Article {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "approved_by")
+    @JsonIgnore
     private User approvedBy;
 
     @Column(name = "approved_at")

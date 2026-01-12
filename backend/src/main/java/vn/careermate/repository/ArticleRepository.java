@@ -19,15 +19,9 @@ public interface ArticleRepository extends JpaRepository<Article, UUID> {
     
     long countByStatus(Article.ArticleStatus status);
     
-    @Query("SELECT a FROM Article a WHERE a.status = 'PUBLISHED' " +
-           "AND a.publishedAt IS NOT NULL " +
-           "AND (:keyword IS NULL OR LOWER(a.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-           "OR LOWER(a.content) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-           "AND (:category IS NULL OR a.category = :category) " +
-           "ORDER BY a.publishedAt DESC")
-    Page<Article> searchPublishedArticles(@Param("keyword") String keyword, 
-                                          @Param("category") String category, 
-                                          Pageable pageable);
+    @Query("SELECT a FROM Article a WHERE a.status = :status AND a.publishedAt IS NOT NULL ORDER BY a.publishedAt DESC")
+    Page<Article> findByStatusAndPublishedAtIsNotNullOrderByPublishedAtDesc(
+        @Param("status") Article.ArticleStatus status, Pageable pageable);
     
     List<Article> findByAuthorId(UUID authorId);
 }
