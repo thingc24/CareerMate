@@ -25,6 +25,12 @@ export default function ChallengeDetail() {
       setChallenge(data);
     } catch (error) {
       console.error('Error loading challenge:', error);
+      if (error.response?.status === 404) {
+        alert('Thử thách không tồn tại hoặc đã bị xóa.');
+        navigate('/student/challenges');
+      } else {
+        alert('Lỗi khi tải thử thách: ' + (error.response?.data?.error || error.message));
+      }
     } finally {
       setLoading(false);
     }

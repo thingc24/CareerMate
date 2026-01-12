@@ -119,7 +119,38 @@ public class CourseContentService {
 
     @Transactional
     public LessonProgress markLessonComplete(UUID enrollmentId, UUID lessonId) {
-        return updateLessonProgress(enrollmentId, lessonId, null, true);
+        try {
+            // Verify enrollment exists and belongs to current user
+            CourseEnrollment enrollment = enrollmentRepository.findById(enrollmentId)
+                    .orElseThrow(() -> new RuntimeException("Enrollment not found"));
+            
+            UUID currentStudentId = getCurrentStudentId();
+            UUID enrollmentStudentId = enrollment.getStudent().getId();
+            if (!enrollmentStudentId.equals(currentStudentId)) {
+                throw new RuntimeException("Unauthorized access to enrollment");
+            }
+            
+            // Verify lesson exists (will throw exception if not found)
+            getLessonById(lessonId);
+            
+            // Update progress
+            LessonProgress progress = updateLessonProgress(enrollmentId, lessonId, null, true);
+            
+            // Verify it was marked complete
+            if (progress == null) {
+                throw new RuntimeException("Progress is null after update");
+            }
+            if (!progress.getIsCompleted()) {
+                throw new RuntimeException("Failed to mark lesson as complete - isCompleted is still false");
+            }
+            
+            return progress;
+        } catch (RuntimeException e) {
+            // Re-throw RuntimeException as-is
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Error marking lesson complete: " + e.getMessage(), e);
+        }
     }
 
     @Transactional(readOnly = true)

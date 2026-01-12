@@ -41,11 +41,14 @@ import PostJob from './pages/recruiter/PostJob';
 import Applicants from './pages/recruiter/Applicants';
 import RecruiterCompany from './pages/recruiter/Company';
 import RecruiterProfile from './pages/recruiter/Profile';
+import RecruiterCreateArticle from './pages/recruiter/CreateArticle';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
 import UserManagement from './pages/admin/UserManagement';
 import JobManagement from './pages/admin/JobManagement';
+import AdminCreateArticle from './pages/admin/CreateArticle';
+import ArticleManagement from './pages/admin/ArticleManagement';
 
 // Context
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -128,6 +131,7 @@ function AppRoutes() {
                 <Route path="applicants" element={<Applicants />} />
                 <Route path="company" element={<RecruiterCompany />} />
                 <Route path="profile" element={<RecruiterProfile />} />
+                <Route path="articles/create" element={<RecruiterCreateArticle />} />
                 <Route path="" element={<Navigate to="dashboard" replace />} />
               </Routes>
             </RecruiterLayout>
@@ -145,6 +149,8 @@ function AppRoutes() {
                 <Route path="dashboard" element={<AdminDashboard />} />
                 <Route path="users" element={<UserManagement />} />
                 <Route path="jobs" element={<JobManagement />} />
+                <Route path="articles" element={<ArticleManagement />} />
+                <Route path="articles/create" element={<AdminCreateArticle />} />
                 <Route path="" element={<Navigate to="dashboard" replace />} />
               </Routes>
             </AdminLayout>

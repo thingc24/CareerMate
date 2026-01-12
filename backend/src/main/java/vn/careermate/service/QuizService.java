@@ -1,24 +1,28 @@
 package vn.careermate.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.careermate.model.*;
 import vn.careermate.repository.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class QuizService {
 
     private final QuizRepository quizRepository;
     private final QuizAttemptRepository quizAttemptRepository;
+    private final QuizAnswerRepository quizAnswerRepository;
+    private final QuizQuestionRepository quizQuestionRepository;
     private final StudentProfileRepository studentProfileRepository;
-    private final AIService aiService;
 
     public List<Quiz> getAvailableQuizzes(String category) {
         if (category != null && !category.isEmpty()) {
@@ -51,48 +55,80 @@ public class QuizService {
 
     @Transactional
     public QuizAttempt submitQuiz(UUID attemptId, Map<UUID, String> answers) {
-        QuizAttempt attempt = quizAttemptRepository.findById(attemptId)
-                .orElseThrow(() -> new RuntimeException("Quiz attempt not found"));
+        try {
+            QuizAttempt attempt = quizAttemptRepository.findById(attemptId)
+                    .orElseThrow(() -> new RuntimeException("Quiz attempt not found"));
 
-        int correctAnswers = 0;
-        int totalScore = 0;
+            // Load quiz with questions eagerly to avoid lazy loading issues
+            Quiz quiz = quizRepository.findById(attempt.getQuiz().getId())
+                    .orElseThrow(() -> new RuntimeException("Quiz not found"));
+            
+            // Load questions
+            List<QuizQuestion> questions = quizQuestionRepository.findByQuizIdOrderByOrderIndex(quiz.getId());
+            quiz.setQuestions(questions);
+            attempt.setQuiz(quiz);
 
-        // Evaluate answers
-        for (Map.Entry<UUID, String> entry : answers.entrySet()) {
-            UUID questionId = entry.getKey();
-            String answer = entry.getValue();
+            int correctAnswers = 0;
+            int totalScore = 0;
+            List<QuizAnswer> quizAnswers = new ArrayList<>();
 
-            // Find question and check answer
-            QuizQuestion question = attempt.getQuiz().getQuestions().stream()
-                    .filter(q -> q.getId().equals(questionId))
-                    .findFirst()
-                    .orElse(null);
+            // Evaluate answers
+            for (Map.Entry<UUID, String> entry : answers.entrySet()) {
+                UUID questionId = entry.getKey();
+                String answer = entry.getValue();
 
-            if (question != null) {
-                boolean isCorrect = question.getCorrectAnswer() != null &&
-                        question.getCorrectAnswer().equalsIgnoreCase(answer.trim());
+                // Find question
+                QuizQuestion question = questions.stream()
+                        .filter(q -> q.getId().equals(questionId))
+                        .findFirst()
+                        .orElse(null);
 
-                QuizAnswer quizAnswer = QuizAnswer.builder()
-                        .attempt(attempt)
-                        .question(question)
-                        .answer(answer)
-                        .isCorrect(isCorrect)
-                        .pointsEarned(isCorrect ? question.getPoints() : 0)
-                        .build();
+                if (question != null) {
+                    boolean isCorrect = question.getCorrectAnswer() != null &&
+                            question.getCorrectAnswer().equalsIgnoreCase(answer.trim());
 
-                if (isCorrect) {
-                    correctAnswers++;
-                    totalScore += question.getPoints();
+                    QuizAnswer quizAnswer = QuizAnswer.builder()
+                            .attempt(attempt)
+                            .question(question)
+                            .answer(answer)
+                            .isCorrect(isCorrect)
+                            .pointsEarned(isCorrect ? (question.getPoints() != null ? question.getPoints() : 1) : 0)
+                            .build();
+
+                    quizAnswers.add(quizAnswer);
+
+                    if (isCorrect) {
+                        correctAnswers++;
+                        totalScore += (question.getPoints() != null ? question.getPoints() : 1);
+                    }
+                } else {
+                    log.warn("Question {} not found in quiz {}", questionId, quiz.getId());
                 }
             }
+
+            // Save all answers first
+            if (!quizAnswers.isEmpty()) {
+                quizAnswerRepository.saveAll(quizAnswers);
+                log.info("Saved {} quiz answers for attempt {}", quizAnswers.size(), attemptId);
+            } else {
+                log.warn("No quiz answers to save for attempt {}", attemptId);
+            }
+
+            // Update attempt
+            attempt.setCorrectAnswers(correctAnswers);
+            attempt.setScore(totalScore);
+            attempt.setStatus(QuizAttempt.AttemptStatus.COMPLETED);
+            attempt.setCompletedAt(LocalDateTime.now());
+            attempt.setAnswers(quizAnswers);
+
+            QuizAttempt savedAttempt = quizAttemptRepository.save(attempt);
+            log.info("Quiz attempt {} submitted successfully. Score: {}/{}", attemptId, correctAnswers, attempt.getTotalQuestions());
+            
+            return savedAttempt;
+        } catch (Exception e) {
+            log.error("Error submitting quiz", e);
+            throw new RuntimeException("Error submitting quiz: " + e.getMessage(), e);
         }
-
-        attempt.setCorrectAnswers(correctAnswers);
-        attempt.setScore(totalScore);
-        attempt.setStatus(QuizAttempt.AttemptStatus.COMPLETED);
-        attempt.setCompletedAt(LocalDateTime.now());
-
-        return quizAttemptRepository.save(attempt);
     }
 
     public List<QuizAttempt> getStudentAttempts(UUID studentId) {

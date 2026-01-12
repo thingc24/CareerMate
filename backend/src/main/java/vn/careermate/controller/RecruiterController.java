@@ -22,13 +22,13 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/recruiters")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('RECRUITER') or hasRole('ADMIN')")
 @CrossOrigin(origins = "*")
 public class RecruiterController {
 
     private final RecruiterService recruiterService;
 
     @PostMapping("/jobs")
+    @PreAuthorize("hasRole('RECRUITER') or hasRole('ADMIN')")
     public ResponseEntity<Job> createJob(
             @RequestBody Job job,
             @RequestParam(required = false) List<String> requiredSkills,
@@ -100,6 +100,16 @@ public class RecruiterController {
     @PostMapping("/company")
     public ResponseEntity<Company> createOrUpdateCompany(@RequestBody Company company) {
         return ResponseEntity.ok(recruiterService.createOrUpdateCompany(company));
+    }
+
+    @GetMapping("/by-user/{userId}")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<RecruiterProfile> getRecruiterByUserId(@PathVariable UUID userId) {
+        RecruiterProfile profile = recruiterService.getRecruiterByUserId(userId);
+        if (profile == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(profile);
     }
 }
 

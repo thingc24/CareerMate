@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
+import ArticleCard from '../../components/ArticleCard';
 
 export default function Articles() {
   const [articles, setArticles] = useState([]);
@@ -88,49 +89,20 @@ export default function Articles() {
         </div>
       </div>
 
-      {/* Articles Grid */}
+      {/* Articles Feed (Facebook style) */}
       {articles.length === 0 ? (
         <div className="card p-12 text-center">
           <i className="fas fa-newspaper text-gray-400 text-6xl mb-4"></i>
           <p className="text-gray-600 text-lg">Không tìm thấy bài viết nào</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="max-w-2xl mx-auto space-y-4">
           {articles.map((article) => (
-            <Link
+            <ArticleCard
               key={article.id}
-              to={`/student/articles/${article.id}`}
-              className="card p-6 hover:shadow-lg transition-all duration-300 group"
-            >
-              {article.thumbnailUrl && (
-                <div className="mb-4 overflow-hidden rounded-lg">
-                  <img
-                    src={article.thumbnailUrl.startsWith('http') 
-                      ? article.thumbnailUrl 
-                      : `http://localhost:8080/api${article.thumbnailUrl}`}
-                    alt={article.title}
-                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-              )}
-              <div className="mb-2">
-                <span className="badge badge-info text-xs">
-                  {categories.find(c => c.value === article.category)?.label || article.category}
-                </span>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
-                {article.title}
-              </h3>
-              <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                {article.excerpt || article.summary || (article.content ? article.content.substring(0, 150) + '...' : '')}
-              </p>
-              <div className="flex items-center justify-between text-sm text-gray-500">
-                <span>{formatDate(article.publishedAt || article.createdAt)}</span>
-                <span className="group-hover:text-blue-600 transition-colors">
-                  Đọc thêm <i className="fas fa-arrow-right ml-1"></i>
-                </span>
-              </div>
-            </Link>
+              article={article}
+              onUpdate={() => loadArticles()}
+            />
           ))}
         </div>
       )}

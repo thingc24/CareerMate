@@ -42,6 +42,10 @@ public class RecruiterService {
                 });
     }
 
+    public RecruiterProfile getRecruiterByUserId(UUID userId) {
+        return recruiterProfileRepository.findByUserId(userId).orElse(null);
+    }
+
     @Transactional
     public Job createJob(Job job, List<String> requiredSkills, List<String> optionalSkills) {
         RecruiterProfile recruiter = getCurrentRecruiterProfile();

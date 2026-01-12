@@ -50,7 +50,11 @@ public class QuizController {
             @PathVariable UUID attemptId,
             @RequestBody Map<UUID, String> answers
     ) {
-        return ResponseEntity.ok(quizService.submitQuiz(attemptId, answers));
+        try {
+            return ResponseEntity.ok(quizService.submitQuiz(attemptId, answers));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @GetMapping("/attempts")

@@ -91,6 +91,17 @@ export default function RecruiterLayout({ children }) {
               <i className="fas fa-user-tie text-sm" />
               <span>Hồ sơ nhà tuyển dụng</span>
             </Link>
+            <Link
+              to="/recruiter/articles/create"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                isActive('/recruiter/articles/create')
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <i className="fas fa-newspaper text-sm" />
+              <span>Đăng bài viết</span>
+            </Link>
           </nav>
 
           <div className="border-t border-slate-100 px-4 py-3 text-xs text-slate-500">

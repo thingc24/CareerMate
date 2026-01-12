@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import vn.careermate.model.Badge;
 import vn.careermate.model.Challenge;
 import vn.careermate.model.ChallengeParticipation;
 import vn.careermate.service.ChallengeService;
@@ -28,7 +29,15 @@ public class ChallengeController {
 
     @GetMapping("/{challengeId}")
     public ResponseEntity<Challenge> getChallenge(@PathVariable UUID challengeId) {
-        return ResponseEntity.ok(challengeService.getChallengeById(challengeId));
+        try {
+            Challenge challenge = challengeService.getChallengeById(challengeId);
+            return ResponseEntity.ok(challenge);
+        } catch (RuntimeException e) {
+            if (e.getMessage() != null && e.getMessage().contains("not found")) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @PostMapping("/{challengeId}/join")
@@ -47,6 +56,12 @@ public class ChallengeController {
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<List<ChallengeParticipation>> getMyParticipations() {
         return ResponseEntity.ok(challengeService.getMyParticipations());
+    }
+
+    @GetMapping("/my-badges")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<List<Badge>> getMyBadges() {
+        return ResponseEntity.ok(challengeService.getMyBadges());
     }
 }
 

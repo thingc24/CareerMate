@@ -34,8 +34,8 @@ public class Challenge {
 
     private String difficulty;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "badge_id")
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "badge_id", nullable = true)
     private Badge badge;
 
     @Column(name = "start_date")

@@ -6,6 +6,7 @@ export default function ArticleDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [article, setArticle] = useState(null);
+  const [authorName, setAuthorName] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -17,6 +18,22 @@ export default function ArticleDetail() {
       setLoading(true);
       const data = await api.getArticle(id);
       setArticle(data);
+      
+      // Get author display name
+      try {
+        const authorDisplayName = await api.getAuthorDisplayName(id);
+        setAuthorName(authorDisplayName);
+      } catch (error) {
+        console.error('Error loading author name:', error);
+        // Fallback to author fullName if API fails
+        if (data.author) {
+          if (data.author.role === 'ADMIN') {
+            setAuthorName(`Admin ${data.author.fullName}`);
+          } else {
+            setAuthorName(data.author.fullName);
+          }
+        }
+      }
     } catch (error) {
       console.error('Error loading article:', error);
     } finally {
@@ -85,10 +102,10 @@ export default function ArticleDetail() {
             <i className="fas fa-calendar mr-2"></i>
             {formatDate(article.publishedAt || article.createdAt)}
           </span>
-          {article.author && (
+          {authorName && (
             <span>
               <i className="fas fa-user mr-2"></i>
-              {article.author}
+              {authorName}
             </span>
           )}
         </div>

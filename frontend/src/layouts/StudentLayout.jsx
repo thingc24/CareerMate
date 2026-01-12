@@ -21,10 +21,11 @@ export default function StudentLayout({ children }) {
     
     window.addEventListener('avatarUpdated', handleAvatarUpdate);
     
-    // Reload avatar every 5 seconds to catch updates (or use event listener)
+    // Only reload avatar every 30 seconds (reduced from 5 seconds to save resources)
+    // Event listener should handle most updates
     const interval = setInterval(() => {
       loadAvatar();
-    }, 5000);
+    }, 30000);
     
     return () => {
       clearInterval(interval);

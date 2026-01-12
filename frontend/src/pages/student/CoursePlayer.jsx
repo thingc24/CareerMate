@@ -165,26 +165,106 @@ export default function CoursePlayer() {
     }
   };
 
-  const handleSubmitQuiz = () => {
-    if (!quizData || !quizData.questions) return;
-    
-    let score = 0;
-    quizData.questions.forEach((q) => {
-      if (quizAnswers[q.id] === q.correctAnswer) {
-        score++;
+  const handleSubmitQuiz = async () => {
+    try {
+      console.log('=== QUIZ SUBMISSION STARTED ===');
+      console.log('Quiz data:', quizData);
+      console.log('Quiz answers:', quizAnswers);
+      console.log('Current lesson:', currentLesson);
+      console.log('Enrollment ID:', enrollmentId);
+      
+      if (!quizData || !quizData.questions) {
+        console.error('No quiz data or questions!');
+        alert('Lỗi: Không có dữ liệu quiz!');
+        return;
       }
-    });
-    
-    const totalQuestions = quizData.questions.length;
-    const percentage = (score / totalQuestions) * 100;
-    const passed = percentage >= 50; // Cần đạt 50% trở lên
-    
-    setQuizScore(score);
-    setQuizSubmitted(true);
-    setQuizPassed(passed);
-    
-    if (!passed) {
-      alert(`Bạn đạt ${score}/${totalQuestions} câu (${Math.round(percentage)}%). Cần đạt ít nhất 50% để qua bài tiếp theo. Vui lòng làm lại!`);
+      
+      if (!quizData.questions || quizData.questions.length === 0) {
+        console.error('No questions in quiz data!');
+        alert('Lỗi: Quiz không có câu hỏi!');
+        return;
+      }
+      
+      // Calculate score locally first
+      let score = 0;
+      try {
+        console.log('Calculating score...');
+        quizData.questions.forEach((q, index) => {
+          console.log(`Question ${index + 1}:`, {
+            id: q.id,
+            question: q.question,
+            userAnswer: quizAnswers[q.id],
+            correctAnswer: q.correctAnswer,
+            match: quizAnswers[q.id] === q.correctAnswer
+          });
+          if (quizAnswers[q.id] === q.correctAnswer) {
+            score++;
+          }
+        });
+        console.log('Total score:', score);
+      } catch (error) {
+        console.error('Error calculating score:', error);
+        alert('Lỗi khi tính điểm: ' + error.message);
+        return;
+      }
+      
+      const totalQuestions = quizData.questions.length;
+      const percentage = (score / totalQuestions) * 100;
+      const passed = percentage >= 50; // Cần đạt 50% trở lên
+      
+      console.log('Quiz result:', { score, totalQuestions, percentage, passed });
+      
+      // Update UI first
+      setQuizScore(score);
+      setQuizSubmitted(true);
+      setQuizPassed(passed);
+      
+      // Mark lesson as complete if passed - only call one API
+      if (passed && currentLesson) {
+        try {
+          console.log('=== MARKING LESSON COMPLETE ===');
+          console.log('Enrollment ID:', enrollmentId);
+          console.log('Lesson ID:', currentLesson.id);
+          const result = await api.markLessonComplete(enrollmentId, currentLesson.id);
+          console.log('Lesson marked complete successfully:', result);
+          console.log('Progress completed:', result?.isCompleted);
+          
+          alert(`Chúc mừng! Bạn đạt ${score}/${totalQuestions} câu (${Math.round(percentage)}%). Bài học đã được đánh dấu hoàn thành!`);
+          // Reload data to update progress
+          setTimeout(() => {
+            loadData();
+          }, 500);
+        } catch (error) {
+          console.error('=== ERROR MARKING LESSON COMPLETE ===');
+          console.error('Error:', error);
+          console.error('Error message:', error.message);
+          console.error('Error response:', error.response);
+          console.error('Error status:', error.response?.status);
+          console.error('Error data:', error.response?.data);
+          console.error('Error stack:', error.stack);
+          
+          // Still show success for quiz submission, but warn about completion
+          alert(`Bạn đạt ${score}/${totalQuestions} câu (${Math.round(percentage)}%).\n\nQuiz đã được nộp thành công, nhưng có lỗi khi đánh dấu bài học hoàn thành. Vui lòng thử lại sau.`);
+          
+          // Try to reload anyway
+          setTimeout(() => {
+            loadData();
+          }, 500);
+        }
+      } else {
+        // Quiz not passed
+        console.log('Quiz not passed, showing message');
+        alert(`Bạn đạt ${score}/${totalQuestions} câu (${Math.round(percentage)}%). Cần đạt ít nhất 50% để qua bài tiếp theo. Vui lòng làm lại!`);
+      }
+      
+      console.log('=== QUIZ SUBMISSION COMPLETED ===');
+    } catch (error) {
+      console.error('=== UNEXPECTED ERROR IN handleSubmitQuiz ===');
+      console.error('Error:', error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      alert('Lỗi không mong đợi: ' + (error.message || 'Lỗi không xác định'));
+      throw error; // Re-throw để button handler có thể catch
     }
   };
 
@@ -390,7 +470,24 @@ export default function CoursePlayer() {
                   ))}
                   <div className="sticky bottom-0 bg-black pt-6 pb-4 mt-8 border-t border-gray-700">
                     <button
-                      onClick={handleSubmitQuiz}
+                      onClick={async (e) => {
+                        try {
+                          console.log('=== BUTTON CLICKED ===');
+                          console.log('Event:', e);
+                          console.log('Quiz answers count:', Object.keys(quizAnswers).length);
+                          console.log('Questions count:', quizData.questions?.length || 0);
+                          console.log('Button disabled?', Object.keys(quizAnswers).length !== (quizData.questions?.length || 0));
+                          e.preventDefault();
+                          e.stopPropagation();
+                          await handleSubmitQuiz();
+                        } catch (error) {
+                          console.error('=== ERROR IN BUTTON CLICK HANDLER ===');
+                          console.error('Error:', error);
+                          console.error('Error message:', error.message);
+                          console.error('Error stack:', error.stack);
+                          alert('Lỗi khi xử lý: ' + (error.message || 'Lỗi không xác định'));
+                        }
+                      }}
                       disabled={Object.keys(quizAnswers).length !== (quizData.questions?.length || 0)}
                       className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-4 px-6 rounded-lg text-lg transition-colors"
                     >

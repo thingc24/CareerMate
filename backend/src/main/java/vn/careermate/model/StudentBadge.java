@@ -13,38 +13,30 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "quiz_answers")
+@Table(name = "student_badges", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"student_id", "badge_id"})
+})
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-public class QuizAnswer {
+public class StudentBadge {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "attempt_id", nullable = false)
+    @JoinColumn(name = "student_id", nullable = false)
     @JsonIgnore
-    private QuizAttempt attempt;
+    private StudentProfile student;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "question_id", nullable = false)
-    private QuizQuestion question;
-
-    @Column(name = "answer", columnDefinition = "TEXT")
-    private String answer;
-
-    @Column(name = "is_correct")
-    private Boolean isCorrect;
-
-    @Column(name = "points_earned")
-    private Integer pointsEarned;
+    @JoinColumn(name = "badge_id", nullable = false)
+    private Badge badge;
 
     @CreatedDate
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "earned_at", updatable = false)
+    private LocalDateTime earnedAt;
 }
-

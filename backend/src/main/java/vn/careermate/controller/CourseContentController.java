@@ -91,11 +91,15 @@ public class CourseContentController {
         log.info("POST /course-content/enrollments/{}/lessons/{}/complete", enrollmentId, lessonId);
         try {
             LessonProgress progress = contentService.markLessonComplete(enrollmentId, lessonId);
-            log.info("POST /course-content/enrollments/{}/lessons/{}/complete - Success", enrollmentId, lessonId);
+            log.info("POST /course-content/enrollments/{}/lessons/{}/complete - Success. Progress ID: {}, Completed: {}", 
+                    enrollmentId, lessonId, progress.getId(), progress.getIsCompleted());
             return ResponseEntity.ok(progress);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.error("POST /course-content/enrollments/{}/lessons/{}/complete - Error: {}", enrollmentId, lessonId, e.getMessage(), e);
-            throw e;
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            log.error("POST /course-content/enrollments/{}/lessons/{}/complete - Unexpected error: {}", enrollmentId, lessonId, e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
         }
     }
 }

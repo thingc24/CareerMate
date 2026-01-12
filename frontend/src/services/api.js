@@ -170,21 +170,27 @@ class CareerMateAPI {
       if (!this.token) {
         throw new Error('No authentication token found. Please login first.');
       }
-      console.log('Getting student profile with token:', this.token.substring(0, 20) + '...');
+      // Only log in development mode to reduce console noise
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Getting student profile with token:', this.token.substring(0, 20) + '...');
+      }
       // Add cache busting parameter if force refresh
       const url = forceRefresh 
         ? `/students/profile?t=${Date.now()}`
         : '/students/profile';
       const response = await this.client.get(url);
-      console.log('=== PROFILE API RESPONSE ===');
-      console.log('Full response:', response.data);
-      console.log('Profile details:', {
-        gender: response.data?.gender,
-        address: response.data?.address,
-        city: response.data?.city,
-        university: response.data?.university,
-        major: response.data?.major
-      });
+      // Only log in development mode
+      if (process.env.NODE_ENV === 'development') {
+        console.log('=== PROFILE API RESPONSE ===');
+        console.log('Full response:', response.data);
+        console.log('Profile details:', {
+          gender: response.data?.gender,
+          address: response.data?.address,
+          city: response.data?.city,
+          university: response.data?.university,
+          major: response.data?.major
+        });
+      }
       
       // Check if response has error
       if (response.data && response.data.error) {
@@ -322,6 +328,79 @@ class CareerMateAPI {
   async getArticle(articleId) {
     const response = await this.client.get(`/articles/${articleId}`);
     return response.data;
+  }
+
+  async createArticle(articleData) {
+    const response = await this.client.post('/articles', articleData);
+    return response.data;
+  }
+
+  async getAuthorDisplayName(articleId) {
+    const response = await this.client.get(`/articles/${articleId}/author-name`);
+    return response.data;
+  }
+
+  async getPendingArticles(page = 0, size = 10) {
+    const response = await this.client.get(`/articles/pending?page=${page}&size=${size}`);
+    return response.data;
+  }
+
+  async getAllArticles(status = '', page = 0, size = 10) {
+    const params = new URLSearchParams();
+    if (status) params.append('status', status);
+    params.append('page', page);
+    params.append('size', size);
+    const response = await this.client.get(`/articles/all?${params.toString()}`);
+    return response.data;
+  }
+
+  async approveArticle(articleId) {
+    const response = await this.client.post(`/articles/${articleId}/approve`);
+    return response.data;
+  }
+
+  async rejectArticle(articleId) {
+    const response = await this.client.post(`/articles/${articleId}/reject`);
+    return response.data;
+  }
+
+  // Article Reactions
+  async toggleArticleReaction(articleId, reactionType) {
+    const response = await this.client.post(`/articles/${articleId}/reactions?reactionType=${reactionType}`);
+    return response.data;
+  }
+
+  async getArticleReactionCounts(articleId) {
+    const response = await this.client.get(`/articles/${articleId}/reactions`);
+    return response.data;
+  }
+
+  async getMyArticleReaction(articleId) {
+    const response = await this.client.get(`/articles/${articleId}/reactions/my`);
+    return response.data;
+  }
+
+  // Article Comments
+  async getArticleComments(articleId) {
+    const response = await this.client.get(`/articles/${articleId}/comments`);
+    return response.data;
+  }
+
+  async createArticleComment(articleId, content, parentCommentId = null) {
+    const response = await this.client.post(`/articles/${articleId}/comments`, {
+      content,
+      parentCommentId
+    });
+    return response.data;
+  }
+
+  async updateArticleComment(commentId, content) {
+    const response = await this.client.put(`/articles/comments/${commentId}`, { content });
+    return response.data;
+  }
+
+  async deleteArticleComment(commentId) {
+    await this.client.delete(`/articles/comments/${commentId}`);
   }
 
   // Company APIs

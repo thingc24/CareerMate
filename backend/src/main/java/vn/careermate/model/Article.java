@@ -32,7 +32,7 @@ public class Article {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
 
@@ -61,6 +61,14 @@ public class Article {
     @Builder.Default
     @Column(name = "likes_count")
     private Integer likesCount = 0;
+
+    @Builder.Default
+    @Column(name = "reactions_count")
+    private Integer reactionsCount = 0;
+
+    @Builder.Default
+    @Column(name = "comments_count")
+    private Integer commentsCount = 0;
 
     @Enumerated(EnumType.STRING)
     @Builder.Default

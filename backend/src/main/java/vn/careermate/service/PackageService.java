@@ -37,8 +37,13 @@ public class PackageService {
     }
 
     public Optional<Subscription> getMyCurrentSubscription() {
-        User user = getCurrentUser();
-        return getCurrentSubscription(user.getId());
+        try {
+            User user = getCurrentUser();
+            return getCurrentSubscription(user.getId());
+        } catch (RuntimeException e) {
+            // If user not found or not authenticated, return empty
+            return Optional.empty();
+        }
     }
 
     @Transactional

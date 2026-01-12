@@ -15,12 +15,16 @@ import java.util.UUID;
 public interface ArticleRepository extends JpaRepository<Article, UUID> {
     Page<Article> findByStatus(Article.ArticleStatus status, Pageable pageable);
     
-    @Query("SELECT a FROM Article a WHERE a.status = 'PUBLISHED' AND " +
-           "(:category IS NULL OR a.category = :category) AND " +
-           "(:keyword IS NULL OR a.title LIKE %:keyword% OR a.content LIKE %:keyword%)")
-    Page<Article> searchPublishedArticles(@Param("keyword") String keyword,
-                                         @Param("category") String category,
-                                         Pageable pageable);
+    Page<Article> findByStatusOrderByCreatedAtDesc(Article.ArticleStatus status, Pageable pageable);
+    
+    @Query("SELECT a FROM Article a WHERE a.status = 'PUBLISHED' " +
+           "AND (:keyword IS NULL OR LOWER(a.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "OR LOWER(a.content) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "AND (:category IS NULL OR a.category = :category) " +
+           "ORDER BY a.publishedAt DESC")
+    Page<Article> searchPublishedArticles(@Param("keyword") String keyword, 
+                                          @Param("category") String category, 
+                                          Pageable pageable);
     
     List<Article> findByAuthorId(UUID authorId);
 }
