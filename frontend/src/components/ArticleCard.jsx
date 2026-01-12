@@ -2,7 +2,79 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
-export default function ArticleCard({ article, onUpdate }) {
+// Component for rendering nested replies recursively
+function ReplyComment({ reply, onReply, replyingTo, setReplyingTo, replyContent, setReplyContent, formatDate, depth = 0 }) {
+  const maxDepth = 10; // Prevent infinite nesting in UI (safety limit)
+  const hasNestedReplies = reply.replies && reply.replies.length > 0;
+
+  return (
+    <div className="flex gap-2">
+      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+        {reply.user?.fullName?.charAt(0).toUpperCase() || 'U'}
+      </div>
+      <div className="flex-1">
+        <div className="bg-gray-50 rounded-lg p-2">
+          <p className="font-semibold text-xs text-gray-900">
+            {reply.user?.fullName || 'Người dùng'}
+          </p>
+          <p className="text-gray-700 text-xs">{reply.content}</p>
+        </div>
+        <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+          <span>{formatDate(reply.createdAt)}</span>
+          {depth < maxDepth && (
+            <button
+              onClick={() => setReplyingTo(replyingTo === reply.id ? null : reply.id)}
+              className="hover:text-blue-600"
+            >
+              Trả lời
+            </button>
+          )}
+        </div>
+
+        {/* Reply Input */}
+        {replyingTo === reply.id && depth < maxDepth && (
+          <div className="mt-2 flex gap-2">
+            <input
+              type="text"
+              value={replyContent}
+              onChange={(e) => setReplyContent(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && onReply(reply.id)}
+              placeholder="Viết phản hồi..."
+              className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            />
+            <button
+              onClick={() => onReply(reply.id)}
+              className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+            >
+              Gửi
+            </button>
+          </div>
+        )}
+
+        {/* Nested Replies - Recursive rendering */}
+        {hasNestedReplies && depth < maxDepth && (
+          <div className="mt-2 ml-4 space-y-2 border-l-2 border-gray-200 pl-3">
+            {reply.replies.map((nestedReply) => (
+              <ReplyComment
+                key={nestedReply.id}
+                reply={nestedReply}
+                onReply={onReply}
+                replyingTo={replyingTo}
+                setReplyingTo={setReplyingTo}
+                replyContent={replyContent}
+                setReplyContent={setReplyContent}
+                formatDate={formatDate}
+                depth={depth + 1}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function ArticleCard({ article, onUpdate, showFullComments = false }) {
   const navigate = useNavigate();
   const [reactionCounts, setReactionCounts] = useState({});
   const [myReaction, setMyReaction] = useState(null);
@@ -17,7 +89,11 @@ export default function ArticleCard({ article, onUpdate }) {
   useEffect(() => {
     loadReactions();
     loadAuthorInfo();
-  }, [article.id]);
+    if (showFullComments) {
+      loadComments();
+      setShowComments(true);
+    }
+  }, [article.id, showFullComments]);
 
   const loadReactions = async () => {
     try {
@@ -343,24 +419,20 @@ export default function ArticleCard({ article, onUpdate }) {
                       </div>
                     )}
 
-                    {/* Replies */}
+                    {/* Replies - Support unlimited nested levels */}
                     {comment.replies && comment.replies.length > 0 && (
                       <div className="mt-2 ml-4 space-y-2 border-l-2 border-gray-200 pl-3">
                         {comment.replies.map((reply) => (
-                          <div key={reply.id} className="flex gap-2">
-                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                              {reply.user?.fullName?.charAt(0).toUpperCase() || 'U'}
-                            </div>
-                            <div className="flex-1">
-                              <div className="bg-gray-50 rounded-lg p-2">
-                                <p className="font-semibold text-xs text-gray-900">
-                                  {reply.user?.fullName || 'Người dùng'}
-                                </p>
-                                <p className="text-gray-700 text-xs">{reply.content}</p>
-                              </div>
-                              <span className="text-xs text-gray-500">{formatDate(reply.createdAt)}</span>
-                            </div>
-                          </div>
+                          <ReplyComment 
+                            key={reply.id} 
+                            reply={reply} 
+                            onReply={handleReply}
+                            replyingTo={replyingTo}
+                            setReplyingTo={setReplyingTo}
+                            replyContent={replyContent}
+                            setReplyContent={setReplyContent}
+                            formatDate={formatDate}
+                          />
                         ))}
                       </div>
                     )}

@@ -113,8 +113,41 @@ public class RecruiterService {
         return jobRepository.findByRecruiterId(recruiter.getId(), pageable);
     }
 
+    @Transactional(readOnly = true)
     public Page<Application> getJobApplicants(UUID jobId, Pageable pageable) {
-        return applicationRepository.findByJobId(jobId, pageable);
+        Page<Application> applications = applicationRepository.findByJobId(jobId, pageable);
+        
+        // Force load all fields to avoid lazy loading issues
+        if (applications != null && applications.getContent() != null) {
+            applications.getContent().forEach(app -> {
+                try {
+                    app.getId();
+                    app.getStatus();
+                    app.getAppliedAt();
+                    
+                    if (app.getJob() != null) {
+                        app.getJob().getId();
+                        app.getJob().getTitle();
+                        app.getJob().getLocation();
+                        if (app.getJob().getCompany() != null) {
+                            app.getJob().getCompany().getId();
+                            app.getJob().getCompany().getName();
+                        }
+                    }
+                    if (app.getStudent() != null) {
+                        app.getStudent().getId();
+                    }
+                    if (app.getCv() != null) {
+                        app.getCv().getId();
+                        app.getCv().getFileName();
+                    }
+                } catch (Exception e) {
+                    // Log but continue
+                }
+            });
+        }
+        
+        return applications;
     }
 
     @Transactional

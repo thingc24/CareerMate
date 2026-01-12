@@ -136,7 +136,7 @@ public class ArticleController {
 
     // Reactions endpoints
     @PostMapping("/{articleId}/reactions")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasRole('STUDENT') or hasRole('RECRUITER') or hasRole('ADMIN')")
     public ResponseEntity<ArticleReaction> toggleReaction(
             @PathVariable UUID articleId,
             @RequestParam String reactionType
@@ -155,7 +155,7 @@ public class ArticleController {
     }
 
     @GetMapping("/{articleId}/reactions/my")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasRole('STUDENT') or hasRole('RECRUITER') or hasRole('ADMIN')")
     public ResponseEntity<ArticleReaction> getMyReaction(@PathVariable UUID articleId) {
         ArticleReaction reaction = reactionService.getUserReaction(articleId);
         if (reaction == null) {
@@ -166,25 +166,59 @@ public class ArticleController {
 
     // Comments endpoints
     @GetMapping("/{articleId}/comments")
-    public ResponseEntity<List<ArticleComment>> getComments(@PathVariable UUID articleId) {
-        return ResponseEntity.ok(commentService.getComments(articleId));
+    public ResponseEntity<?> getComments(@PathVariable UUID articleId) {
+        try {
+            System.out.println("=== GET /articles/" + articleId + "/comments ===");
+            // Use DTO to avoid serialization issues
+            List<vn.careermate.dto.ArticleCommentDTO> comments = commentService.getCommentsAsDTO(articleId);
+            System.out.println("Found " + comments.size() + " comments");
+            return ResponseEntity.ok(comments);
+        } catch (Exception e) {
+            System.err.println("ERROR in getComments: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/my")
+    @PreAuthorize("hasRole('RECRUITER') or hasRole('ADMIN')")
+    public ResponseEntity<Page<Article>> getMyArticles(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(articleService.getMyArticles(pageable));
     }
 
     @PostMapping("/{articleId}/comments")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasRole('STUDENT') or hasRole('RECRUITER') or hasRole('ADMIN')")
     public ResponseEntity<ArticleComment> createComment(
             @PathVariable UUID articleId,
             @RequestBody java.util.Map<String, Object> request
     ) {
-        String content = (String) request.get("content");
-        UUID parentCommentId = request.get("parentCommentId") != null 
-            ? UUID.fromString(request.get("parentCommentId").toString()) 
-            : null;
-        return ResponseEntity.ok(commentService.createComment(articleId, content, parentCommentId));
+        try {
+            String content = (String) request.get("content");
+            if (content == null || content.trim().isEmpty()) {
+                return ResponseEntity.badRequest().build();
+            }
+            UUID parentCommentId = null;
+            if (request.get("parentCommentId") != null) {
+                try {
+                    parentCommentId = UUID.fromString(request.get("parentCommentId").toString());
+                } catch (IllegalArgumentException e) {
+                    // Invalid UUID format, treat as null
+                    parentCommentId = null;
+                }
+            }
+            return ResponseEntity.ok(commentService.createComment(articleId, content, parentCommentId));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @PutMapping("/comments/{commentId}")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasRole('STUDENT') or hasRole('RECRUITER') or hasRole('ADMIN')")
     public ResponseEntity<ArticleComment> updateComment(
             @PathVariable UUID commentId,
             @RequestBody java.util.Map<String, String> request
@@ -193,7 +227,7 @@ public class ArticleController {
     }
 
     @DeleteMapping("/comments/{commentId}")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasRole('STUDENT') or hasRole('RECRUITER') or hasRole('ADMIN')")
     public ResponseEntity<Void> deleteComment(@PathVariable UUID commentId) {
         commentService.deleteComment(commentId);
         return ResponseEntity.noContent().build();

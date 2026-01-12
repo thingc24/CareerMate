@@ -150,6 +150,11 @@ class CareerMateAPI {
     return response.data;
   }
 
+  async checkApplication(jobId) {
+    const response = await this.client.get(`/students/applications/check/${jobId}`);
+    return response.data;
+  }
+
   async applyForJob(jobId, cvId, coverLetter) {
     const params = new URLSearchParams();
     params.append('jobId', jobId);
@@ -351,6 +356,11 @@ class CareerMateAPI {
     params.append('page', page);
     params.append('size', size);
     const response = await this.client.get(`/articles?${params.toString()}`);
+    return response.data;
+  }
+
+  async getMyArticles(page = 0, size = 10) {
+    const response = await this.client.get(`/articles/my?page=${page}&size=${size}`);
     return response.data;
   }
 

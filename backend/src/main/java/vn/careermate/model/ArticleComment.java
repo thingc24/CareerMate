@@ -1,5 +1,6 @@
 package vn.careermate.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,6 +29,7 @@ public class ArticleComment {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "article_id", nullable = false)
+    @JsonIgnore // Prevent circular reference
     private Article article;
 
     @ManyToOne(fetch = FetchType.EAGER)
@@ -39,6 +41,7 @@ public class ArticleComment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_comment_id")
+    @JsonIgnore // Prevent circular reference
     private ArticleComment parentComment;
 
     @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

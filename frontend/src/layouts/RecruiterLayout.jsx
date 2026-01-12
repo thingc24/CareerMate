@@ -103,6 +103,17 @@ export default function RecruiterLayout({ children }) {
               <span>Hồ sơ nhà tuyển dụng</span>
             </Link>
             <Link
+              to="/recruiter/articles"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                isActive('/recruiter/articles')
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <i className="fas fa-newspaper text-sm" />
+              <span>Bài viết của tôi</span>
+            </Link>
+            <Link
               to="/recruiter/articles/create"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                 isActive('/recruiter/articles/create')
@@ -110,7 +121,7 @@ export default function RecruiterLayout({ children }) {
                   : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
-              <i className="fas fa-newspaper text-sm" />
+              <i className="fas fa-plus text-sm" />
               <span>Đăng bài viết</span>
             </Link>
           </nav>

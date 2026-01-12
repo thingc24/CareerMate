@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -427,12 +428,32 @@ public class StudentController {
             return ResponseEntity.ok(application);
         } catch (RuntimeException e) {
             log.error("Runtime error applying for job: {}", e.getMessage());
-            return ResponseEntity.status(400)
-                .body(Map.of("error", e.getMessage()));
+            int statusCode = e.getMessage().contains("Already applied") ? 409 : 400;
+            return ResponseEntity.status(statusCode)
+                .body(Map.of("error", e.getMessage(), "message", e.getMessage()));
         } catch (Exception e) {
             log.error("Unexpected error applying for job", e);
             return ResponseEntity.status(500)
                 .body(Map.of("error", "Error applying for job: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/applications/check/{jobId}")
+    public ResponseEntity<Map<String, Object>> checkApplication(@PathVariable UUID jobId) {
+        try {
+            Optional<Application> application = studentService.checkApplication(jobId);
+            if (application.isPresent()) {
+                return ResponseEntity.ok(Map.of(
+                    "applied", true,
+                    "applicationId", application.get().getId(),
+                    "status", application.get().getStatus().name(),
+                    "appliedAt", application.get().getAppliedAt()
+                ));
+            }
+            return ResponseEntity.ok(Map.of("applied", false));
+        } catch (Exception e) {
+            log.error("Error checking application", e);
+            return ResponseEntity.ok(Map.of("applied", false));
         }
     }
 
@@ -442,37 +463,53 @@ public class StudentController {
             @RequestParam(defaultValue = "10") int size
     ) {
         try {
+            log.info("GET /students/applications - page={}, size={}", page, size);
             Pageable pageable = PageRequest.of(page, size);
             Page<Application> applications = studentService.getApplications(pageable);
             
-            // Detach lazy-loaded relations
+            log.info("Applications retrieved: {} total, {} in page", 
+                applications.getTotalElements(), applications.getContent().size());
+            
+            // Detach lazy-loaded relations and ensure all fields are loaded
             if (applications != null && applications.getContent() != null) {
                 applications.getContent().forEach(app -> {
-                    if (app != null) {
-                        if (app.getJob() != null) {
-                            app.getJob().setRecruiter(null);
-                            // KHÔNG set null cho collections có cascade="all-delete-orphan"
-                            // @JsonIgnore sẽ đảm bảo chúng không được serialize
+                    try {
+                        if (app != null) {
+                            // Force access all fields to ensure they're loaded
+                            app.getId();
+                            app.getStatus();
+                            app.getAppliedAt();
+                            
+                            if (app.getJob() != null) {
+                                app.getJob().getId();
+                                app.getJob().getTitle();
+                                app.getJob().setRecruiter(null);
+                            }
+                            if (app.getStudent() != null) {
+                                app.getStudent().getId();
+                                app.getStudent().setUser(null);
+                            }
+                            if (app.getCv() != null) {
+                                app.getCv().getId();
+                                app.getCv().getFileName();
+                                app.getCv().setStudent(null);
+                            }
                         }
-                        if (app.getStudent() != null) {
-                            app.getStudent().setUser(null);
-                            // KHÔNG set null cho collections có cascade="all-delete-orphan"
-                            // @JsonIgnore sẽ đảm bảo chúng không được serialize
-                        }
-                        if (app.getCv() != null) {
-                            app.getCv().setStudent(null);
-                        }
+                    } catch (Exception e) {
+                        log.warn("Error processing application: {}", e.getMessage());
                     }
                 });
             }
             
+            log.info("Returning applications successfully");
             return ResponseEntity.ok(applications);
         } catch (RuntimeException e) {
-            log.error("Runtime error getting applications: {}", e.getMessage());
-            return ResponseEntity.status(401)
+            log.error("Runtime error getting applications: {}", e.getMessage(), e);
+            return ResponseEntity.status(400)
                 .body(Page.empty());
         } catch (Exception e) {
             log.error("Unexpected error getting applications", e);
+            e.printStackTrace();
             return ResponseEntity.status(500)
                 .body(Page.empty());
         }

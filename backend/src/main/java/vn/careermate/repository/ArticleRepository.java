@@ -24,5 +24,7 @@ public interface ArticleRepository extends JpaRepository<Article, UUID> {
         @Param("status") Article.ArticleStatus status, Pageable pageable);
     
     List<Article> findByAuthorId(UUID authorId);
+    
+    Page<Article> findByAuthorIdOrderByCreatedAtDesc(UUID authorId, Pageable pageable);
 }
 

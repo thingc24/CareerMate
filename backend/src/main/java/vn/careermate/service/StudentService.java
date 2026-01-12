@@ -468,19 +468,112 @@ public class StudentService {
         return application;
     }
 
+    @Transactional(readOnly = true)
+    public Optional<Application> checkApplication(UUID jobId) {
+        try {
+            StudentProfile student = getCurrentStudentProfile();
+            if (student == null || student.getId() == null) {
+                return Optional.empty();
+            }
+            
+            // Force load student to ensure it's in the session
+            UUID studentId = student.getId();
+            StudentProfile loadedStudent = studentProfileRepository.findById(studentId)
+                .orElse(null);
+            if (loadedStudent == null) {
+                return Optional.empty();
+            }
+            
+            Optional<Application> applicationOpt = applicationRepository.findByJobIdAndStudentId(jobId, loadedStudent.getId());
+            
+            // Force load fields to avoid lazy loading issues
+            if (applicationOpt.isPresent()) {
+                Application app = applicationOpt.get();
+                app.getId(); // Force load
+                app.getStatus(); // Force load
+                app.getAppliedAt(); // Force load
+            }
+            
+            return applicationOpt;
+        } catch (Exception e) {
+            log.error("Error checking application for job: {}", jobId, e);
+            return Optional.empty();
+        }
+    }
+
+    @Transactional(readOnly = true)
     public Page<Application> getApplications(Pageable pageable) {
         try {
+            log.info("Getting applications for current student - page={}, size={}", 
+                pageable.getPageNumber(), pageable.getPageSize());
+            
             StudentProfile student = getCurrentStudentProfile();
             if (student == null || student.getId() == null) {
                 log.warn("Student profile not found or ID is null");
                 return Page.empty(pageable);
             }
-            return applicationRepository.findByStudentId(student.getId(), pageable);
+            
+            // Force load student to ensure it's in the session
+            UUID studentId = student.getId();
+            StudentProfile loadedStudent = studentProfileRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student profile not found"));
+            
+            log.info("Found student profile: {}", loadedStudent.getId());
+            
+            Page<Application> applications = applicationRepository.findByStudentId(loadedStudent.getId(), pageable);
+            
+            log.info("Found {} applications (total: {})", 
+                applications.getContent().size(), applications.getTotalElements());
+            
+            // Force load job, company, CV, and student for each application to avoid lazy loading issues
+            if (applications != null && applications.getContent() != null) {
+                applications.getContent().forEach(app -> {
+                    try {
+                        // Force load all fields to ensure they're initialized
+                        app.getId();
+                        app.getStatus();
+                        app.getAppliedAt();
+                        app.getCoverLetter();
+                        
+                        if (app.getJob() != null) {
+                            app.getJob().getId(); // Force load job
+                            app.getJob().getTitle(); // Force load job title
+                            app.getJob().getLocation(); // Force load job location
+                            app.getJob().getJobType(); // Force load job type
+                            app.getJob().getExperienceLevel(); // Force load experience level
+                            app.getJob().getDescription(); // Force load description
+                            if (app.getJob().getCompany() != null) {
+                                app.getJob().getCompany().getId(); // Force load company
+                                app.getJob().getCompany().getName(); // Force load company name
+                                app.getJob().getCompany().getLogoUrl(); // Force load logo
+                            }
+                        }
+                        // Force load student to avoid lazy loading
+                        if (app.getStudent() != null) {
+                            app.getStudent().getId();
+                        }
+                        // Force load CV to avoid lazy loading
+                        if (app.getCv() != null) {
+                            app.getCv().getId();
+                            app.getCv().getFileName();
+                            app.getCv().getFileUrl();
+                        }
+                    } catch (Exception e) {
+                        log.error("Error force loading application fields for app {}: {}", 
+                            app != null ? app.getId() : "null", e.getMessage(), e);
+                    }
+                });
+            }
+            
+            log.info("Successfully loaded {} applications", applications.getContent().size());
+            return applications;
         } catch (RuntimeException e) {
-            log.error("Runtime error getting applications: {}", e.getMessage());
+            log.error("Runtime error getting applications: {}", e.getMessage(), e);
+            e.printStackTrace();
             return Page.empty(pageable);
         } catch (Exception e) {
             log.error("Unexpected error getting applications", e);
+            e.printStackTrace();
             return Page.empty(pageable);
         }
     }

@@ -45,6 +45,7 @@ import CompanyView from './pages/recruiter/CompanyView';
 import CompanyEdit from './pages/recruiter/CompanyEdit';
 import RecruiterProfile from './pages/recruiter/Profile';
 import RecruiterCreateArticle from './pages/recruiter/CreateArticle';
+import MyArticles from './pages/recruiter/MyArticles';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -141,6 +142,7 @@ function AppRoutes() {
                 <Route path="company/edit" element={<CompanyEdit />} />
                 <Route path="profile" element={<RecruiterProfile />} />
                 <Route path="articles/create" element={<RecruiterCreateArticle />} />
+                <Route path="articles" element={<MyArticles />} />
                 <Route path="" element={<Navigate to="dashboard" replace />} />
               </Routes>
             </RecruiterLayout>

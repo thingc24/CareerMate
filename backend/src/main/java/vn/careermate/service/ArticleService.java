@@ -35,20 +35,22 @@ public class ArticleService {
             log.info("Getting published articles: keyword={}, category={}, page={}, size={}", 
                 keyword, category, pageable.getPageNumber(), pageable.getPageSize());
             
-            // Get published articles with publishedAt not null using repository method
-            Page<Article> articles = articleRepository.findByStatusAndPublishedAtIsNotNullOrderByPublishedAtDesc(
-                Article.ArticleStatus.PUBLISHED, pageable);
-            
-            // Filter by keyword and category in memory (simple filtering)
-            List<Article> filtered = articles.getContent().stream()
+            // Get ALL published articles with publishedAt not null (without pagination first)
+            List<Article> allArticles = articleRepository.findAll().stream()
+                .filter(a -> a.getStatus() == Article.ArticleStatus.PUBLISHED)
+                .filter(a -> a.getPublishedAt() != null)
                 .filter(a -> keyword == null || keyword.trim().isEmpty() || 
                     (a.getTitle() != null && a.getTitle().toLowerCase().contains(keyword.toLowerCase())))
                 .filter(a -> category == null || category.trim().isEmpty() || 
                     (a.getCategory() != null && a.getCategory().equals(category)))
+                .sorted((a1, a2) -> {
+                    if (a1.getPublishedAt() == null || a2.getPublishedAt() == null) return 0;
+                    return a2.getPublishedAt().compareTo(a1.getPublishedAt()); // DESC
+                })
                 .collect(java.util.stream.Collectors.toList());
             
             // Force load author for each article to avoid lazy loading issues
-            filtered.forEach(article -> {
+            allArticles.forEach(article -> {
                 if (article.getAuthor() != null) {
                     article.getAuthor().getId();
                     article.getAuthor().getFullName();
@@ -56,12 +58,17 @@ public class ArticleService {
                 }
             });
             
-            log.info("Found {} published articles after filtering, returning {} items", 
-                filtered.size(), filtered.size());
+            // Apply pagination after filtering
+            int start = (int) pageable.getOffset();
+            int end = Math.min((start + pageable.getPageSize()), allArticles.size());
+            List<Article> pageContent = start < allArticles.size() ? 
+                allArticles.subList(start, end) : java.util.Collections.emptyList();
             
-            // Return as Page - use original pageable but with filtered content
+            log.info("Found {} published articles after filtering, returning page {} with {} items", 
+                allArticles.size(), pageable.getPageNumber(), pageContent.size());
+            
             return new org.springframework.data.domain.PageImpl<>(
-                filtered, pageable, filtered.size());
+                pageContent, pageable, allArticles.size());
         } catch (Exception e) {
             log.error("Error getting published articles: keyword={}, category={}, error={}", 
                 keyword, category, e.getMessage(), e);
@@ -185,6 +192,23 @@ public class ArticleService {
         article.setApprovedAt(LocalDateTime.now());
         
         return articleRepository.save(article);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Article> getMyArticles(Pageable pageable) {
+        User currentUser = getCurrentUser();
+        Page<Article> articles = articleRepository.findByAuthorIdOrderByCreatedAtDesc(currentUser.getId(), pageable);
+        
+        // Force load author for each article
+        articles.getContent().forEach(article -> {
+            if (article.getAuthor() != null) {
+                article.getAuthor().getId();
+                article.getAuthor().getFullName();
+                article.getAuthor().getRole();
+            }
+        });
+        
+        return articles;
     }
 
     private User getCurrentUser() {

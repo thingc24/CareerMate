@@ -68,8 +68,46 @@ public class RecruiterController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(recruiterService.getJobApplicants(jobId, pageable));
+        try {
+            log.info("GET /recruiters/jobs/{}/applicants - page={}, size={}", jobId, page, size);
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Application> applications = recruiterService.getJobApplicants(jobId, pageable);
+            
+            log.info("Found {} applicants (total: {})", 
+                applications.getContent().size(), applications.getTotalElements());
+            
+            // Detach lazy-loaded relations
+            if (applications != null && applications.getContent() != null) {
+                applications.getContent().forEach(app -> {
+                    try {
+                        if (app != null) {
+                            app.getId();
+                            app.getStatus();
+                            if (app.getJob() != null) {
+                                app.getJob().getId();
+                                app.getJob().setRecruiter(null);
+                            }
+                            if (app.getStudent() != null) {
+                                app.getStudent().getId();
+                                app.getStudent().setUser(null);
+                            }
+                            if (app.getCv() != null) {
+                                app.getCv().getId();
+                                app.getCv().setStudent(null);
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.warn("Error processing application: {}", e.getMessage());
+                    }
+                });
+            }
+            
+            return ResponseEntity.ok(applications);
+        } catch (Exception e) {
+            log.error("Error getting job applicants", e);
+            e.printStackTrace();
+            return ResponseEntity.status(400).body(Page.empty());
+        }
     }
 
     @PutMapping("/applications/{applicationId}/status")

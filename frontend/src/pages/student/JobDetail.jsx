@@ -11,10 +11,13 @@ export default function JobDetail() {
   const [cvs, setCvs] = useState([]);
   const [selectedCV, setSelectedCV] = useState('');
   const [coverLetter, setCoverLetter] = useState('');
+  const [hasApplied, setHasApplied] = useState(false);
+  const [applicationStatus, setApplicationStatus] = useState(null);
 
   useEffect(() => {
     loadJob();
     loadCVs();
+    checkApplication();
   }, [id]);
 
   const loadJob = async () => {
@@ -41,6 +44,18 @@ export default function JobDetail() {
     }
   };
 
+  const checkApplication = async () => {
+    try {
+      const data = await api.checkApplication(id);
+      if (data.applied) {
+        setHasApplied(true);
+        setApplicationStatus(data.status);
+      }
+    } catch (error) {
+      console.error('Error checking application:', error);
+    }
+  };
+
   const handleApply = async () => {
     if (!selectedCV && cvs.length > 0) {
       alert('Vui lòng chọn CV');
@@ -53,7 +68,12 @@ export default function JobDetail() {
       alert('Ứng tuyển thành công!');
       navigate('/student/applications');
     } catch (error) {
-      alert('Lỗi: ' + (error.response?.data?.message || 'Không thể ứng tuyển'));
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Không thể ứng tuyển';
+      alert('Lỗi: ' + errorMessage);
+      // If already applied, redirect to applications page
+      if (errorMessage.includes('Already applied') || errorMessage.includes('đã ứng tuyển')) {
+        setTimeout(() => navigate('/student/applications'), 1500);
+      }
     } finally {
       setApplying(false);
     }
@@ -202,7 +222,33 @@ export default function JobDetail() {
               <h2 className="text-xl font-bold text-gray-900">Ứng tuyển</h2>
             </div>
             
-            {cvs.length === 0 ? (
+            {hasApplied ? (
+              <div className="text-center py-6">
+                <div className="inline-flex h-16 w-16 rounded-full bg-green-100 items-center justify-center mb-4">
+                  <i className="fas fa-check-circle text-green-600 text-2xl"></i>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Đã ứng tuyển</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Trạng thái: <span className="font-semibold">
+                    {applicationStatus === 'PENDING' && 'Đang chờ'}
+                    {applicationStatus === 'VIEWED' && 'Đã xem'}
+                    {applicationStatus === 'SHORTLISTED' && 'Đã chọn'}
+                    {applicationStatus === 'INTERVIEW' && 'Phỏng vấn'}
+                    {applicationStatus === 'OFFERED' && 'Đã đề xuất'}
+                    {applicationStatus === 'REJECTED' && 'Đã từ chối'}
+                    {applicationStatus === 'WITHDRAWN' && 'Đã hủy'}
+                    {!applicationStatus && 'Đang xử lý'}
+                  </span>
+                </p>
+                <button
+                  onClick={() => navigate('/student/applications')}
+                  className="btn-secondary w-full"
+                >
+                  <i className="fas fa-list mr-2"></i>
+                  Xem đơn ứng tuyển
+                </button>
+              </div>
+            ) : cvs.length === 0 ? (
               <div className="text-center py-6">
                 <div className="inline-flex h-16 w-16 rounded-full bg-gray-100 items-center justify-center mb-4">
                   <i className="fas fa-file-pdf text-gray-400 text-2xl"></i>
