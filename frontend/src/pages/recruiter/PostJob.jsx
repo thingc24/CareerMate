@@ -46,7 +46,7 @@ export default function PostJob() {
         requirements: formData.requirements,
         location: formData.location,
         jobType: formData.jobType,
-        experienceLevel: formData.experienceLevel || 'ENTRY',
+        experienceLevel: formData.experienceLevel || null,
         minSalary: formData.minSalary ? parseFloat(formData.minSalary) * 1000000 : null,
         maxSalary: formData.maxSalary ? parseFloat(formData.maxSalary) * 1000000 : null,
         currency: 'VND',
@@ -145,10 +145,12 @@ export default function PostJob() {
             onChange={handleChange}
           >
             <option value="">Không yêu cầu</option>
-            <option value="FRESHER">Fresher</option>
-            <option value="JUNIOR">1-2 năm</option>
-            <option value="MIDDLE">2-5 năm</option>
-            <option value="SENIOR">Trên 5 năm</option>
+            <option value="ENTRY">Fresher / Entry Level</option>
+            <option value="JUNIOR">Junior (1-2 năm)</option>
+            <option value="MID">Mid Level (2-5 năm)</option>
+            <option value="SENIOR">Senior (Trên 5 năm)</option>
+            <option value="LEAD">Lead</option>
+            <option value="EXPERT">Expert</option>
           </select>
         </div>
 

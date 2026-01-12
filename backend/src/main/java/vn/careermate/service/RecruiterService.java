@@ -10,8 +10,13 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.careermate.model.*;
 import vn.careermate.repository.*;
 
+import org.springframework.web.multipart.MultipartFile;
+import vn.careermate.service.FileStorageService;
+
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -24,6 +29,7 @@ public class RecruiterService {
     private final CompanyRepository companyRepository;
     private final ApplicationRepository applicationRepository;
     private final JobSkillRepository jobSkillRepository;
+    private final FileStorageService fileStorageService;
 
     public RecruiterProfile getCurrentRecruiterProfile() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -50,11 +56,19 @@ public class RecruiterService {
     public Job createJob(Job job, List<String> requiredSkills, List<String> optionalSkills) {
         RecruiterProfile recruiter = getCurrentRecruiterProfile();
         
+        // Force load company if it exists
+        Company recruiterCompany = recruiter.getCompany();
+        if (recruiterCompany != null) {
+            // Force load by accessing ID to trigger fetch
+            recruiterCompany.getId();
+            recruiterCompany.getName();
+        }
+        
         // Set recruiter and company
         job.setRecruiter(recruiter);
         if (job.getCompany() == null) {
-            if (recruiter.getCompany() != null) {
-                job.setCompany(recruiter.getCompany());
+            if (recruiterCompany != null) {
+                job.setCompany(recruiterCompany);
             } else {
                 throw new RuntimeException("Recruiter must have a company to post jobs. Please create a company profile first.");
             }
@@ -167,7 +181,12 @@ public class RecruiterService {
     public Company createOrUpdateCompany(Company company) {
         RecruiterProfile recruiter = getCurrentRecruiterProfile();
         
+        // Force load company if it exists
         Company existingCompany = recruiter.getCompany();
+        if (existingCompany != null) {
+            // Force load by accessing ID
+            existingCompany.getId();
+        }
         
         if (existingCompany != null) {
             // Update existing company
@@ -186,14 +205,90 @@ public class RecruiterService {
             // Link company to recruiter
             recruiter.setCompany(company);
             recruiterProfileRepository.save(recruiter);
+            // Flush to ensure company_id is set
+            recruiterProfileRepository.flush();
         }
         
         return company;
     }
 
+    @Transactional(readOnly = true)
     public Company getMyCompany() {
         RecruiterProfile recruiter = getCurrentRecruiterProfile();
-        return recruiter.getCompany();
+        Company company = recruiter.getCompany();
+        if (company != null) {
+            // Force load by accessing ID to trigger fetch
+            company.getId();
+            company.getName();
+        }
+        return company;
+    }
+
+    public Map<String, Object> getDashboardStats() {
+        RecruiterProfile recruiter = getCurrentRecruiterProfile();
+        UUID recruiterId = recruiter.getId();
+        
+        // Count active jobs
+        long activeJobsCount = jobRepository.countByRecruiterIdAndStatus(recruiterId, Job.JobStatus.ACTIVE);
+        
+        // Count new applications (PENDING status)
+        long newApplicationsCount = applicationRepository.countByJobRecruiterIdAndStatus(
+            recruiterId, Application.ApplicationStatus.PENDING);
+        
+        // Count upcoming interviews (INTERVIEW status with scheduled time in future)
+        long upcomingInterviewsCount = applicationRepository.countUpcomingInterviewsByRecruiter(
+            recruiterId, LocalDateTime.now());
+        
+        // Count successful hires (OFFERED status)
+        long successfulHiresCount = applicationRepository.countByJobRecruiterIdAndStatus(
+            recruiterId, Application.ApplicationStatus.OFFERED);
+        
+        return Map.of(
+            "activeJobs", activeJobsCount,
+            "newApplications", newApplicationsCount,
+            "upcomingInterviews", upcomingInterviewsCount,
+            "successfulHires", successfulHiresCount
+        );
+    }
+
+    @Transactional
+    public String uploadCompanyLogo(MultipartFile file) throws IOException {
+        // Validate file type
+        String contentType = file.getContentType();
+        String fileName = file.getOriginalFilename();
+        if (fileName == null || (contentType != null && !contentType.startsWith("image/"))) {
+            throw new RuntimeException("Invalid file type. Only image files are allowed.");
+        }
+
+        // Validate file size (max 5MB)
+        if (file.getSize() > 5 * 1024 * 1024) {
+            throw new RuntimeException("File size too large. Maximum size is 5MB.");
+        }
+
+        // Save file using FileStorageService
+        String filePath = fileStorageService.storeFile(file, "company-logos");
+
+        // Update company with logo URL
+        RecruiterProfile recruiter = getCurrentRecruiterProfile();
+        Company company = recruiter.getCompany();
+        
+        if (company == null) {
+            throw new RuntimeException("Company not found. Please create company profile first.");
+        }
+
+        // Delete old logo if exists
+        if (company.getLogoUrl() != null && !company.getLogoUrl().isEmpty()) {
+            try {
+                fileStorageService.deleteFile(company.getLogoUrl());
+            } catch (Exception e) {
+                // Log warning but continue
+            }
+        }
+        
+        company.setLogoUrl(filePath);
+        companyRepository.save(company);
+
+        return filePath;
     }
 }
 

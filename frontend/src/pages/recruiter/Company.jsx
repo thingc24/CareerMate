@@ -50,8 +50,12 @@ export default function RecruiterCompany() {
           foundedYear: company.foundedYear || '',
         });
       }
+      // 404 is expected when recruiter doesn't have a company yet - no need to log
     } catch (error) {
-      console.error('Error loading company info:', error);
+      // Only log non-404 errors
+      if (error.response?.status !== 404) {
+        console.error('Error loading company info:', error);
+      }
     }
   };
 

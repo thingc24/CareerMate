@@ -1,6 +1,7 @@
 package vn.careermate.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -8,6 +9,9 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 import vn.careermate.dto.RecruiterProfileUpdateRequest;
 import vn.careermate.model.Application;
 import vn.careermate.model.Company;
@@ -17,11 +21,13 @@ import vn.careermate.service.RecruiterService;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/recruiters")
 @RequiredArgsConstructor
+@Slf4j
 @CrossOrigin(origins = "*")
 public class RecruiterController {
 
@@ -29,12 +35,22 @@ public class RecruiterController {
 
     @PostMapping("/jobs")
     @PreAuthorize("hasRole('RECRUITER') or hasRole('ADMIN')")
-    public ResponseEntity<Job> createJob(
+    public ResponseEntity<?> createJob(
             @RequestBody Job job,
             @RequestParam(required = false) List<String> requiredSkills,
             @RequestParam(required = false) List<String> optionalSkills
     ) {
-        return ResponseEntity.ok(recruiterService.createJob(job, requiredSkills, optionalSkills));
+        try {
+            return ResponseEntity.ok(recruiterService.createJob(job, requiredSkills, optionalSkills));
+        } catch (RuntimeException e) {
+            log.error("Error creating job: {}", e.getMessage(), e);
+            return ResponseEntity.status(400)
+                .body(Map.of("error", e.getMessage(), "message", e.getMessage()));
+        } catch (Exception e) {
+            log.error("Unexpected error creating job: {}", e.getMessage(), e);
+            return ResponseEntity.status(500)
+                .body(Map.of("error", "Error creating job: " + e.getMessage()));
+        }
     }
 
     @GetMapping("/jobs")
@@ -89,15 +105,23 @@ public class RecruiterController {
     }
 
     @GetMapping("/company")
-    public ResponseEntity<Company> getMyCompany() {
-        Company company = recruiterService.getMyCompany();
-        if (company == null) {
-            return ResponseEntity.notFound().build();
+    @PreAuthorize("hasRole('RECRUITER')")
+    public ResponseEntity<?> getMyCompany() {
+        try {
+            Company company = recruiterService.getMyCompany();
+            if (company == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(company);
+        } catch (Exception e) {
+            log.error("Error getting company: {}", e.getMessage(), e);
+            return ResponseEntity.status(400)
+                .body(Map.of("error", "Error loading company: " + e.getMessage()));
         }
-        return ResponseEntity.ok(company);
     }
 
     @PostMapping("/company")
+    @PreAuthorize("hasRole('RECRUITER')")
     public ResponseEntity<Company> createOrUpdateCompany(@RequestBody Company company) {
         return ResponseEntity.ok(recruiterService.createOrUpdateCompany(company));
     }
@@ -110,6 +134,30 @@ public class RecruiterController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(profile);
+    }
+
+    @GetMapping("/dashboard/stats")
+    @PreAuthorize("hasRole('RECRUITER')")
+    public ResponseEntity<Map<String, Object>> getDashboardStats() {
+        return ResponseEntity.ok(recruiterService.getDashboardStats());
+    }
+
+    @PostMapping("/company/logo")
+    @PreAuthorize("hasRole('RECRUITER')")
+    public ResponseEntity<Map<String, String>> uploadCompanyLogo(@RequestParam("file") MultipartFile file) {
+        try {
+            String logoUrl = recruiterService.uploadCompanyLogo(file);
+            return ResponseEntity.ok(Map.of("logoUrl", logoUrl));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400)
+                .body(Map.of("error", e.getMessage()));
+        } catch (IOException e) {
+            return ResponseEntity.status(500)
+                .body(Map.of("error", "Error uploading file: " + e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                .body(Map.of("error", "Error uploading logo: " + e.getMessage()));
+        }
     }
 }
 

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
 
 export default function Applicants() {
+  const [searchParams] = useSearchParams();
   const [jobs, setJobs] = useState([]);
   const [selectedJobId, setSelectedJobId] = useState('');
   const [applicants, setApplicants] = useState([]);
@@ -10,6 +12,13 @@ export default function Applicants() {
   useEffect(() => {
     loadJobs();
   }, []);
+
+  useEffect(() => {
+    const jobIdFromUrl = searchParams.get('jobId');
+    if (jobIdFromUrl) {
+      setSelectedJobId(jobIdFromUrl);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (selectedJobId) {
@@ -209,37 +218,107 @@ export default function Applicants() {
 }
 
 function ApplicantCard({ applicant, onStatusChange, formatDate, getStatusColor }) {
+  const [showDetails, setShowDetails] = useState(false);
   const studentName = applicant.student?.fullName || applicant.studentName || 'Ứng viên';
   const initials = studentName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-  const matchScore = applicant.matchScore || 0;
+  const matchScore = applicant.matchScore ? parseFloat(applicant.matchScore) : 0;
   const scoreColor = matchScore >= 80 ? 'green' : matchScore >= 60 ? 'yellow' : 'gray';
+
+  const getScoreBadgeClass = () => {
+    if (matchScore >= 80) return 'bg-green-100 text-green-700 border-green-300';
+    if (matchScore >= 60) return 'bg-yellow-100 text-yellow-700 border-yellow-300';
+    return 'bg-gray-100 text-gray-700 border-gray-300';
+  };
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
       <div className="flex justify-between items-start mb-2">
-        <h4 className="font-semibold text-gray-900 text-sm flex-1">{studentName}</h4>
-        <span className={`text-xs font-bold text-${scoreColor}-600 bg-${scoreColor}-50 px-2 py-1 rounded`}>
-          {matchScore}%
-        </span>
+        <div className="flex-1">
+          <h4 className="font-semibold text-gray-900 text-sm">{studentName}</h4>
+          {applicant.student?.user?.email && (
+            <p className="text-xs text-gray-500">{applicant.student.user.email}</p>
+          )}
+        </div>
+        {matchScore > 0 && (
+          <div className={`text-xs font-bold px-2 py-1 rounded border ${getScoreBadgeClass()}`}>
+            {matchScore.toFixed(0)}%
+          </div>
+        )}
       </div>
-      <p className="text-xs text-gray-500 mb-2">{formatDate(applicant.appliedAt)}</p>
+      
+      <p className="text-xs text-gray-500 mb-2">
+        <i className="fas fa-calendar mr-1"></i>
+        {formatDate(applicant.appliedAt)}
+      </p>
+
+      {applicant.aiNotes && (
+        <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded mb-2">
+          <i className="fas fa-robot mr-1"></i>
+          <span className="font-medium">AI Notes:</span> {applicant.aiNotes.substring(0, 100)}...
+        </div>
+      )}
+
       <div className="flex gap-1 mt-2">
         {applicant.cv && (
           <button
             onClick={() => window.open(applicant.cv.fileUrl, '_blank')}
-            className="p-1 hover:bg-gray-100 rounded text-gray-500 text-xs"
+            className="p-1.5 hover:bg-gray-100 rounded text-gray-600 text-xs border border-gray-300"
             title="Xem CV"
           >
-            <i className="fas fa-file-pdf"></i>
+            <i className="fas fa-file-pdf mr-1"></i>
+            CV
           </button>
         )}
         <button
-          className="p-1 hover:bg-gray-100 rounded text-blue-500 text-xs"
+          onClick={() => setShowDetails(!showDetails)}
+          className="p-1.5 hover:bg-gray-100 rounded text-blue-600 text-xs border border-blue-300"
           title="Chi tiết"
         >
-          <i className="fas fa-eye"></i>
+          <i className={`fas fa-${showDetails ? 'chevron-up' : 'chevron-down'} mr-1`}></i>
+          {showDetails ? 'Ẩn' : 'Chi tiết'}
         </button>
       </div>
+
+      {showDetails && (
+        <div className="mt-3 pt-3 border-t border-gray-200 space-y-2">
+          <div className="flex gap-2">
+            <button
+              onClick={() => onStatusChange('SHORTLISTED')}
+              className="flex-1 text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+            >
+              <i className="fas fa-star mr-1"></i>
+              Shortlist
+            </button>
+            <button
+              onClick={() => onStatusChange('INTERVIEW')}
+              className="flex-1 text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200"
+            >
+              <i className="fas fa-calendar-check mr-1"></i>
+              Phỏng vấn
+            </button>
+            <button
+              onClick={() => onStatusChange('OFFERED')}
+              className="flex-1 text-xs px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200"
+            >
+              <i className="fas fa-hand-holding-usd mr-1"></i>
+              Offer
+            </button>
+            <button
+              onClick={() => onStatusChange('REJECTED')}
+              className="flex-1 text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
+            >
+              <i className="fas fa-times mr-1"></i>
+              Từ chối
+            </button>
+          </div>
+          {applicant.coverLetter && (
+            <div className="text-xs text-gray-700 bg-gray-50 p-2 rounded">
+              <p className="font-medium mb-1">Thư xin việc:</p>
+              <p className="line-clamp-3">{applicant.coverLetter}</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

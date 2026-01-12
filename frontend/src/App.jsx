@@ -39,7 +39,10 @@ import Packages from './pages/student/Packages';
 import RecruiterDashboard from './pages/recruiter/Dashboard';
 import PostJob from './pages/recruiter/PostJob';
 import Applicants from './pages/recruiter/Applicants';
+import FindCandidates from './pages/recruiter/FindCandidates';
 import RecruiterCompany from './pages/recruiter/Company';
+import CompanyView from './pages/recruiter/CompanyView';
+import CompanyEdit from './pages/recruiter/CompanyEdit';
 import RecruiterProfile from './pages/recruiter/Profile';
 import RecruiterCreateArticle from './pages/recruiter/CreateArticle';
 
@@ -129,7 +132,10 @@ function AppRoutes() {
                 <Route path="dashboard" element={<RecruiterDashboard />} />
                 <Route path="post-job" element={<PostJob />} />
                 <Route path="applicants" element={<Applicants />} />
-                <Route path="company" element={<RecruiterCompany />} />
+                <Route path="find-candidates" element={<FindCandidates />} />
+                <Route path="company" element={<Navigate to="company/view" replace />} />
+                <Route path="company/view" element={<CompanyView />} />
+                <Route path="company/edit" element={<CompanyEdit />} />
                 <Route path="profile" element={<RecruiterProfile />} />
                 <Route path="articles/create" element={<RecruiterCreateArticle />} />
                 <Route path="" element={<Navigate to="dashboard" replace />} />

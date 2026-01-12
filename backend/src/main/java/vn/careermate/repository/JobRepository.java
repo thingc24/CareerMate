@@ -28,5 +28,7 @@ public interface JobRepository extends JpaRepository<Job, UUID> {
     
     @Query("SELECT j FROM Job j WHERE j.recruiter.id = :recruiterId")
     Page<Job> findByRecruiterId(@Param("recruiterId") UUID recruiterId, Pageable pageable);
+    
+    long countByRecruiterIdAndStatus(UUID recruiterId, Job.JobStatus status);
 }
 

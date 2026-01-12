@@ -29,7 +29,7 @@ public class RecruiterProfile {
     @JoinColumn(name = "user_id", unique = true, nullable = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "company_id")
     private Company company;
 

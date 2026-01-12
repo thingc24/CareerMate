@@ -70,9 +70,20 @@ export default function RecruiterLayout({ children }) {
               <span>Ứng viên</span>
             </Link>
             <Link
-              to="/recruiter/company"
+              to="/recruiter/find-candidates"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                isActive('/recruiter/company')
+                isActive('/recruiter/find-candidates')
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <i className="fas fa-search text-sm" />
+              <span>Tìm ứng viên</span>
+            </Link>
+            <Link
+              to="/recruiter/company/view"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                isActive('/recruiter/company') || isActive('/recruiter/company/view') || isActive('/recruiter/company/edit')
                   ? 'bg-emerald-600 text-white shadow-sm'
                   : 'text-slate-600 hover:bg-slate-100'
               }`}

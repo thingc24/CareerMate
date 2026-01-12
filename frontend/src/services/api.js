@@ -277,10 +277,22 @@ class CareerMateAPI {
     return response.data;
   }
 
+  async getRecruiterDashboardStats() {
+    const response = await this.client.get('/recruiters/dashboard/stats');
+    return response.data;
+  }
+
+  async findMatchingCandidates(jobId) {
+    const response = await this.client.get(`/ai/jobs/${jobId}/matching`);
+    return response.data;
+  }
+
   async updateApplicationStatus(applicationId, status, note = '') {
-    const response = await this.client.put(`/recruiters/applications/${applicationId}`, {
-      status,
-      note,
+    const response = await this.client.put(`/recruiters/applications/${applicationId}/status`, null, {
+      params: {
+        status,
+        notes: note
+      }
     });
     return response.data;
   }
@@ -291,8 +303,13 @@ class CareerMateAPI {
       const response = await this.client.get('/recruiters/company');
       return response.data;
     } catch (error) {
+      // 404 is expected when recruiter doesn't have a company yet
       if (error.response?.status === 404) {
         return null;
+      }
+      // Only log non-404 errors
+      if (error.response?.status !== 404) {
+        console.error('Error loading company:', error);
       }
       throw error;
     }
@@ -300,6 +317,18 @@ class CareerMateAPI {
 
   async createOrUpdateCompany(companyData) {
     const response = await this.client.post('/recruiters/company', companyData);
+    return response.data;
+  }
+
+  async uploadCompanyLogo(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await this.client.post('/recruiters/company/logo', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   }
 
