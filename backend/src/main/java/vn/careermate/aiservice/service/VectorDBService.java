@@ -1,4 +1,4 @@
-package vn.careermate.service;
+package vn.careermate.aiservice.service;
 
 import io.weaviate.client.WeaviateClient;
 import io.weaviate.client.base.Result;
@@ -10,7 +10,7 @@ import io.weaviate.client.v1.graphql.query.fields.Field;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import vn.careermate.service.EmbeddingService;
+import vn.careermate.aiservice.service.EmbeddingService;
 
 import jakarta.annotation.PostConstruct;
 import java.util.*;
@@ -251,4 +251,3 @@ public class VectorDBService {
         return enabled && client != null;
     }
 }
-

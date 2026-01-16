@@ -1,4 +1,4 @@
-package vn.careermate.model;
+package vn.careermate.aiservice.model;
 
 import jakarta.persistence.*;
 import vn.careermate.userservice.model.StudentProfile;
@@ -69,4 +69,3 @@ public class CareerRoadmap {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 }
-

@@ -1,4 +1,4 @@
-package vn.careermate.controller;
+package vn.careermate.aiservice.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -6,10 +6,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import vn.careermate.model.CareerRoadmap;
+import vn.careermate.aiservice.model.CareerRoadmap;
 import vn.careermate.userservice.repository.StudentProfileRepository;
 import vn.careermate.userservice.repository.UserRepository;
-import vn.careermate.service.CareerRoadmapService;
+import vn.careermate.aiservice.service.CareerRoadmapService;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -62,4 +62,3 @@ public class CareerRoadmapController {
                 .orElseThrow(() -> new RuntimeException("Student profile not found"));
     }
 }
-

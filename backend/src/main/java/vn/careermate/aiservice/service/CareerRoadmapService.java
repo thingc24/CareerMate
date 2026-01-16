@@ -1,17 +1,18 @@
-package vn.careermate.service;
+package vn.careermate.aiservice.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.careermate.model.CareerRoadmap;
+import vn.careermate.aiservice.model.CareerRoadmap;
 import vn.careermate.model.CV;
 import vn.careermate.model.StudentSkill;
 import vn.careermate.userservice.model.StudentProfile;
-import vn.careermate.repository.CareerRoadmapRepository;
+import vn.careermate.aiservice.repository.CareerRoadmapRepository;
 import vn.careermate.repository.CVRepository;
 import vn.careermate.repository.StudentSkillRepository;
 import vn.careermate.userservice.repository.StudentProfileRepository;
+import vn.careermate.aiservice.service.AIService;
 
 import java.util.*;
 
@@ -112,4 +113,3 @@ public class CareerRoadmapService {
         return info.toString();
     }
 }
-

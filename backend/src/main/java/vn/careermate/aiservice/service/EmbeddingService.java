@@ -1,4 +1,4 @@
-package vn.careermate.service;
+package vn.careermate.aiservice.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -118,4 +118,3 @@ public class EmbeddingService {
         return generateEmbedding(combined);
     }
 }
-

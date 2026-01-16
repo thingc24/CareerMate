@@ -12,7 +12,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
     scanBasePackages = {
         "vn.careermate.userservice",      // User Service - Văn Tân
         "vn.careermate.jobservice",       // Job Service - Ngọc Thi
-        "vn.careermate.ai.service",        // AI Service - Anh Vũ (will be created)
+        "vn.careermate.aiservice",         // AI Service - Anh Vũ
         "vn.careermate.content.service",   // Content Service - Hiệu Hiệu (will be created)
         "vn.careermate.learning.service",  // Learning Service - Bảo Hân (will be created)
         "vn.careermate.common",            // Common code (will be created)

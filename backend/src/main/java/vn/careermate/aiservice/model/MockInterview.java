@@ -1,4 +1,4 @@
-package vn.careermate.model;
+package vn.careermate.aiservice.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -49,7 +49,7 @@ public class MockInterview {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cv_id")
     @JsonIgnore
-    private CV cv;
+    private vn.careermate.model.CV cv;
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
@@ -87,4 +87,3 @@ public class MockInterview {
         NOT_STARTED, IN_PROGRESS, COMPLETED, ABANDONED
     }
 }
-

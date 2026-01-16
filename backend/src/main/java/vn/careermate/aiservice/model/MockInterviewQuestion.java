@@ -1,4 +1,4 @@
-package vn.careermate.model;
+package vn.careermate.aiservice.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -63,4 +63,3 @@ public class MockInterviewQuestion {
         NOT_ANSWERED, ANSWERED, SKIPPED
     }
 }
-

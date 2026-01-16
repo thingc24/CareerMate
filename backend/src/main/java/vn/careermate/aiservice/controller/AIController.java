@@ -1,4 +1,4 @@
-package vn.careermate.controller;
+package vn.careermate.aiservice.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -11,9 +11,9 @@ import vn.careermate.jobservice.model.JobSkill;
 import vn.careermate.repository.CVRepository;
 import vn.careermate.jobservice.repository.JobRepository;
 import vn.careermate.jobservice.repository.JobSkillRepository;
-import vn.careermate.service.AIService;
+import vn.careermate.aiservice.service.AIService;
 import vn.careermate.service.FileStorageService;
-import vn.careermate.service.VectorDBService;
+import vn.careermate.aiservice.service.VectorDBService;
 import vn.careermate.util.DOCXExtractor;
 import vn.careermate.util.PDFExtractor;
 
@@ -252,4 +252,3 @@ public class AIController {
         }
     }
 }
-
