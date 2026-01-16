@@ -10,7 +10,7 @@ import vn.careermate.jobservice.model.Job;
 import vn.careermate.jobservice.model.JobSkill;
 import vn.careermate.jobservice.repository.JobRepository;
 import vn.careermate.jobservice.repository.JobSkillRepository;
-import vn.careermate.model.Company;
+import vn.careermate.contentservice.model.Company;
 import vn.careermate.userservice.model.RecruiterProfile;
 import vn.careermate.userservice.service.RecruiterProfileService;
 

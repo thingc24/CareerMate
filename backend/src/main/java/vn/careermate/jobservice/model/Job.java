@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import vn.careermate.userservice.model.RecruiterProfile;
 import vn.careermate.userservice.model.User;
-import vn.careermate.model.Company;
+import vn.careermate.contentservice.model.Company;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

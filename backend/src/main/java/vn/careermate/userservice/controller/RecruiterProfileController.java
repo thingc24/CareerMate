@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import vn.careermate.model.Company;
+import vn.careermate.contentservice.model.Company;
 import vn.careermate.userservice.dto.RecruiterProfileUpdateRequest;
 import vn.careermate.userservice.model.RecruiterProfile;
 import vn.careermate.userservice.service.RecruiterProfileService;

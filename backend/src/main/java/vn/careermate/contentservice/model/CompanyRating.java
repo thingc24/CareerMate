@@ -1,4 +1,4 @@
-package vn.careermate.model;
+package vn.careermate.contentservice.model;
 
 import jakarta.persistence.*;
 import vn.careermate.userservice.model.StudentProfile;
@@ -47,4 +47,3 @@ public class CompanyRating {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 }
-

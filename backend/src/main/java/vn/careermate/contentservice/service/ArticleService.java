@@ -1,4 +1,4 @@
-package vn.careermate.service;
+package vn.careermate.contentservice.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,10 +9,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.careermate.dto.CreateArticleRequest;
-import vn.careermate.model.Article;
+import vn.careermate.contentservice.model.Article;
 import vn.careermate.userservice.model.RecruiterProfile;
 import vn.careermate.userservice.model.User;
-import vn.careermate.repository.ArticleRepository;
+import vn.careermate.contentservice.repository.ArticleRepository;
 import vn.careermate.userservice.repository.RecruiterProfileRepository;
 import vn.careermate.userservice.repository.UserRepository;
 
@@ -218,4 +218,3 @@ public class ArticleService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }
-

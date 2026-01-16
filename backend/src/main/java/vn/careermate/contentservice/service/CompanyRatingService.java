@@ -1,15 +1,15 @@
-package vn.careermate.service;
+package vn.careermate.contentservice.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.careermate.model.Company;
-import vn.careermate.model.CompanyRating;
+import vn.careermate.contentservice.model.Company;
+import vn.careermate.contentservice.model.CompanyRating;
 import vn.careermate.userservice.model.StudentProfile;
-import vn.careermate.repository.CompanyRatingRepository;
-import vn.careermate.repository.CompanyRepository;
+import vn.careermate.contentservice.repository.CompanyRatingRepository;
+import vn.careermate.contentservice.repository.CompanyRepository;
 import vn.careermate.userservice.repository.StudentProfileRepository;
 import vn.careermate.userservice.repository.UserRepository;
 
@@ -76,4 +76,3 @@ public class CompanyRatingService {
                 .orElseThrow(() -> new RuntimeException("Student profile not found"));
     }
 }
-

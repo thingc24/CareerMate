@@ -11,8 +11,8 @@ import vn.careermate.userservice.model.User;
 import vn.careermate.userservice.repository.RecruiterProfileRepository;
 import vn.careermate.userservice.repository.UserRepository;
 import vn.careermate.service.FileStorageService;
-import vn.careermate.model.Company;
-import vn.careermate.repository.CompanyRepository;
+import vn.careermate.contentservice.model.Company;
+import vn.careermate.contentservice.repository.CompanyRepository;
 
 import java.io.IOException;
 

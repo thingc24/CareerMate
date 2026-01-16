@@ -36,7 +36,7 @@ public class RecruiterProfile {
     // Can be changed to UUID reference if needed: @Column(name = "company_id") private UUID companyId;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "company_id")
-    private vn.careermate.model.Company company; // Reference to Company in root model package
+    private vn.careermate.contentservice.model.Company company; // Reference to Company in contentservice package
 
     private String position;
 

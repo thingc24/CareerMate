@@ -1,4 +1,4 @@
-package vn.careermate.model;
+package vn.careermate.contentservice.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -55,4 +55,3 @@ public class Company {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 }
-

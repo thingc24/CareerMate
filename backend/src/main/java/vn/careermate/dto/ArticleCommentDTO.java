@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import vn.careermate.model.ArticleComment;
+import vn.careermate.contentservice.model.ArticleComment;
 
 import java.time.LocalDateTime;
 import java.util.List;

@@ -1,4 +1,4 @@
-package vn.careermate.controller;
+package vn.careermate.contentservice.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -10,13 +10,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import vn.careermate.dto.CreateArticleRequest;
-import vn.careermate.model.Article;
-import vn.careermate.model.ArticleComment;
-import vn.careermate.model.ArticleReaction;
+import vn.careermate.contentservice.model.Article;
+import vn.careermate.contentservice.model.ArticleComment;
+import vn.careermate.contentservice.model.ArticleReaction;
 import vn.careermate.userservice.repository.UserRepository;
-import vn.careermate.service.ArticleCommentService;
-import vn.careermate.service.ArticleReactionService;
-import vn.careermate.service.ArticleService;
+import vn.careermate.contentservice.service.ArticleCommentService;
+import vn.careermate.contentservice.service.ArticleReactionService;
+import vn.careermate.contentservice.service.ArticleService;
 
 import java.util.List;
 import java.util.Map;
@@ -233,4 +233,3 @@ public class ArticleController {
         return ResponseEntity.noContent().build();
     }
 }
-

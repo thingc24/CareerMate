@@ -1,4 +1,4 @@
-package vn.careermate.controller;
+package vn.careermate.contentservice.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -6,8 +6,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import vn.careermate.model.Company;
-import vn.careermate.service.CompanyService;
+import vn.careermate.contentservice.model.Company;
+import vn.careermate.contentservice.service.CompanyService;
 
 import java.util.List;
 import java.util.UUID;
@@ -41,4 +41,3 @@ public class CompanyController {
         return ResponseEntity.ok(companyService.getCompanyById(companyId));
     }
 }
-

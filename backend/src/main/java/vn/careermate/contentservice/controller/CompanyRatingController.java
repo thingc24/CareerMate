@@ -1,11 +1,11 @@
-package vn.careermate.controller;
+package vn.careermate.contentservice.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import vn.careermate.model.CompanyRating;
-import vn.careermate.service.CompanyRatingService;
+import vn.careermate.contentservice.model.CompanyRating;
+import vn.careermate.contentservice.service.CompanyRatingService;
 
 import java.util.List;
 import java.util.Map;
@@ -40,4 +40,3 @@ public class CompanyRatingController {
         return ResponseEntity.ok(ratingService.createOrUpdateRating(companyId, rating, reviewText));
     }
 }
-

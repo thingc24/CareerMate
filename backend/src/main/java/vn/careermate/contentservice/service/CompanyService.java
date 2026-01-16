@@ -1,12 +1,12 @@
-package vn.careermate.service;
+package vn.careermate.contentservice.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import vn.careermate.model.Company;
-import vn.careermate.repository.CompanyRatingRepository;
-import vn.careermate.repository.CompanyRepository;
+import vn.careermate.contentservice.model.Company;
+import vn.careermate.contentservice.repository.CompanyRatingRepository;
+import vn.careermate.contentservice.repository.CompanyRepository;
 
 import java.util.List;
 import java.util.UUID;
@@ -42,4 +42,3 @@ public class CompanyService {
                 .orElseThrow(() -> new RuntimeException("Company not found"));
     }
 }
-

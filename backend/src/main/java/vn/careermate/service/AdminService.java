@@ -9,13 +9,13 @@ import vn.careermate.dto.AdminAnalytics;
 import vn.careermate.dto.AdminDashboardStats;
 import vn.careermate.jobservice.model.Application;
 import vn.careermate.jobservice.model.Job;
-import vn.careermate.model.Article;
+import vn.careermate.contentservice.model.Article;
 import vn.careermate.userservice.model.User;
 import vn.careermate.jobservice.repository.ApplicationRepository;
 import vn.careermate.jobservice.repository.JobRepository;
 import vn.careermate.jobservice.repository.JobSkillRepository;
-import vn.careermate.repository.ArticleRepository;
-import vn.careermate.repository.CompanyRepository;
+import vn.careermate.contentservice.repository.ArticleRepository;
+import vn.careermate.contentservice.repository.CompanyRepository;
 import vn.careermate.userservice.repository.UserRepository;
 
 import java.time.LocalDateTime;

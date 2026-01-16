@@ -1,4 +1,4 @@
-package vn.careermate.service;
+package vn.careermate.contentservice.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -6,11 +6,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.careermate.dto.ArticleCommentDTO;
-import vn.careermate.model.Article;
-import vn.careermate.model.ArticleComment;
+import vn.careermate.contentservice.model.Article;
+import vn.careermate.contentservice.model.ArticleComment;
 import vn.careermate.userservice.model.User;
-import vn.careermate.repository.ArticleCommentRepository;
-import vn.careermate.repository.ArticleRepository;
+import vn.careermate.contentservice.repository.ArticleCommentRepository;
+import vn.careermate.contentservice.repository.ArticleRepository;
 import vn.careermate.userservice.repository.UserRepository;
 
 import java.util.List;

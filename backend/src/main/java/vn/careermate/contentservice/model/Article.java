@@ -1,4 +1,4 @@
-package vn.careermate.model;
+package vn.careermate.contentservice.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -100,4 +100,3 @@ public class Article {
         DRAFT, PENDING, PUBLISHED, REJECTED
     }
 }
-

@@ -13,7 +13,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
         "vn.careermate.userservice",      // User Service - Văn Tân
         "vn.careermate.jobservice",       // Job Service - Ngọc Thi
         "vn.careermate.aiservice",         // AI Service - Anh Vũ
-        "vn.careermate.content.service",   // Content Service - Hiệu Hiệu (will be created)
+        "vn.careermate.contentservice",     // Content Service - Hiệu Hiệu
         "vn.careermate.learning.service",  // Learning Service - Bảo Hân (will be created)
         "vn.careermate.common",            // Common code (will be created)
         "vn.careermate.config",            // Shared configs (if any remain at root)

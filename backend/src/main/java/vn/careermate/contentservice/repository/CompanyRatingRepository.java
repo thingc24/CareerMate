@@ -1,9 +1,9 @@
-package vn.careermate.repository;
+package vn.careermate.contentservice.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-import vn.careermate.model.CompanyRating;
+import vn.careermate.contentservice.model.CompanyRating;
 
 import java.util.List;
 import java.util.UUID;
@@ -15,4 +15,3 @@ public interface CompanyRatingRepository extends JpaRepository<CompanyRating, UU
     @Query("SELECT AVG(cr.rating) FROM CompanyRating cr WHERE cr.company.id = :companyId")
     Double getAverageRatingByCompanyId(UUID companyId);
 }
-

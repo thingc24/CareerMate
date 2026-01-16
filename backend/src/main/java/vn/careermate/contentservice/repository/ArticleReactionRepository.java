@@ -1,10 +1,10 @@
-package vn.careermate.repository;
+package vn.careermate.contentservice.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import vn.careermate.model.ArticleReaction;
+import vn.careermate.contentservice.model.ArticleReaction;
 
 import java.util.Optional;
 import java.util.UUID;
