@@ -1,4 +1,4 @@
-package vn.careermate.config;
+package vn.careermate.userservice.config;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -99,4 +99,3 @@ public class JwtService {
         }
     }
 }
-

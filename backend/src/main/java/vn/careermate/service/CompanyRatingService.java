@@ -7,11 +7,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.careermate.model.Company;
 import vn.careermate.model.CompanyRating;
-import vn.careermate.model.StudentProfile;
+import vn.careermate.userservice.model.StudentProfile;
 import vn.careermate.repository.CompanyRatingRepository;
 import vn.careermate.repository.CompanyRepository;
-import vn.careermate.repository.StudentProfileRepository;
-import vn.careermate.repository.UserRepository;
+import vn.careermate.userservice.repository.StudentProfileRepository;
+import vn.careermate.userservice.repository.UserRepository;
 
 import java.util.List;
 import java.util.UUID;

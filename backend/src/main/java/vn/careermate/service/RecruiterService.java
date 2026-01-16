@@ -9,6 +9,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.careermate.model.*;
 import vn.careermate.repository.*;
+import vn.careermate.userservice.model.RecruiterProfile;
+import vn.careermate.userservice.model.User;
+import vn.careermate.userservice.repository.RecruiterProfileRepository;
+import vn.careermate.userservice.repository.UserRepository;
 
 import org.springframework.web.multipart.MultipartFile;
 import vn.careermate.service.FileStorageService;

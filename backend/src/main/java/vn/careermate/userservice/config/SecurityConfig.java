@@ -1,4 +1,4 @@
-package vn.careermate.config;
+package vn.careermate.userservice.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -90,4 +90,3 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 }
-

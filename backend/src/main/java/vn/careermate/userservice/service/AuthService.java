@@ -1,4 +1,4 @@
-package vn.careermate.service;
+package vn.careermate.userservice.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -6,17 +6,17 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.careermate.config.JwtService;
-import vn.careermate.dto.AuthRequest;
-import vn.careermate.dto.AuthResponse;
-import vn.careermate.dto.RegisterRequest;
-import vn.careermate.dto.UserInfo;
-import vn.careermate.model.RecruiterProfile;
-import vn.careermate.model.StudentProfile;
-import vn.careermate.model.User;
-import vn.careermate.repository.RecruiterProfileRepository;
-import vn.careermate.repository.StudentProfileRepository;
-import vn.careermate.repository.UserRepository;
+import vn.careermate.userservice.config.JwtService;
+import vn.careermate.userservice.dto.AuthRequest;
+import vn.careermate.userservice.dto.AuthResponse;
+import vn.careermate.userservice.dto.RegisterRequest;
+import vn.careermate.userservice.dto.UserInfo;
+import vn.careermate.userservice.model.RecruiterProfile;
+import vn.careermate.userservice.model.StudentProfile;
+import vn.careermate.userservice.model.User;
+import vn.careermate.userservice.repository.RecruiterProfileRepository;
+import vn.careermate.userservice.repository.StudentProfileRepository;
+import vn.careermate.userservice.repository.UserRepository;
 
 import java.time.LocalDateTime;
 
@@ -136,4 +136,3 @@ public class AuthService {
                 .build();
     }
 }
-

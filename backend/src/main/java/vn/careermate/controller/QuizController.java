@@ -8,8 +8,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import vn.careermate.model.Quiz;
 import vn.careermate.model.QuizAttempt;
-import vn.careermate.repository.StudentProfileRepository;
-import vn.careermate.repository.UserRepository;
+import vn.careermate.userservice.repository.StudentProfileRepository;
+import vn.careermate.userservice.repository.UserRepository;
 import vn.careermate.service.QuizService;
 
 import java.util.List;

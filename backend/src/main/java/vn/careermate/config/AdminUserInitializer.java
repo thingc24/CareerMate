@@ -7,8 +7,8 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import vn.careermate.model.User;
-import vn.careermate.repository.UserRepository;
+import vn.careermate.userservice.model.User;
+import vn.careermate.userservice.repository.UserRepository;
 
 @Slf4j
 @Component

@@ -1,4 +1,4 @@
-package vn.careermate.config;
+package vn.careermate.userservice.config;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

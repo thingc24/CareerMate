@@ -1,6 +1,7 @@
 package vn.careermate.model;
 
 import jakarta.persistence.*;
+import vn.careermate.userservice.model.StudentProfile;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

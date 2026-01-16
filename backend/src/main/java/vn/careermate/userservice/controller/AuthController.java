@@ -1,13 +1,13 @@
-package vn.careermate.controller;
+package vn.careermate.userservice.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import vn.careermate.dto.AuthRequest;
-import vn.careermate.dto.AuthResponse;
-import vn.careermate.dto.RegisterRequest;
-import vn.careermate.service.AuthService;
+import vn.careermate.userservice.dto.AuthRequest;
+import vn.careermate.userservice.dto.AuthResponse;
+import vn.careermate.userservice.dto.RegisterRequest;
+import vn.careermate.userservice.service.AuthService;
 
 @RestController
 @RequestMapping("/auth")
@@ -52,4 +52,3 @@ public class AuthController {
         }
     }
 }
-

@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.careermate.model.*;
 import vn.careermate.repository.*;
+import vn.careermate.userservice.repository.StudentProfileRepository;
+import vn.careermate.userservice.repository.UserRepository;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

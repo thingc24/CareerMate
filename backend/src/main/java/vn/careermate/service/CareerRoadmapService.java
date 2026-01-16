@@ -5,9 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.careermate.model.CareerRoadmap;
-import vn.careermate.model.StudentProfile;
+import vn.careermate.userservice.model.StudentProfile;
 import vn.careermate.repository.CareerRoadmapRepository;
-import vn.careermate.repository.StudentProfileRepository;
+import vn.careermate.userservice.repository.StudentProfileRepository;
 
 import java.util.*;
 

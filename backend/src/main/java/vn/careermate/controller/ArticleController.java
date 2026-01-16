@@ -13,7 +13,7 @@ import vn.careermate.dto.CreateArticleRequest;
 import vn.careermate.model.Article;
 import vn.careermate.model.ArticleComment;
 import vn.careermate.model.ArticleReaction;
-import vn.careermate.repository.UserRepository;
+import vn.careermate.userservice.repository.UserRepository;
 import vn.careermate.service.ArticleCommentService;
 import vn.careermate.service.ArticleReactionService;
 import vn.careermate.service.ArticleService;

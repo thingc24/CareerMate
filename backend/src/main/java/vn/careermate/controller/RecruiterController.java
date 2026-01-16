@@ -9,14 +9,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import vn.careermate.dto.RecruiterProfileUpdateRequest;
 import vn.careermate.model.Application;
-import vn.careermate.model.Company;
 import vn.careermate.model.Job;
-import vn.careermate.model.RecruiterProfile;
 import vn.careermate.service.RecruiterService;
 
 import java.time.LocalDateTime;
@@ -127,75 +121,5 @@ public class RecruiterController {
         return ResponseEntity.ok(recruiterService.scheduleInterview(applicationId, interviewTime));
     }
 
-    @GetMapping("/profile")
-    public ResponseEntity<RecruiterProfile> getMyProfile() {
-        return ResponseEntity.ok(recruiterService.getMyProfile());
-    }
-
-    @PutMapping("/profile")
-    public ResponseEntity<RecruiterProfile> updateProfile(@RequestBody RecruiterProfileUpdateRequest request) {
-        return ResponseEntity.ok(recruiterService.updateProfile(
-            request.getPosition(),
-            request.getDepartment(),
-            request.getPhone(),
-            request.getBio()
-        ));
-    }
-
-    @GetMapping("/company")
-    @PreAuthorize("hasRole('RECRUITER')")
-    public ResponseEntity<?> getMyCompany() {
-        try {
-            Company company = recruiterService.getMyCompany();
-            if (company == null) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.ok(company);
-        } catch (Exception e) {
-            log.error("Error getting company: {}", e.getMessage(), e);
-            return ResponseEntity.status(400)
-                .body(Map.of("error", "Error loading company: " + e.getMessage()));
-        }
-    }
-
-    @PostMapping("/company")
-    @PreAuthorize("hasRole('RECRUITER')")
-    public ResponseEntity<Company> createOrUpdateCompany(@RequestBody Company company) {
-        return ResponseEntity.ok(recruiterService.createOrUpdateCompany(company));
-    }
-
-    @GetMapping("/by-user/{userId}")
-    @PreAuthorize("permitAll()")
-    public ResponseEntity<RecruiterProfile> getRecruiterByUserId(@PathVariable UUID userId) {
-        RecruiterProfile profile = recruiterService.getRecruiterByUserId(userId);
-        if (profile == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(profile);
-    }
-
-    @GetMapping("/dashboard/stats")
-    @PreAuthorize("hasRole('RECRUITER')")
-    public ResponseEntity<Map<String, Object>> getDashboardStats() {
-        return ResponseEntity.ok(recruiterService.getDashboardStats());
-    }
-
-    @PostMapping("/company/logo")
-    @PreAuthorize("hasRole('RECRUITER')")
-    public ResponseEntity<Map<String, String>> uploadCompanyLogo(@RequestParam("file") MultipartFile file) {
-        try {
-            String logoUrl = recruiterService.uploadCompanyLogo(file);
-            return ResponseEntity.ok(Map.of("logoUrl", logoUrl));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(400)
-                .body(Map.of("error", e.getMessage()));
-        } catch (IOException e) {
-            return ResponseEntity.status(500)
-                .body(Map.of("error", "Error uploading file: " + e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(500)
-                .body(Map.of("error", "Error uploading logo: " + e.getMessage()));
-        }
-    }
 }
 

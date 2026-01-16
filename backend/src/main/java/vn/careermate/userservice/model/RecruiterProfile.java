@@ -1,5 +1,6 @@
-package vn.careermate.model;
+package vn.careermate.userservice.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,11 +28,15 @@ public class RecruiterProfile {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", unique = true, nullable = false)
+    @JsonIgnore
     private User user;
 
+    // Note: Company reference kept as UUID for now
+    // Company info will be managed by Content Service
+    // Can be changed to UUID reference if needed: @Column(name = "company_id") private UUID companyId;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "company_id")
-    private Company company;
+    private vn.careermate.model.Company company; // Reference to Company in root model package
 
     private String position;
 
@@ -50,4 +55,3 @@ public class RecruiterProfile {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 }
-

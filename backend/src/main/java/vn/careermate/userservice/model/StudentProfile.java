@@ -1,4 +1,4 @@
-package vn.careermate.model;
+package vn.careermate.userservice.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -12,7 +12,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -82,16 +81,7 @@ public class StudentProfile {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore // tránh vòng lặp và lazy loading khi trả JSON
-    private List<StudentSkill> skills;
-
-    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private List<CV> cvs;
-
-    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private List<Application> applications;
+    // Note: References to StudentSkill, CV, Application are kept for now
+    // They can be accessed via UUID references if needed in future microservice architecture
+    // @OneToMany relationships removed to keep User Service independent
 }
-

@@ -8,11 +8,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.careermate.model.Course;
 import vn.careermate.model.CourseEnrollment;
-import vn.careermate.model.StudentProfile;
+import vn.careermate.userservice.model.StudentProfile;
 import vn.careermate.repository.CourseEnrollmentRepository;
 import vn.careermate.repository.CourseRepository;
-import vn.careermate.repository.StudentProfileRepository;
-import vn.careermate.repository.UserRepository;
+import vn.careermate.userservice.repository.StudentProfileRepository;
+import vn.careermate.userservice.repository.UserRepository;
 
 import java.math.BigDecimal;
 import java.util.List;

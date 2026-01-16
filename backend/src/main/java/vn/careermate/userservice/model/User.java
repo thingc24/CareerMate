@@ -1,4 +1,4 @@
-package vn.careermate.model;
+package vn.careermate.userservice.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -76,4 +76,3 @@ public class User {
         ACTIVE, INACTIVE, SUSPENDED, DELETED
     }
 }
-

@@ -8,10 +8,10 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.careermate.dto.ArticleCommentDTO;
 import vn.careermate.model.Article;
 import vn.careermate.model.ArticleComment;
-import vn.careermate.model.User;
+import vn.careermate.userservice.model.User;
 import vn.careermate.repository.ArticleCommentRepository;
 import vn.careermate.repository.ArticleRepository;
-import vn.careermate.repository.UserRepository;
+import vn.careermate.userservice.repository.UserRepository;
 
 import java.util.List;
 import java.util.UUID;

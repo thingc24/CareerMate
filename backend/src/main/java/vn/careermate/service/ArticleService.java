@@ -10,11 +10,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.careermate.dto.CreateArticleRequest;
 import vn.careermate.model.Article;
-import vn.careermate.model.RecruiterProfile;
-import vn.careermate.model.User;
+import vn.careermate.userservice.model.RecruiterProfile;
+import vn.careermate.userservice.model.User;
 import vn.careermate.repository.ArticleRepository;
-import vn.careermate.repository.RecruiterProfileRepository;
-import vn.careermate.repository.UserRepository;
+import vn.careermate.userservice.repository.RecruiterProfileRepository;
+import vn.careermate.userservice.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;

@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.careermate.model.*;
 import vn.careermate.repository.*;
+import vn.careermate.userservice.model.StudentProfile;
+import vn.careermate.userservice.repository.StudentProfileRepository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

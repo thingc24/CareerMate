@@ -7,10 +7,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.careermate.model.Article;
 import vn.careermate.model.ArticleReaction;
-import vn.careermate.model.User;
+import vn.careermate.userservice.model.User;
 import vn.careermate.repository.ArticleReactionRepository;
 import vn.careermate.repository.ArticleRepository;
-import vn.careermate.repository.UserRepository;
+import vn.careermate.userservice.repository.UserRepository;
 
 import java.util.Map;
 import java.util.Optional;

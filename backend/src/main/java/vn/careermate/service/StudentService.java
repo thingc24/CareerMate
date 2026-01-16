@@ -13,6 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import vn.careermate.model.*;
 import vn.careermate.repository.*;
+import vn.careermate.userservice.model.StudentProfile;
+import vn.careermate.userservice.model.User;
+import vn.careermate.userservice.repository.StudentProfileRepository;
+import vn.careermate.userservice.repository.UserRepository;
 
 import java.io.IOException;
 import java.time.LocalDateTime;

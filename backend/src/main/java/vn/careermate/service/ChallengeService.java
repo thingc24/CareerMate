@@ -10,13 +10,13 @@ import vn.careermate.model.Badge;
 import vn.careermate.model.Challenge;
 import vn.careermate.model.ChallengeParticipation;
 import vn.careermate.model.StudentBadge;
-import vn.careermate.model.StudentProfile;
+import vn.careermate.userservice.model.StudentProfile;
 import vn.careermate.repository.BadgeRepository;
 import vn.careermate.repository.ChallengeParticipationRepository;
 import vn.careermate.repository.ChallengeRepository;
 import vn.careermate.repository.StudentBadgeRepository;
-import vn.careermate.repository.StudentProfileRepository;
-import vn.careermate.repository.UserRepository;
+import vn.careermate.userservice.repository.StudentProfileRepository;
+import vn.careermate.userservice.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;

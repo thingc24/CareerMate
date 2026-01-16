@@ -10,13 +10,13 @@ import vn.careermate.dto.AdminDashboardStats;
 import vn.careermate.model.Application;
 import vn.careermate.model.Article;
 import vn.careermate.model.Job;
-import vn.careermate.model.User;
+import vn.careermate.userservice.model.User;
 import vn.careermate.repository.ApplicationRepository;
 import vn.careermate.repository.ArticleRepository;
 import vn.careermate.repository.CompanyRepository;
 import vn.careermate.repository.JobRepository;
 import vn.careermate.repository.JobSkillRepository;
-import vn.careermate.repository.UserRepository;
+import vn.careermate.userservice.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.*;

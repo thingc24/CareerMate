@@ -7,10 +7,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.careermate.model.Package;
 import vn.careermate.model.Subscription;
-import vn.careermate.model.User;
+import vn.careermate.userservice.model.User;
 import vn.careermate.repository.PackageRepository;
 import vn.careermate.repository.SubscriptionRepository;
-import vn.careermate.repository.UserRepository;
+import vn.careermate.userservice.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;

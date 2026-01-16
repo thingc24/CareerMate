@@ -1,8 +1,8 @@
-package vn.careermate.repository;
+package vn.careermate.userservice.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import vn.careermate.model.StudentProfile;
+import vn.careermate.userservice.model.StudentProfile;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -11,4 +11,3 @@ import java.util.UUID;
 public interface StudentProfileRepository extends JpaRepository<StudentProfile, UUID> {
     Optional<StudentProfile> findByUserId(UUID userId);
 }
-
