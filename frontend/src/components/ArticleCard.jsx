@@ -98,8 +98,37 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
       setShowComments(true);
     }
     
-    // Also try to load avatar directly from article.author if available
-    if (article.author && article.author.avatarUrl) {
+    // Also try to load company logo if author is RECRUITER (priority over user avatar)
+    if (article.author && article.author.role === 'RECRUITER') {
+      // Try to load company logo immediately if possible
+      // The full logic is in loadAuthorInfo, but this provides immediate display
+      api.getRecruiterByUserId(article.author.id).then(profile => {
+        if (profile?.company?.logoUrl) {
+          const logoUrl = profile.company.logoUrl.startsWith('http') 
+            ? profile.company.logoUrl 
+            : `http://localhost:8080/api${profile.company.logoUrl}`;
+          setAuthorAvatar(logoUrl);
+          if (profile.company.name) {
+            setAuthorName(profile.company.name);
+          }
+        } else if (article.author.avatarUrl) {
+          // Fallback to user avatar if no company logo
+          const avatarUrl = article.author.avatarUrl.startsWith('http') 
+            ? article.author.avatarUrl 
+            : `http://localhost:8080/api${article.author.avatarUrl}`;
+          setAuthorAvatar(avatarUrl);
+        }
+      }).catch(() => {
+        // If API fails, fallback to author avatar
+        if (article.author.avatarUrl) {
+          const avatarUrl = article.author.avatarUrl.startsWith('http') 
+            ? article.author.avatarUrl 
+            : `http://localhost:8080/api${article.author.avatarUrl}`;
+          setAuthorAvatar(avatarUrl);
+        }
+      });
+    } else if (article.author && article.author.avatarUrl) {
+      // For non-recruiters, use author avatar directly
       const avatarUrl = article.author.avatarUrl.startsWith('http') 
         ? article.author.avatarUrl 
         : `http://localhost:8080/api${article.author.avatarUrl}`;
@@ -128,9 +157,30 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
       const authorDisplayName = await api.getAuthorDisplayName(article.id);
       setAuthorName(authorDisplayName);
       
-      // Get author avatar - prioritize article.author.avatarUrl
+      // Get author avatar - for RECRUITER, prioritize company logo over user avatar
       if (article.author) {
-        // First, try to get from article.author directly
+        // If author is RECRUITER, try to get company logo first
+        if (article.author.role === 'RECRUITER') {
+          try {
+            const profile = await api.getRecruiterByUserId(article.author.id);
+            if (profile?.company?.logoUrl) {
+              // Use company logo instead of recruiter avatar
+              const logoUrl = profile.company.logoUrl.startsWith('http') 
+                ? profile.company.logoUrl 
+                : `http://localhost:8080/api${profile.company.logoUrl}`;
+              setAuthorAvatar(logoUrl);
+              // Also update author name to company name if available
+              if (profile.company.name) {
+                setAuthorName(profile.company.name);
+              }
+              return; // Exit early if we have company logo
+            }
+          } catch (err) {
+            console.error('Error loading recruiter/company info:', err);
+          }
+        }
+        
+        // Fallback: use author avatar (for STUDENT or if company logo not available)
         if (article.author.avatarUrl) {
           const avatarUrl = article.author.avatarUrl.startsWith('http') 
             ? article.author.avatarUrl 
@@ -139,18 +189,9 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
           return; // Exit early if we have avatar
         }
         
-        // If no avatarUrl in article.author, try to get from user profile
+        // If no avatarUrl in article.author, try to get from user profile (for non-recruiter)
         try {
-          if (article.author.role === 'RECRUITER') {
-            const profile = await api.getRecruiterByUserId(article.author.id);
-            if (profile?.user?.avatarUrl) {
-              const avatarUrl = profile.user.avatarUrl.startsWith('http') 
-                ? profile.user.avatarUrl 
-                : `http://localhost:8080/api${profile.user.avatarUrl}`;
-              setAuthorAvatar(avatarUrl);
-            }
-          } else if (article.author.role === 'STUDENT') {
-            // For students, try to get from student profile
+          if (article.author.role === 'STUDENT') {
             const profile = await api.getStudentProfile?.();
             if (profile?.user?.avatarUrl) {
               const avatarUrl = profile.user.avatarUrl.startsWith('http') 
