@@ -260,11 +260,22 @@ function ApplicantCard({ applicant, onStatusChange, formatDate, getStatusColor }
       <div className="flex gap-1 mt-2">
         {applicant.cv && (
           <button
-            onClick={() => window.open(applicant.cv.fileUrl, '_blank')}
+            onClick={() => {
+              // Build full URL for CV file
+              let cvUrl = applicant.cv.fileUrl;
+              if (cvUrl && !cvUrl.startsWith('http')) {
+                if (cvUrl.startsWith('/api')) {
+                  cvUrl = `http://localhost:8080${cvUrl}`;
+                } else {
+                  cvUrl = `http://localhost:8080/api${cvUrl}`;
+                }
+              }
+              window.open(cvUrl, '_blank');
+            }}
             className="p-1.5 hover:bg-gray-100 rounded text-gray-600 text-xs border border-gray-300"
             title="Xem CV"
           >
-            <i className="fas fa-file-pdf mr-1"></i>
+            <i className={`fas fa-file-${applicant.cv.fileType === 'text/html' ? 'code' : 'pdf'} mr-1`}></i>
             CV
           </button>
         )}
