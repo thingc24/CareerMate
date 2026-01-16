@@ -42,10 +42,38 @@ public class ArticleService {
                 .filter(a -> a.getStatus() == Article.ArticleStatus.PUBLISHED)
                 .filter(a -> a.getPublishedAt() != null)
                 .filter(a -> {
-                    // Filter by keyword
+                    // Filter by keyword - search in title, content, excerpt, and author name
                     if (keyword != null && !keyword.trim().isEmpty()) {
-                        return a.getTitle() != null && 
-                               a.getTitle().toLowerCase().contains(keyword.toLowerCase());
+                        String lowerKeyword = keyword.toLowerCase().trim();
+                        boolean matchesTitle = a.getTitle() != null && 
+                               a.getTitle().toLowerCase().contains(lowerKeyword);
+                        boolean matchesContent = a.getContent() != null && 
+                               a.getContent().toLowerCase().contains(lowerKeyword);
+                        boolean matchesExcerpt = a.getExcerpt() != null && 
+                               a.getExcerpt().toLowerCase().contains(lowerKeyword);
+                        
+                        // Search by author name (fullName)
+                        boolean matchesAuthor = false;
+                        if (a.getAuthor() != null && a.getAuthor().getFullName() != null) {
+                            matchesAuthor = a.getAuthor().getFullName().toLowerCase().contains(lowerKeyword);
+                        }
+                        
+                        // If author is RECRUITER, also search by company name
+                        if (!matchesAuthor && a.getAuthor() != null && 
+                            a.getAuthor().getRole() == User.UserRole.RECRUITER) {
+                            try {
+                                RecruiterProfile profile = recruiterProfileRepository.findByUserId(a.getAuthor().getId())
+                                        .orElse(null);
+                                if (profile != null && profile.getCompany() != null && 
+                                    profile.getCompany().getName() != null) {
+                                    matchesAuthor = profile.getCompany().getName().toLowerCase().contains(lowerKeyword);
+                                }
+                            } catch (Exception e) {
+                                log.debug("Error checking company name for article search: {}", e.getMessage());
+                            }
+                        }
+                        
+                        return matchesTitle || matchesContent || matchesExcerpt || matchesAuthor;
                     }
                     return true;
                 })

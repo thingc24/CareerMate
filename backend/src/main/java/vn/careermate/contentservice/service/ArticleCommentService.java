@@ -9,9 +9,11 @@ import vn.careermate.contentservice.dto.ArticleCommentDTO;
 import vn.careermate.contentservice.model.Article;
 import vn.careermate.contentservice.model.ArticleComment;
 import vn.careermate.userservice.model.User;
+import vn.careermate.userservice.model.StudentProfile;
 import vn.careermate.contentservice.repository.ArticleCommentRepository;
 import vn.careermate.contentservice.repository.ArticleRepository;
 import vn.careermate.userservice.repository.UserRepository;
+import vn.careermate.userservice.repository.StudentProfileRepository;
 
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +26,7 @@ public class ArticleCommentService {
     private final ArticleCommentRepository commentRepository;
     private final ArticleRepository articleRepository;
     private final UserRepository userRepository;
+    private final StudentProfileRepository studentProfileRepository;
 
     @Transactional(readOnly = true)
     public List<ArticleComment> getComments(UUID articleId) {
@@ -40,6 +43,22 @@ public class ArticleCommentService {
                         comment.getUser().getId();
                         comment.getUser().getFullName();
                         comment.getUser().getEmail();
+                        String userAvatarUrl = comment.getUser().getAvatarUrl();
+                        // For STUDENT users, if User.avatarUrl is null, try to get from StudentProfile
+                        if ((userAvatarUrl == null || userAvatarUrl.isEmpty()) && 
+                            comment.getUser().getRole() == User.UserRole.STUDENT) {
+                            try {
+                                StudentProfile studentProfile = studentProfileRepository.findByUserId(comment.getUser().getId()).orElse(null);
+                                if (studentProfile != null && studentProfile.getAvatarUrl() != null && 
+                                    !studentProfile.getAvatarUrl().isEmpty()) {
+                                    // Sync StudentProfile.avatarUrl to User.avatarUrl for display
+                                    comment.getUser().setAvatarUrl(studentProfile.getAvatarUrl());
+                                }
+                            } catch (Exception e) {
+                                // If can't load student profile, continue with null avatarUrl
+                            }
+                        }
+                        comment.getUser().getAvatarUrl(); // Ensure avatarUrl is loaded
                     }
                     if (comment.getArticle() != null) {
                         comment.getArticle().getId();
@@ -61,6 +80,22 @@ public class ArticleCommentService {
                                 reply.getUser().getId();
                                 reply.getUser().getFullName();
                                 reply.getUser().getEmail();
+                                String replyUserAvatarUrl = reply.getUser().getAvatarUrl();
+                                // For STUDENT users, if User.avatarUrl is null, try to get from StudentProfile
+                                if ((replyUserAvatarUrl == null || replyUserAvatarUrl.isEmpty()) && 
+                                    reply.getUser().getRole() == User.UserRole.STUDENT) {
+                                    try {
+                                        StudentProfile studentProfile = studentProfileRepository.findByUserId(reply.getUser().getId()).orElse(null);
+                                        if (studentProfile != null && studentProfile.getAvatarUrl() != null && 
+                                            !studentProfile.getAvatarUrl().isEmpty()) {
+                                            // Sync StudentProfile.avatarUrl to User.avatarUrl for display
+                                            reply.getUser().setAvatarUrl(studentProfile.getAvatarUrl());
+                                        }
+                                    } catch (Exception e) {
+                                        // If can't load student profile, continue with null avatarUrl
+                                    }
+                                }
+                                reply.getUser().getAvatarUrl(); // Ensure avatarUrl is loaded
                             }
                             if (reply.getArticle() != null) {
                                 reply.getArticle().getId();
@@ -106,6 +141,22 @@ public class ArticleCommentService {
                         comment.getUser().getId();
                         comment.getUser().getFullName();
                         comment.getUser().getEmail();
+                        String userAvatarUrl = comment.getUser().getAvatarUrl();
+                        // For STUDENT users, if User.avatarUrl is null, try to get from StudentProfile
+                        if ((userAvatarUrl == null || userAvatarUrl.isEmpty()) && 
+                            comment.getUser().getRole() == User.UserRole.STUDENT) {
+                            try {
+                                StudentProfile studentProfile = studentProfileRepository.findByUserId(comment.getUser().getId()).orElse(null);
+                                if (studentProfile != null && studentProfile.getAvatarUrl() != null && 
+                                    !studentProfile.getAvatarUrl().isEmpty()) {
+                                    // Sync StudentProfile.avatarUrl to User.avatarUrl for display
+                                    comment.getUser().setAvatarUrl(studentProfile.getAvatarUrl());
+                                }
+                            } catch (Exception e) {
+                                // If can't load student profile, continue with null avatarUrl
+                            }
+                        }
+                        comment.getUser().getAvatarUrl(); // Ensure avatarUrl is loaded
                     }
                     if (comment.getArticle() != null) {
                         comment.getArticle().getId();
@@ -146,6 +197,22 @@ public class ArticleCommentService {
                 reply.getUser().getId();
                 reply.getUser().getFullName();
                 reply.getUser().getEmail();
+                String replyUserAvatarUrl = reply.getUser().getAvatarUrl();
+                // For STUDENT users, if User.avatarUrl is null, try to get from StudentProfile
+                if ((replyUserAvatarUrl == null || replyUserAvatarUrl.isEmpty()) && 
+                    reply.getUser().getRole() == User.UserRole.STUDENT) {
+                    try {
+                        StudentProfile studentProfile = studentProfileRepository.findByUserId(reply.getUser().getId()).orElse(null);
+                        if (studentProfile != null && studentProfile.getAvatarUrl() != null && 
+                            !studentProfile.getAvatarUrl().isEmpty()) {
+                            // Sync StudentProfile.avatarUrl to User.avatarUrl for display
+                            reply.getUser().setAvatarUrl(studentProfile.getAvatarUrl());
+                        }
+                    } catch (Exception e) {
+                        // If can't load student profile, continue with null avatarUrl
+                    }
+                }
+                reply.getUser().getAvatarUrl(); // Ensure avatarUrl is loaded
             }
             if (reply.getArticle() != null) {
                 reply.getArticle().getId();
@@ -182,6 +249,7 @@ public class ArticleCommentService {
             // Force load user and article for serialization
             saved.getUser().getId();
             saved.getUser().getFullName();
+            saved.getUser().getAvatarUrl(); // Ensure avatarUrl is loaded
             saved.getArticle().getId();
             
             updateArticleCommentsCount(articleId);

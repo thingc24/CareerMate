@@ -39,6 +39,16 @@ public class CompanyRatingService {
                         rating.getStudent().getUser().getId();
                         rating.getStudent().getUser().getFullName();
                         rating.getStudent().getUser().getEmail();
+                        String userAvatarUrl = rating.getStudent().getUser().getAvatarUrl();
+                        // If User.avatarUrl is null, try to get from StudentProfile
+                        if (userAvatarUrl == null || userAvatarUrl.isEmpty()) {
+                            // StudentProfile.avatarUrl should be loaded already (since we have rating.getStudent())
+                            if (rating.getStudent().getAvatarUrl() != null && 
+                                !rating.getStudent().getAvatarUrl().isEmpty()) {
+                                // Sync StudentProfile.avatarUrl to User.avatarUrl for display
+                                rating.getStudent().getUser().setAvatarUrl(rating.getStudent().getAvatarUrl());
+                            }
+                        }
                         rating.getStudent().getUser().getAvatarUrl();
                     }
                 } catch (Exception e) {

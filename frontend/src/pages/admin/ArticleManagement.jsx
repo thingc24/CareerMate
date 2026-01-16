@@ -103,8 +103,6 @@ export default function ArticleManagement() {
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Quản lý bài viết</h1>
-          <p className="text-lg text-gray-600">Duyệt và quản lý bài viết từ nhà tuyển dụng</p>
         </div>
         <button
           onClick={() => navigate('/admin/articles/create')}

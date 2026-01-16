@@ -412,14 +412,40 @@ export default function CompanyDetail() {
           <div className="space-y-6">
             {ratings.map((rating) => {
               const userName = rating.student?.user?.fullName || 'Người dùng ẩn danh';
+              const avatarUrl = rating.student?.user?.avatarUrl;
               const initials = userName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+              
+              // Construct full avatar URL
+              let fullAvatarUrl = null;
+              if (avatarUrl) {
+                if (avatarUrl.startsWith('http')) {
+                  fullAvatarUrl = avatarUrl;
+                } else if (avatarUrl.startsWith('/api')) {
+                  fullAvatarUrl = `http://localhost:8080${avatarUrl}`;
+                } else {
+                  fullAvatarUrl = `http://localhost:8080/api${avatarUrl}`;
+                }
+              }
               
               return (
                 <div key={rating.id} className="bg-gradient-to-br from-white to-gray-50 rounded-xl p-6 border-2 border-gray-100 hover:border-blue-200 transition-all duration-300 animate-fade-in">
                   <div className="flex items-start gap-4 mb-4">
                     {/* Avatar */}
                     <div className="flex-shrink-0">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md">
+                      {fullAvatarUrl ? (
+                        <img
+                          src={fullAvatarUrl}
+                          alt={userName}
+                          className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div 
+                        className={`w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md ${fullAvatarUrl ? 'hidden' : ''}`}
+                      >
                         {initials}
                       </div>
                     </div>

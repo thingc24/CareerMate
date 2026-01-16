@@ -47,9 +47,19 @@ export default function JobList() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 animate-fade-in">
-      {/* Search and Filters */}
-      <div className="card p-6 mb-8">
+    <div className="max-w-7xl mx-auto px-4 py-4">
+      {/* Header Section */}
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">
+          Tìm Việc Làm
+        </h1>
+        <p className="text-lg text-gray-600">
+          Khám phá cơ hội nghề nghiệp phù hợp với bạn
+        </p>
+      </div>
+
+      {/* Enhanced Search and Filters */}
+      <div className="card p-6 mb-8 shadow-lg bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
         <form onSubmit={handleSearch} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
             <div className="md:col-span-5">
@@ -58,7 +68,7 @@ export default function JobList() {
                 <input
                   type="text"
                   placeholder="Tìm kiếm việc làm, công ty, kỹ năng..."
-                  className="input-field pl-12"
+                  className="input-field pl-12 pr-4 py-3 bg-white border-2 border-blue-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -68,7 +78,7 @@ export default function JobList() {
               <div className="relative">
                 <i className="fas fa-map-marker-alt absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                 <select
-                  className="input-field pl-12 appearance-none"
+                  className="input-field pl-12 pr-10 appearance-none w-full py-3 bg-white border-2 border-blue-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                 >
@@ -113,11 +123,11 @@ export default function JobList() {
           ))}
         </div>
       ) : jobs.length === 0 ? (
-        <div className="card p-12 text-center">
-          <div className="inline-flex h-24 w-24 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 items-center justify-center mb-6">
-            <i className="fas fa-briefcase text-blue-500 text-4xl"></i>
+        <div className="card p-16 text-center shadow-lg">
+          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 mb-6">
+            <i className="fas fa-briefcase text-blue-500 text-5xl"></i>
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Không tìm thấy việc làm nào</h3>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">Không tìm thấy việc làm nào</h3>
           <p className="text-gray-600 mb-6">Thử thay đổi từ khóa hoặc bộ lọc tìm kiếm</p>
           <button
             onClick={() => {
@@ -137,8 +147,8 @@ export default function JobList() {
             <Link
               key={job.id}
               to={`/student/jobs/${job.id}`}
-              className="card card-hover p-6 block group animate-slide-up"
-              style={{ animationDelay: `${index * 50}ms` }}
+              className="card p-6 hover:shadow-2xl hover:shadow-blue-500/20 hover:-translate-y-2 transition-all duration-300 block group border-2 border-transparent hover:border-blue-200 animate-fade-in"
+              style={{ animationDelay: `${index * 0.05}s` }}
             >
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div className="flex-1">

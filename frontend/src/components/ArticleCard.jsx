@@ -8,25 +8,56 @@ function ReplyComment({ reply, onReply, replyingTo, setReplyingTo, replyContent,
   const maxDepth = 10; // Prevent infinite nesting in UI (safety limit)
   const hasNestedReplies = reply.replies && reply.replies.length > 0;
 
+  const replyUserName = reply.user?.fullName || 'Người dùng';
+  const replyAvatarUrl = reply.user?.avatarUrl;
+  const replyInitials = replyUserName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+  
+  // Construct full avatar URL
+  let fullReplyAvatarUrl = null;
+  if (replyAvatarUrl) {
+    if (replyAvatarUrl.startsWith('http')) {
+      fullReplyAvatarUrl = replyAvatarUrl;
+    } else if (replyAvatarUrl.startsWith('/api')) {
+      fullReplyAvatarUrl = `http://localhost:8080${replyAvatarUrl}`;
+    } else {
+      fullReplyAvatarUrl = `http://localhost:8080/api${replyAvatarUrl}`;
+    }
+  }
+
   return (
     <div className="flex gap-2">
-      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-        {reply.user?.fullName?.charAt(0).toUpperCase() || 'U'}
+      <div className="flex-shrink-0">
+        {fullReplyAvatarUrl ? (
+          <img
+            src={fullReplyAvatarUrl}
+            alt={replyUserName}
+            className="w-8 h-8 rounded-full object-cover border-2 border-white shadow-md ring-1 ring-gray-200"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+        ) : null}
+        <div className={`w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center text-white text-xs font-bold shadow-md ring-1 ring-gray-200 ${fullReplyAvatarUrl ? 'hidden' : ''}`}>
+          {replyInitials}
+        </div>
       </div>
       <div className="flex-1">
-        <div className="bg-gray-50 rounded-lg p-2">
-          <p className="font-semibold text-xs text-gray-900">
-            {reply.user?.fullName || 'Người dùng'}
+        <div className="bg-gradient-to-br from-green-50 to-teal-50 rounded-lg p-3 border border-green-200">
+          <p className="font-bold text-xs text-gray-900 mb-1">
+            {replyUserName}
           </p>
-          <p className="text-gray-700 text-xs">{reply.content}</p>
+          <p className="text-gray-700 text-xs leading-relaxed">{reply.content}</p>
         </div>
-        <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+        <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+          <i className="fas fa-clock"></i>
           <span>{formatDate(reply.createdAt)}</span>
           {depth < maxDepth && (
             <button
               onClick={() => setReplyingTo(replyingTo === reply.id ? null : reply.id)}
-              className="hover:text-blue-600"
+              className="hover:text-blue-600 hover:font-semibold transition-all flex items-center gap-1"
             >
+              <i className="fas fa-reply text-xs"></i>
               Trả lời
             </button>
           )}
@@ -34,18 +65,18 @@ function ReplyComment({ reply, onReply, replyingTo, setReplyingTo, replyContent,
 
         {/* Reply Input */}
         {replyingTo === reply.id && depth < maxDepth && (
-          <div className="mt-2 flex gap-2">
+          <div className="mt-3 flex gap-2">
             <input
               type="text"
               value={replyContent}
               onChange={(e) => setReplyContent(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && onReply(reply.id)}
               placeholder="Viết phản hồi..."
-              className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="flex-1 px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
             />
             <button
               onClick={() => onReply(reply.id)}
-              className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105 text-sm font-semibold"
             >
               Gửi
             </button>
@@ -54,7 +85,7 @@ function ReplyComment({ reply, onReply, replyingTo, setReplyingTo, replyContent,
 
         {/* Nested Replies - Recursive rendering */}
         {hasNestedReplies && depth < maxDepth && (
-          <div className="mt-2 ml-4 space-y-2 border-l-2 border-gray-200 pl-3">
+          <div className="mt-3 ml-4 space-y-3 border-l-4 border-teal-300 pl-4">
             {reply.replies.map((nestedReply) => (
               <ReplyComment
                 key={nestedReply.id}
@@ -323,102 +354,127 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md mb-4">
+    <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg mb-6 border-2 border-gray-100 hover:border-blue-200 hover:shadow-2xl hover:shadow-blue-500/20 hover:-translate-y-1 transition-all duration-300 overflow-hidden">
       {/* Header with Avatar and Author Info */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-5 border-b border-gray-200 bg-white">
         <div className="flex items-center gap-3">
           <button
             onClick={handleAuthorClick}
-            className="flex-shrink-0 hover:opacity-80 transition-opacity"
+            className="flex-shrink-0 hover:opacity-80 transition-opacity transform hover:scale-110"
           >
             {authorAvatar ? (
               <img
                 src={authorAvatar}
                 alt={authorName}
-                className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md ring-2 ring-gray-100"
                 onError={(e) => {
                   e.target.style.display = 'none';
                   e.target.nextSibling.style.display = 'flex';
                 }}
               />
             ) : null}
-            <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold ${authorAvatar ? 'hidden' : ''}`}>
+            <div className={`w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md ring-2 ring-gray-100 ${authorAvatar ? 'hidden' : ''}`}>
               {authorName?.charAt(0).toUpperCase() || 'U'}
             </div>
           </button>
           <div className="flex-1">
             <button
               onClick={handleAuthorClick}
-              className="text-left hover:underline"
+              className="text-left hover:underline group"
             >
-              <h3 className="font-semibold text-gray-900">{authorName}</h3>
+              <h3 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{authorName}</h3>
             </button>
-            <p className="text-xs text-gray-500">{formatDate(article.publishedAt || article.createdAt)}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <i className="fas fa-clock text-xs text-gray-400"></i>
+              <p className="text-xs text-gray-500">{formatDate(article.publishedAt || article.createdAt)}</p>
+              {article.category && (
+                <>
+                  <span className="text-xs text-gray-300">•</span>
+                  <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full font-medium">
+                    {article.category.replace('_', ' ')}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-5 bg-gradient-to-br from-white to-gray-50">
         <h2 
-          className="text-lg font-semibold text-gray-900 mb-2 cursor-pointer hover:text-blue-600"
+          className="text-xl font-bold text-gray-900 mb-3 cursor-pointer hover:text-blue-600 transition-colors line-clamp-2 group"
           onClick={() => navigate(`/student/articles/${article.id}`)}
         >
           {article.title}
+          <i className="fas fa-external-link-alt ml-2 text-xs text-gray-400 group-hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"></i>
         </h2>
         {article.excerpt && (
-          <p className="text-gray-700 mb-3 line-clamp-3">{article.excerpt}</p>
+          <p className="text-gray-700 mb-4 line-clamp-3 leading-relaxed">{article.excerpt}</p>
         )}
         {article.thumbnailUrl && (
-          <img
-            src={article.thumbnailUrl.startsWith('http') 
-              ? article.thumbnailUrl 
-              : `http://localhost:8080/api${article.thumbnailUrl}`}
-            alt={article.title}
-            className="w-full rounded-lg mb-3 cursor-pointer"
-            onClick={() => navigate(`/student/articles/${article.id}`)}
-          />
+          <div className="relative overflow-hidden rounded-xl mb-4 border-2 border-gray-100 group cursor-pointer" onClick={() => navigate(`/student/articles/${article.id}`)}>
+            <img
+              src={article.thumbnailUrl.startsWith('http') 
+                ? article.thumbnailUrl 
+                : `http://localhost:8080/api${article.thumbnailUrl}`}
+              alt={article.title}
+              className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          </div>
         )}
       </div>
 
       {/* Reactions Count */}
       {getTotalReactions() > 0 && (
-        <div className="px-4 pb-2 flex items-center gap-2 text-sm text-gray-600">
+        <div className="px-5 pb-3 flex items-center gap-2 text-sm">
           <div className="flex -space-x-1">
             {Object.entries(reactionCounts)
               .filter(([_, count]) => count > 0)
               .slice(0, 3)
               .map(([type, _]) => (
-                <span key={type} className="text-lg">{getReactionEmoji(type)}</span>
+                <span key={type} className="text-lg transform hover:scale-125 transition-transform">{getReactionEmoji(type)}</span>
               ))}
           </div>
-          <span>{getTotalReactions()}</span>
+          <span className="font-semibold text-gray-700">{getTotalReactions()}</span>
+          {comments.length > 0 && (
+            <>
+              <span className="text-gray-300">•</span>
+              <span className="text-gray-600">
+                <i className="fas fa-comment mr-1"></i>
+                {comments.length}
+              </span>
+            </>
+          )}
         </div>
       )}
 
       {/* Action Buttons */}
-      <div className="px-4 py-2 border-t border-gray-200">
-        <div className="flex items-center justify-around">
+      <div className="px-5 py-3 border-t border-gray-200 bg-white">
+        <div className="flex items-center justify-around gap-2">
           <button
             onClick={() => handleReaction('LIKE')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-200 flex-1 justify-center ${
               myReaction?.reactionType === 'LIKE' 
-                ? 'bg-blue-100 text-blue-600' 
-                : 'text-gray-600 hover:bg-gray-100'
+                ? 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 shadow-md transform scale-105' 
+                : 'text-gray-600 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-sm'
             }`}
           >
-            <span className="text-lg">{getReactionEmoji('LIKE')}</span>
-            <span className="font-medium">Thích</span>
+            <span className="text-xl">{getReactionEmoji('LIKE')}</span>
+            <span className="font-semibold">Thích</span>
           </button>
           <button
             onClick={() => setShowComments(!showComments)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-200 flex-1 justify-center text-gray-600 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-sm ${
+              showComments ? 'bg-gradient-to-r from-gray-100 to-gray-200' : ''
+            }`}
             onMouseEnter={showComments ? null : loadComments}
           >
-            <i className="fas fa-comment"></i>
-            <span className="font-medium">Bình luận</span>
+            <i className="fas fa-comment text-lg"></i>
+            <span className="font-semibold">Bình luận</span>
             {article.commentsCount > 0 && (
-              <span className="text-xs bg-gray-200 px-2 py-0.5 rounded-full">
+              <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">
                 {article.commentsCount}
               </span>
             )}
@@ -444,66 +500,99 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
 
       {/* Comments Section */}
       {showComments && (
-        <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
+        <div className="px-5 py-4 border-t border-gray-200 bg-gradient-to-br from-gray-50 to-white">
           {/* Comment Input */}
-          <div className="mb-3">
-            <div className="flex gap-2">
+          <div className="mb-4">
+            <div className="flex gap-3">
               <input
                 type="text"
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleComment()}
                 placeholder="Viết bình luận..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all"
               />
               <button
                 onClick={handleComment}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105 font-semibold"
               >
+                <i className="fas fa-paper-plane mr-2"></i>
                 Gửi
               </button>
             </div>
           </div>
 
           {/* Comments List */}
-          <div className="space-y-3 max-h-96 overflow-y-auto">
-            {comments.map((comment) => (
-              <div key={comment.id} className="bg-white rounded-lg p-3">
-                <div className="flex gap-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
-                    {comment.user?.fullName?.charAt(0).toUpperCase() || 'U'}
+          <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+            {comments.map((comment) => {
+              const commentUserName = comment.user?.fullName || 'Người dùng';
+              const commentAvatarUrl = comment.user?.avatarUrl;
+              const commentInitials = commentUserName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+              
+              // Construct full avatar URL
+              let fullCommentAvatarUrl = null;
+              if (commentAvatarUrl) {
+                if (commentAvatarUrl.startsWith('http')) {
+                  fullCommentAvatarUrl = commentAvatarUrl;
+                } else if (commentAvatarUrl.startsWith('/api')) {
+                  fullCommentAvatarUrl = `http://localhost:8080${commentAvatarUrl}`;
+                } else {
+                  fullCommentAvatarUrl = `http://localhost:8080/api${commentAvatarUrl}`;
+                }
+              }
+              
+              return (
+              <div key={comment.id} className="bg-white rounded-xl p-4 border-2 border-gray-100 hover:border-blue-200 transition-all shadow-sm">
+                <div className="flex gap-3">
+                  <div className="flex-shrink-0">
+                    {fullCommentAvatarUrl ? (
+                      <img
+                        src={fullCommentAvatarUrl}
+                        alt={commentUserName}
+                        className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md ring-2 ring-gray-100"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md ring-2 ring-gray-100 ${fullCommentAvatarUrl ? 'hidden' : ''}`}>
+                      {commentInitials}
+                    </div>
                   </div>
                   <div className="flex-1">
-                    <div className="bg-gray-100 rounded-lg p-2">
-                      <p className="font-semibold text-sm text-gray-900">
-                        {comment.user?.fullName || 'Người dùng'}
+                    <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-3 border border-gray-200">
+                      <p className="font-bold text-sm text-gray-900 mb-1">
+                        {commentUserName}
                       </p>
-                      <p className="text-gray-700 text-sm">{comment.content}</p>
+                      <p className="text-gray-700 text-sm leading-relaxed">{comment.content}</p>
                     </div>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                      <i className="fas fa-clock"></i>
                       <span>{formatDate(comment.createdAt)}</span>
                       <button
                         onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-                        className="hover:text-blue-600"
+                        className="hover:text-blue-600 hover:font-semibold transition-all flex items-center gap-1"
                       >
+                        <i className="fas fa-reply text-xs"></i>
                         Trả lời
                       </button>
                     </div>
 
                     {/* Reply Input */}
                     {replyingTo === comment.id && (
-                      <div className="mt-2 flex gap-2">
+                      <div className="mt-3 flex gap-2">
                         <input
                           type="text"
                           value={replyContent}
                           onChange={(e) => setReplyContent(e.target.value)}
                           onKeyPress={(e) => e.key === 'Enter' && handleReply(comment.id)}
                           placeholder="Viết phản hồi..."
-                          className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                          className="flex-1 px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
                         />
                         <button
                           onClick={() => handleReply(comment.id)}
-                          className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105 text-sm font-semibold"
                         >
                           Gửi
                         </button>
@@ -512,7 +601,7 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
 
                     {/* Replies - Support unlimited nested levels */}
                     {comment.replies && comment.replies.length > 0 && (
-                      <div className="mt-2 ml-4 space-y-2 border-l-2 border-gray-200 pl-3">
+                      <div className="mt-3 ml-4 space-y-3 border-l-4 border-blue-300 pl-4">
                         {comment.replies.map((reply) => (
                           <ReplyComment 
                             key={reply.id} 
@@ -530,7 +619,8 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
