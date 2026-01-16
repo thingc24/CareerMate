@@ -4,11 +4,13 @@ import api from '../../services/api';
 export default function Packages() {
   const [packages, setPackages] = useState([]);
   const [mySubscription, setMySubscription] = useState(null);
+  const [mySubscriptions, setMySubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadPackages();
     loadMySubscription();
+    loadMySubscriptions();
   }, []);
 
   const loadPackages = async () => {
@@ -28,22 +30,37 @@ export default function Packages() {
       const data = await api.getMySubscription();
       setMySubscription(data);
     } catch (error) {
-      console.error('Error loading subscription:', error);
+      // Not having a subscription is OK
+      setMySubscription(null);
+    }
+  };
+
+  const loadMySubscriptions = async () => {
+    try {
+      const data = await api.getMySubscriptions();
+      setMySubscriptions(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error loading my subscriptions:', error);
     }
   };
 
   const handleSubscribe = async (packageId) => {
-    if (!window.confirm('Bạn có chắc muốn đăng ký gói này?')) {
+    if (!window.confirm('Bạn có chắc muốn đăng ký gói này? Yêu cầu sẽ được gửi đến admin để duyệt.')) {
       return;
     }
     try {
-      await api.subscribePackage(packageId);
-      alert('Đăng ký thành công!');
-      loadMySubscription();
-      loadPackages();
+      await api.requestSubscription(packageId);
+      alert('Yêu cầu đăng ký đã được gửi! Vui lòng chờ admin duyệt. Bạn sẽ nhận được thông báo khi có kết quả.');
+      loadMySubscriptions();
     } catch (error) {
-      alert('Lỗi: ' + (error.response?.data?.error || 'Không thể đăng ký gói'));
+      alert('Lỗi: ' + (error.response?.data?.message || error.message || 'Không thể gửi yêu cầu đăng ký gói'));
     }
+  };
+
+  const getSubscriptionStatus = (pkgId) => {
+    const sub = mySubscriptions.find(s => s.packageEntity?.id === pkgId);
+    if (!sub) return null;
+    return sub.status;
   };
 
   const formatCurrency = (amount) => {
@@ -72,19 +89,60 @@ export default function Packages() {
         <div className="card p-6 mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Gói hiện tại</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Gói đang hoạt động</h2>
               <p className="text-gray-700">
-                {mySubscription.package?.name || 'Gói Premium'}
+                {mySubscription.packageEntity?.name || mySubscription.package?.name || 'Gói Premium'}
               </p>
-              {mySubscription.expiresAt && (
+              {mySubscription.endDate && (
                 <p className="text-sm text-gray-600 mt-1">
-                  Hết hạn: {new Date(mySubscription.expiresAt).toLocaleDateString('vi-VN')}
+                  Hết hạn: {new Date(mySubscription.endDate).toLocaleDateString('vi-VN')}
                 </p>
               )}
             </div>
             <span className="badge badge-success text-lg px-4 py-2">
               Đang hoạt động
             </span>
+          </div>
+        </div>
+      )}
+
+      {/* My Subscriptions List */}
+      {mySubscriptions.length > 0 && (
+        <div className="card p-6 mb-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Lịch sử đăng ký của tôi</h2>
+          <div className="space-y-3">
+            {mySubscriptions.map((sub) => {
+              const statusColors = {
+                PENDING: 'bg-yellow-100 text-yellow-800',
+                APPROVED: 'bg-green-100 text-green-800',
+                REJECTED: 'bg-red-100 text-red-800',
+                ACTIVE: 'bg-blue-100 text-blue-800',
+                EXPIRED: 'bg-gray-100 text-gray-800',
+                CANCELLED: 'bg-gray-100 text-gray-800'
+              };
+              const statusTexts = {
+                PENDING: 'Đang chờ duyệt',
+                APPROVED: 'Đã được duyệt',
+                REJECTED: 'Bị từ chối',
+                ACTIVE: 'Đang hoạt động',
+                EXPIRED: 'Hết hạn',
+                CANCELLED: 'Đã hủy'
+              };
+              return (
+                <div key={sub.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium text-gray-900">{sub.packageEntity?.name || 'N/A'}</p>
+                    <p className="text-sm text-gray-600">
+                      {sub.startDate && `Từ ${new Date(sub.startDate).toLocaleDateString('vi-VN')}`}
+                      {sub.endDate && ` đến ${new Date(sub.endDate).toLocaleDateString('vi-VN')}`}
+                    </p>
+                  </div>
+                  <span className={`px-3 py-1 text-xs font-semibold rounded-full ${statusColors[sub.status] || 'bg-gray-100 text-gray-800'}`}>
+                    {statusTexts[sub.status] || sub.status}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -98,7 +156,9 @@ export default function Packages() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {packages.map((pkg) => {
-            const isSubscribed = mySubscription?.package?.id === pkg.id;
+            const isSubscribed = mySubscription?.packageEntity?.id === pkg.id || mySubscription?.package?.id === pkg.id;
+            const subscriptionStatus = getSubscriptionStatus(pkg.id);
+            const hasPendingRequest = subscriptionStatus === 'PENDING';
             const isPremium = pkg.name?.toUpperCase().includes('PREMIUM') || pkg.isPremium;
 
             return (
@@ -118,9 +178,14 @@ export default function Packages() {
                   <span className="text-4xl font-bold text-blue-600">
                     {formatCurrency(pkg.price)}
                   </span>
-                  {pkg.price && (
+                  {pkg.price && pkg.price > 0 && (
                     <span className="text-gray-600">
-                      /{pkg.durationMonths || 1} tháng
+                      /{pkg.durationDays ? Math.ceil(pkg.durationDays / 30) : 1} tháng
+                    </span>
+                  )}
+                  {(!pkg.price || pkg.price === 0) && (
+                    <span className="text-sm text-gray-600 ml-2">
+                      / {pkg.durationDays || 30} ngày
                     </span>
                   )}
                 </div>
@@ -137,9 +202,9 @@ export default function Packages() {
                 </div>
                 <button
                   onClick={() => handleSubscribe(pkg.id)}
-                  disabled={isSubscribed}
+                  disabled={isSubscribed || hasPendingRequest}
                   className={`w-full ${
-                    isSubscribed ? 'btn-secondary' : 'btn-primary'
+                    isSubscribed ? 'btn-secondary' : hasPendingRequest ? 'bg-yellow-500 hover:bg-yellow-600' : 'btn-primary'
                   }`}
                 >
                   {isSubscribed ? (
@@ -147,10 +212,15 @@ export default function Packages() {
                       <i className="fas fa-check mr-2"></i>
                       Đã đăng ký
                     </>
+                  ) : hasPendingRequest ? (
+                    <>
+                      <i className="fas fa-clock mr-2"></i>
+                      Đang chờ duyệt
+                    </>
                   ) : (
                     <>
-                      <i className="fas fa-shopping-cart mr-2"></i>
-                      Đăng ký ngay
+                      <i className="fas fa-paper-plane mr-2"></i>
+                      Gửi yêu cầu đăng ký
                     </>
                   )}
                 </button>

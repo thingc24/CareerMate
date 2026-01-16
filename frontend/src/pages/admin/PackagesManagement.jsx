@@ -4,8 +4,11 @@ import api from '../../services/api';
 export default function PackagesManagement() {
   const [packages, setPackages] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
+  const [approvedSubscriptions, setApprovedSubscriptions] = useState([]);
+  const [subscriptionsHistory, setSubscriptionsHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('packages');
+  const [subscriptionTab, setSubscriptionTab] = useState('pending'); // 'pending', 'approved', 'history'
   const [showForm, setShowForm] = useState(false);
   const [editingPackage, setEditingPackage] = useState(null);
   const [formData, setFormData] = useState({
@@ -20,10 +23,16 @@ export default function PackagesManagement() {
   useEffect(() => {
     if (activeTab === 'packages') {
       loadPackages();
-    } else {
-      loadSubscriptions();
+    } else if (activeTab === 'subscriptions') {
+      if (subscriptionTab === 'pending') {
+        loadSubscriptions();
+      } else if (subscriptionTab === 'approved') {
+        loadApprovedSubscriptions();
+      } else if (subscriptionTab === 'history') {
+        loadSubscriptionsHistory();
+      }
     }
-  }, [activeTab]);
+  }, [activeTab, subscriptionTab]);
 
   const loadPackages = async () => {
     try {
@@ -40,12 +49,90 @@ export default function PackagesManagement() {
   const loadSubscriptions = async () => {
     try {
       setLoading(true);
-      const data = await api.getAdminSubscriptions();
-      setSubscriptions(data);
+      const data = await api.getPendingSubscriptions(0, 100);
+      // Handle both array and page response
+      if (data.content) {
+        setSubscriptions(data.content);
+      } else if (Array.isArray(data)) {
+        setSubscriptions(data);
+      } else {
+        setSubscriptions([]);
+      }
     } catch (error) {
       console.error('Error loading subscriptions:', error);
+      setSubscriptions([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadApprovedSubscriptions = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getApprovedSubscriptions(0, 100);
+      if (data.content) {
+        setApprovedSubscriptions(data.content);
+      } else if (Array.isArray(data)) {
+        setApprovedSubscriptions(data);
+      } else {
+        setApprovedSubscriptions([]);
+      }
+    } catch (error) {
+      console.error('Error loading approved subscriptions:', error);
+      setApprovedSubscriptions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadSubscriptionsHistory = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getSubscriptionsHistory(0, 100);
+      if (data.content) {
+        setSubscriptionsHistory(data.content);
+      } else if (Array.isArray(data)) {
+        setSubscriptionsHistory(data);
+      } else {
+        setSubscriptionsHistory([]);
+      }
+    } catch (error) {
+      console.error('Error loading subscriptions history:', error);
+      setSubscriptionsHistory([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApprove = async (subscriptionId) => {
+    if (!window.confirm('Bạn có chắc muốn duyệt đăng ký này?')) return;
+    
+    try {
+      await api.approveSubscription(subscriptionId);
+      alert('Đã duyệt đăng ký thành công!');
+      loadSubscriptions();
+      if (subscriptionTab === 'approved') {
+        loadApprovedSubscriptions();
+      }
+    } catch (error) {
+      console.error('Error approving subscription:', error);
+      alert('Lỗi: ' + (error.response?.data?.error || 'Không thể duyệt đăng ký'));
+    }
+  };
+
+  const handleReject = async (subscriptionId) => {
+    if (!window.confirm('Bạn có chắc muốn từ chối đăng ký này?')) return;
+    
+    try {
+      await api.rejectSubscription(subscriptionId);
+      alert('Đã từ chối đăng ký!');
+      loadSubscriptions();
+      if (subscriptionTab === 'history') {
+        loadSubscriptionsHistory();
+      }
+    } catch (error) {
+      console.error('Error rejecting subscription:', error);
+      alert('Lỗi: ' + (error.response?.data?.error || 'Không thể từ chối đăng ký'));
     }
   };
 
@@ -127,11 +214,26 @@ export default function PackagesManagement() {
 
   const getStatusBadge = (status) => {
     const badges = {
-      ACTIVE: 'bg-green-100 text-green-800',
+      PENDING: 'bg-yellow-100 text-yellow-800',
+      APPROVED: 'bg-green-100 text-green-800',
+      REJECTED: 'bg-red-100 text-red-800',
+      ACTIVE: 'bg-blue-100 text-blue-800',
       EXPIRED: 'bg-gray-100 text-gray-800',
-      CANCELLED: 'bg-red-100 text-red-800'
+      CANCELLED: 'bg-gray-100 text-gray-800'
     };
     return badges[status] || 'bg-gray-100 text-gray-800';
+  };
+
+  const getStatusText = (status) => {
+    const texts = {
+      PENDING: 'Đang chờ duyệt',
+      APPROVED: 'Đã duyệt',
+      REJECTED: 'Đã từ chối',
+      ACTIVE: 'Đang hoạt động',
+      EXPIRED: 'Hết hạn',
+      CANCELLED: 'Đã hủy'
+    };
+    return texts[status] || status;
   };
 
   if (loading) {
@@ -166,7 +268,10 @@ export default function PackagesManagement() {
             Gói Dịch Vụ
           </button>
           <button
-            onClick={() => setActiveTab('subscriptions')}
+            onClick={() => {
+              setActiveTab('subscriptions');
+              setSubscriptionTab('pending');
+            }}
             className={`px-4 py-2 font-medium border-b-2 transition ${
               activeTab === 'subscriptions'
                 ? 'border-blue-600 text-blue-600'
@@ -347,46 +452,250 @@ export default function PackagesManagement() {
 
       {/* Subscriptions Tab */}
       {activeTab === 'subscriptions' && (
-        <div className="card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Người dùng</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gói</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bắt đầu</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kết thúc</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {subscriptions.map((sub) => (
-                  <tr key={sub.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {sub.user?.fullName || sub.user?.email || 'N/A'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">{sub.packageEntity?.name || 'N/A'}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(sub.status)}`}>
-                        {sub.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {formatDate(sub.startDate)}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {formatDate(sub.endDate)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <>
+          {/* Sub-tabs for subscriptions */}
+          <div className="mb-6 border-b border-gray-200">
+            <div className="flex gap-4">
+              <button
+                onClick={() => setSubscriptionTab('pending')}
+                className={`px-4 py-2 font-medium border-b-2 transition ${
+                  subscriptionTab === 'pending'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Đang chờ duyệt
+              </button>
+              <button
+                onClick={() => setSubscriptionTab('approved')}
+                className={`px-4 py-2 font-medium border-b-2 transition ${
+                  subscriptionTab === 'approved'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Đã duyệt
+              </button>
+              <button
+                onClick={() => setSubscriptionTab('history')}
+                className={`px-4 py-2 font-medium border-b-2 transition ${
+                  subscriptionTab === 'history'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Lịch sử duyệt
+              </button>
+            </div>
           </div>
-        </div>
+
+          {/* Pending Subscriptions */}
+          {subscriptionTab === 'pending' && (
+            <>
+              {subscriptions.length === 0 ? (
+                <div className="card p-12 text-center">
+                  <i className="fas fa-inbox text-gray-400 text-6xl mb-4"></i>
+                  <p className="text-gray-600 text-lg">Không có yêu cầu đăng ký đang chờ duyệt</p>
+                </div>
+              ) : (
+            <div className="card overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Người dùng</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gói</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ngày yêu cầu</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {subscriptions.map((sub) => (
+                      <tr key={sub.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {sub.user?.fullName || 'N/A'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-600">
+                            {sub.user?.email || 'N/A'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900">{sub.packageEntity?.name || 'N/A'}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(sub.status)}`}>
+                            {getStatusText(sub.status)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {formatDate(sub.createdAt)}
+                        </td>
+                        <td className="px-6 py-4">
+                          {sub.status === 'PENDING' && (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleApprove(sub.id)}
+                                className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm"
+                                title="Duyệt"
+                              >
+                                <i className="fas fa-check mr-1"></i>
+                                Duyệt
+                              </button>
+                              <button
+                                onClick={() => handleReject(sub.id)}
+                                className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm"
+                                title="Từ chối"
+                              >
+                                <i className="fas fa-times mr-1"></i>
+                                Từ chối
+                              </button>
+                            </div>
+                          )}
+                          {sub.status !== 'PENDING' && (
+                            <span className="text-xs text-gray-500">Đã xử lý</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+              )}
+            </>
+          )}
+
+          {/* Approved Subscriptions */}
+          {subscriptionTab === 'approved' && (
+            <>
+              {approvedSubscriptions.length === 0 ? (
+                <div className="card p-12 text-center">
+                  <i className="fas fa-check-circle text-gray-400 text-6xl mb-4"></i>
+                  <p className="text-gray-600 text-lg">Không có gói dịch vụ nào đã được duyệt</p>
+                </div>
+              ) : (
+                <div className="card overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Người dùng</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gói</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bắt đầu</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kết thúc</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ngày duyệt</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {approvedSubscriptions.map((sub) => (
+                          <tr key={sub.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4">
+                              <div className="text-sm font-medium text-gray-900">
+                                {sub.user?.fullName || 'N/A'}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="text-sm text-gray-600">
+                                {sub.user?.email || 'N/A'}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="text-sm text-gray-900">{sub.packageEntity?.name || 'N/A'}</div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(sub.status)}`}>
+                                {getStatusText(sub.status)}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                              {formatDate(sub.startDate)}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                              {formatDate(sub.endDate)}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                              {formatDate(sub.createdAt)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Subscriptions History */}
+          {subscriptionTab === 'history' && (
+            <>
+              {subscriptionsHistory.length === 0 ? (
+                <div className="card p-12 text-center">
+                  <i className="fas fa-history text-gray-400 text-6xl mb-4"></i>
+                  <p className="text-gray-600 text-lg">Chưa có lịch sử đăng ký</p>
+                </div>
+              ) : (
+                <div className="card overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Người dùng</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gói</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bắt đầu</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kết thúc</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ngày yêu cầu</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {subscriptionsHistory.map((sub) => (
+                          <tr key={sub.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4">
+                              <div className="text-sm font-medium text-gray-900">
+                                {sub.user?.fullName || 'N/A'}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="text-sm text-gray-600">
+                                {sub.user?.email || 'N/A'}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="text-sm text-gray-900">{sub.packageEntity?.name || 'N/A'}</div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(sub.status)}`}>
+                                {getStatusText(sub.status)}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                              {formatDate(sub.startDate)}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                              {formatDate(sub.endDate)}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                              {formatDate(sub.createdAt)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </>
       )}
     </div>
   );

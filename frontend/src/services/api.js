@@ -797,7 +797,43 @@ class CareerMateAPI {
   }
 
   async subscribePackage(packageId) {
-    const response = await this.client.post(`/packages/${packageId}/subscribe`);
+    // Legacy - use requestSubscription instead
+    return this.requestSubscription(packageId);
+  }
+
+  async requestSubscription(packageId) {
+    const response = await this.client.post(`/packages/${packageId}/request`);
+    return response.data;
+  }
+
+  async getMySubscriptions() {
+    const response = await this.client.get('/packages/my-subscriptions');
+    return response.data;
+  }
+
+  // Admin subscription management
+  async getPendingSubscriptions(page = 0, size = 10) {
+    const response = await this.client.get(`/packages/subscriptions/pending?page=${page}&size=${size}`);
+    return response.data;
+  }
+
+  async approveSubscription(subscriptionId) {
+    const response = await this.client.post(`/packages/subscriptions/${subscriptionId}/approve`);
+    return response.data;
+  }
+
+  async rejectSubscription(subscriptionId) {
+    const response = await this.client.post(`/packages/subscriptions/${subscriptionId}/reject`);
+    return response.data;
+  }
+
+  async getApprovedSubscriptions(page = 0, size = 10) {
+    const response = await this.client.get(`/packages/subscriptions/approved?page=${page}&size=${size}`);
+    return response.data;
+  }
+
+  async getSubscriptionsHistory(page = 0, size = 10) {
+    const response = await this.client.get(`/packages/subscriptions/history?page=${page}&size=${size}`);
     return response.data;
   }
 

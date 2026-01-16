@@ -73,7 +73,10 @@ public class Notification {
         NEW_REACTION,         // Có reaction mới trên bài viết
         INTERVIEW_SCHEDULED,  // Đã lên lịch phỏng vấn
         SYSTEM_ANNOUNCEMENT,  // Thông báo hệ thống
-        NEW_MESSAGE           // Tin nhắn mới
+        NEW_MESSAGE,          // Tin nhắn mới
+        SUBSCRIPTION_REQUEST, // Sinh viên đăng ký gói dịch vụ (thông báo cho admin)
+        SUBSCRIPTION_APPROVED, // Admin duyệt đăng ký gói dịch vụ (thông báo cho sinh viên)
+        SUBSCRIPTION_REJECTED  // Admin từ chối đăng ký gói dịch vụ (thông báo cho sinh viên)
     }
 
     public enum NotificationStatus {

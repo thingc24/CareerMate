@@ -1,5 +1,6 @@
 package vn.careermate.learningservice.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import vn.careermate.userservice.model.User;
 import lombok.AllArgsConstructor;
@@ -30,10 +31,12 @@ public class Subscription {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "package_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Package packageEntity;
 
     @Enumerated(EnumType.STRING)
@@ -51,6 +54,11 @@ public class Subscription {
     private LocalDateTime createdAt;
 
     public enum SubscriptionStatus {
-        ACTIVE, EXPIRED, CANCELLED
+        PENDING,      // Đang chờ admin duyệt
+        APPROVED,     // Đã được admin duyệt (tương đương ACTIVE)
+        REJECTED,     // Bị admin từ chối
+        ACTIVE,       // Đang hoạt động (backward compatibility)
+        EXPIRED,      // Hết hạn
+        CANCELLED     // Đã hủy
     }
 }
