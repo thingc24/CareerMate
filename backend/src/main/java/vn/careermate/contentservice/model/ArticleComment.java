@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "article_comments")
+@Table(name = "article_comments", schema = "contentservice")
 @Data
 @Builder
 @NoArgsConstructor

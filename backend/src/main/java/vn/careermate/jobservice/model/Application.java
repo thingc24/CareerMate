@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "applications", indexes = {
+@Table(name = "applications", schema = "jobservice", indexes = {
     @Index(name = "idx_applications_job", columnList = "job_id"),
     @Index(name = "idx_applications_student", columnList = "student_id"),
     @Index(name = "idx_applications_status", columnList = "status"),

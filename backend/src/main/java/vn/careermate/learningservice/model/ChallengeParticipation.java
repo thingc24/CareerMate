@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "challenge_participations", uniqueConstraints = {
+@Table(name = "challenge_participations", schema = "learningservice", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"student_id", "challenge_id"})
 })
 @Data

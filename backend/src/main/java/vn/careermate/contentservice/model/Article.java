@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "articles", indexes = {
+@Table(name = "articles", schema = "contentservice", indexes = {
     @Index(name = "idx_articles_author", columnList = "author_id"),
     @Index(name = "idx_articles_status", columnList = "status"),
     @Index(name = "idx_articles_published", columnList = "published_at")

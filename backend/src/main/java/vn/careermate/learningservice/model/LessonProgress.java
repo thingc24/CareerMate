@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "lesson_progress", uniqueConstraints = {
+@Table(name = "lesson_progress", schema = "learningservice", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"enrollment_id", "lesson_id"})
 })
 @Data

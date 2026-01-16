@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "recruiter_profiles")
+@Table(name = "recruiter_profiles", schema = "userservice")
 @Data
 @Builder
 @NoArgsConstructor

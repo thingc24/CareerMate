@@ -18,4 +18,7 @@ public interface RecruiterProfileRepository extends JpaRepository<RecruiterProfi
     
     @Query("SELECT rp FROM RecruiterProfile rp LEFT JOIN FETCH rp.company LEFT JOIN FETCH rp.user WHERE rp.user.id = :userId")
     Optional<RecruiterProfile> findByUserIdWithCompany(@Param("userId") UUID userId);
+    
+    @Query("SELECT rp FROM RecruiterProfile rp LEFT JOIN FETCH rp.user WHERE rp.user.id = :userId")
+    Optional<RecruiterProfile> findByUserIdWithUser(@Param("userId") UUID userId);
 }

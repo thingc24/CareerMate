@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "article_reactions", 
+@Table(name = "article_reactions", schema = "contentservice",
        uniqueConstraints = @UniqueConstraint(columnNames = {"article_id", "user_id"}))
 @Data
 @Builder

@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "application_history")
+@Table(name = "application_history", schema = "jobservice")
 @Data
 @Builder
 @NoArgsConstructor

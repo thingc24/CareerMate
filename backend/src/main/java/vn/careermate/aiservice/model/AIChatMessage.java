@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "ai_chat_messages", indexes = {
+@Table(name = "ai_chat_messages", schema = "aiservice", indexes = {
     @Index(name = "idx_ai_messages_conversation", columnList = "conversation_id"),
     @Index(name = "idx_ai_messages_created", columnList = "created_at")
 })

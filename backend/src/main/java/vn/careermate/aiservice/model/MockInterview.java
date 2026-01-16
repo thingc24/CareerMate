@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Entity
-@Table(name = "mock_interviews", indexes = {
+@Table(name = "mock_interviews", schema = "aiservice", indexes = {
     @Index(name = "idx_mock_interviews_student", columnList = "student_id"),
     @Index(name = "idx_mock_interviews_job", columnList = "job_id"),
     @Index(name = "idx_mock_interviews_status", columnList = "status")

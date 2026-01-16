@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "messages", indexes = {
+@Table(name = "messages", schema = "userservice", indexes = {
     @Index(name = "idx_messages_conversation", columnList = "conversation_id"),
     @Index(name = "idx_messages_sender", columnList = "sender_id"),
     @Index(name = "idx_messages_created", columnList = "created_at DESC"),

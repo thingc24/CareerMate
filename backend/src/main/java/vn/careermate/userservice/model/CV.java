@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Entity
-@Table(name = "cvs", indexes = {
+@Table(name = "cvs", schema = "userservice", indexes = {
     @Index(name = "idx_cvs_student", columnList = "student_id"),
     @Index(name = "idx_cvs_default", columnList = "student_id,is_default")
 })

@@ -22,6 +22,9 @@ export default function CVTemplateEditor() {
     skills: [],
     certifications: []
   });
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     loadTemplate();
@@ -87,12 +90,47 @@ export default function CVTemplateEditor() {
     }));
   };
 
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        alert('Chỉ chấp nhận file ảnh');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File ảnh không được vượt quá 5MB');
+        return;
+      }
+      setPhotoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSave = async () => {
-    // Note: Backend doesn't have createCVFromTemplate endpoint yet
-    // For now, we'll show a message that this feature needs backend implementation
-    alert('Tính năng này đang được phát triển. Vui lòng upload CV file trực tiếp tại trang "CV của tôi".');
-    // TODO: Implement backend endpoint to create CV from template
-    // navigate('/student/cv');
+    if (!cvData.personalInfo.fullName) {
+      alert('Vui lòng nhập họ và tên');
+      return;
+    }
+    
+    try {
+      setSaving(true);
+      const savedCV = await api.createCVFromTemplate(id, cvData, photoFile);
+      alert('✅ Lưu CV thành công!');
+      navigate('/student/cv');
+    } catch (error) {
+      console.error('Error saving CV:', error);
+      const errorMsg = error.response?.data?.error || 
+                      error.response?.data?.message || 
+                      error.message || 
+                      'Không thể lưu CV. Vui lòng thử lại.';
+      alert('❌ Lỗi: ' + errorMsg);
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
@@ -133,9 +171,22 @@ export default function CVTemplateEditor() {
             <span>Quay lại</span>
           </button>
         </div>
-        <button onClick={handleSave} className="btn-primary">
-          <i className="fas fa-save mr-2"></i>
-          Lưu CV
+        <button 
+          onClick={handleSave} 
+          className="btn-primary"
+          disabled={saving}
+        >
+          {saving ? (
+            <>
+              <i className="fas fa-spinner fa-spin mr-2"></i>
+              Đang lưu...
+            </>
+          ) : (
+            <>
+              <i className="fas fa-save mr-2"></i>
+              Lưu CV
+            </>
+          )}
         </button>
       </div>
 
@@ -146,6 +197,49 @@ export default function CVTemplateEditor() {
           <div className="card p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Thông tin cá nhân</h2>
             <div className="space-y-4">
+              {/* Photo Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Ảnh đại diện</label>
+                <div className="flex items-center gap-4">
+                  {photoPreview ? (
+                    <img src={photoPreview} alt="Preview" className="w-24 h-24 rounded-full object-cover border-2 border-gray-300" />
+                  ) : (
+                    <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center border-2 border-gray-300">
+                      <i className="fas fa-user text-gray-400 text-2xl"></i>
+                    </div>
+                  )}
+                  <div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoChange}
+                      className="hidden"
+                      id="photoInput"
+                    />
+                    <label
+                      htmlFor="photoInput"
+                      className="btn-secondary cursor-pointer inline-block"
+                    >
+                      <i className="fas fa-upload mr-2"></i>
+                      {photoFile ? 'Đổi ảnh' : 'Chọn ảnh'}
+                    </label>
+                    {photoFile && (
+                      <button
+                        onClick={() => {
+                          setPhotoFile(null);
+                          setPhotoPreview(null);
+                          document.getElementById('photoInput').value = '';
+                        }}
+                        className="ml-2 text-red-600 hover:text-red-700 text-sm"
+                      >
+                        <i className="fas fa-times mr-1"></i>Xóa
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">Tối đa 5MB, định dạng JPG/PNG</p>
+              </div>
+              
               <input
                 type="text"
                 placeholder="Họ và tên"

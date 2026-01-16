@@ -302,6 +302,34 @@ class CareerMateAPI {
     return response.data;
   }
 
+  // Recruiter Profile APIs
+  async getRecruiterProfile() {
+    const response = await this.client.get('/recruiters/profile');
+    return response.data;
+  }
+
+  async updateRecruiterProfile(profileData) {
+    const response = await this.client.put('/recruiters/profile', profileData);
+    return response.data;
+  }
+
+  async updateUserFullName(fullName) {
+    const response = await this.client.put('/recruiters/profile/fullName', { fullName });
+    return response.data;
+  }
+
+  async uploadRecruiterAvatar(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await this.client.post('/recruiters/profile/avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  }
+
   // Company APIs
   async getMyCompany() {
     try {
@@ -575,8 +603,19 @@ class CareerMateAPI {
     return response.data;
   }
 
-  async createCVFromTemplate(templateId, cvData) {
-    const response = await this.client.post(`/cv-templates/${templateId}/create-cv`, cvData);
+  async createCVFromTemplate(templateId, cvData, photoFile) {
+    const formData = new FormData();
+    formData.append('templateId', templateId);
+    formData.append('cvDataJson', JSON.stringify(cvData));
+    if (photoFile) {
+      formData.append('photoFile', photoFile);
+    }
+    
+    const response = await this.client.post('/students/cv/from-template', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   }
 

@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "conversations", indexes = {
+@Table(name = "conversations", schema = "userservice", indexes = {
     @Index(name = "idx_conversations_p1", columnList = "participant1_id"),
     @Index(name = "idx_conversations_p2", columnList = "participant2_id"),
     @Index(name = "idx_conversations_last_message", columnList = "last_message_at DESC")

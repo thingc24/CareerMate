@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "packages")
+@Table(name = "packages", schema = "learningservice")
 @Data
 @Builder
 @NoArgsConstructor

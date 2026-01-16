@@ -10,6 +10,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication(
     exclude = {OAuth2ClientAutoConfiguration.class},
     scanBasePackages = {
+        "vn.careermate.adminservice",      // Admin Service
         "vn.careermate.userservice",      // User Service - Văn Tân
         "vn.careermate.jobservice",       // Job Service - Ngọc Thi
         "vn.careermate.aiservice",         // AI Service - Anh Vũ

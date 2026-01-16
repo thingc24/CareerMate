@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "subscriptions", indexes = {
+@Table(name = "subscriptions", schema = "learningservice", indexes = {
     @Index(name = "idx_subscriptions_user", columnList = "user_id"),
     @Index(name = "idx_subscriptions_status", columnList = "status")
 })

@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "job_skills", indexes = {
+@Table(name = "job_skills", schema = "jobservice", indexes = {
     @Index(name = "idx_job_skills_job", columnList = "job_id")
 })
 @Data

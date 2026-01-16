@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Entity
-@Table(name = "career_roadmaps")
+@Table(name = "career_roadmaps", schema = "aiservice")
 @Data
 @Builder
 @NoArgsConstructor

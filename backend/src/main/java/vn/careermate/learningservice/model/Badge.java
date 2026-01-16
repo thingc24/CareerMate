@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "badges")
+@Table(name = "badges", schema = "learningservice")
 @Data
 @Builder
 @NoArgsConstructor

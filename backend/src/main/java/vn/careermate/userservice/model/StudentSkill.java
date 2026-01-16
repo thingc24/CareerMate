@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "student_skills", indexes = {
+@Table(name = "student_skills", schema = "userservice", indexes = {
     @Index(name = "idx_student_skills_student", columnList = "student_id"),
     @Index(name = "idx_student_skills_name", columnList = "skill_name")
 })

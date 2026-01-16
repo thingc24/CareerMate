@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "ai_chat_conversations", indexes = {
+@Table(name = "ai_chat_conversations", schema = "aiservice", indexes = {
     @Index(name = "idx_ai_chat_student", columnList = "student_id"),
     @Index(name = "idx_ai_chat_created", columnList = "created_at")
 })

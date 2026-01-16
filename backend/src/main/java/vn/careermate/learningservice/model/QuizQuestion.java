@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "quiz_questions")
+@Table(name = "quiz_questions", schema = "learningservice")
 @Data
 @Builder
 @NoArgsConstructor

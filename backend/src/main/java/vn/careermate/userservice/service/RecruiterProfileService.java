@@ -37,21 +37,36 @@ public class RecruiterProfileService {
     private final JobRepository jobRepository;
     private final ApplicationRepository applicationRepository;
 
+    @Transactional(readOnly = true)
     public RecruiterProfile getCurrentRecruiterProfile() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
-        return recruiterProfileRepository.findByUserId(user.getId())
+        // Use JOIN FETCH to load user eagerly
+        RecruiterProfile profile = recruiterProfileRepository.findByUserIdWithUser(user.getId())
                 .orElseGet(() -> {
                     // Auto-create profile if it doesn't exist
-                    RecruiterProfile profile = RecruiterProfile.builder()
+                    RecruiterProfile newProfile = RecruiterProfile.builder()
                             .user(user)
                             .position("Nhà tuyển dụng")
                             .build();
-                    return recruiterProfileRepository.save(profile);
+                    RecruiterProfile saved = recruiterProfileRepository.save(newProfile);
+                    // Reload with JOIN FETCH to ensure user is loaded
+                    return recruiterProfileRepository.findByUserIdWithUser(user.getId())
+                            .orElse(saved);
                 });
+        
+        // Force load user fields to ensure they're initialized
+        if (profile.getUser() != null) {
+            profile.getUser().getId();
+            profile.getUser().getFullName();
+            profile.getUser().getEmail();
+            profile.getUser().getAvatarUrl();
+        }
+        
+        return profile;
     }
 
     public RecruiterProfile getRecruiterByUserId(java.util.UUID userId) {
@@ -222,5 +237,52 @@ public class RecruiterProfileService {
             "upcomingInterviews", upcomingInterviewsCount,
             "successfulHires", successfulHiresCount
         );
+    }
+
+    @Transactional
+    public User updateFullName(String fullName) {
+        RecruiterProfile recruiter = getCurrentRecruiterProfile();
+        User user = recruiter.getUser();
+        if (fullName != null && !fullName.trim().isEmpty()) {
+            user.setFullName(fullName.trim());
+            return userRepository.save(user);
+        }
+        return user;
+    }
+
+    @Transactional
+    public String uploadAvatar(MultipartFile file) throws IOException {
+        // Validate file type
+        String contentType = file.getContentType();
+        String fileName = file.getOriginalFilename();
+        if (fileName == null || (contentType != null && !contentType.startsWith("image/"))) {
+            throw new RuntimeException("Invalid file type. Only image files are allowed.");
+        }
+
+        // Validate file size (max 5MB)
+        if (file.getSize() > 5 * 1024 * 1024) {
+            throw new RuntimeException("File size too large. Maximum size is 5MB.");
+        }
+
+        // Save file using FileStorageService
+        String filePath = fileStorageService.storeFile(file, "avatars");
+
+        // Update user avatar URL
+        RecruiterProfile recruiter = getCurrentRecruiterProfile();
+        User user = recruiter.getUser();
+        
+        // Delete old avatar if exists
+        if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {
+            try {
+                fileStorageService.deleteFile(user.getAvatarUrl());
+            } catch (Exception e) {
+                log.warn("Could not delete old avatar: {}", e.getMessage());
+            }
+        }
+        
+        user.setAvatarUrl(filePath);
+        userRepository.save(user);
+
+        return filePath;
     }
 }
