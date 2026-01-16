@@ -57,6 +57,9 @@ import CVTemplatesManagement from './pages/admin/CVTemplatesManagement';
 import PackagesManagement from './pages/admin/PackagesManagement';
 import Analytics from './pages/admin/Analytics';
 
+// Shared Pages
+import Notifications from './pages/Notifications';
+
 // Context
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
@@ -172,6 +175,30 @@ function AppRoutes() {
         }
       />
       
+      {/* Shared Routes - Notifications (accessible by all authenticated users) */}
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute>
+            {user?.role === 'STUDENT' ? (
+              <StudentLayout>
+                <Notifications />
+              </StudentLayout>
+            ) : user?.role === 'RECRUITER' ? (
+              <RecruiterLayout>
+                <Notifications />
+              </RecruiterLayout>
+            ) : user?.role === 'ADMIN' ? (
+              <AdminLayout>
+                <Notifications />
+              </AdminLayout>
+            ) : (
+              <Navigate to="/login" replace />
+            )}
+          </ProtectedRoute>
+        }
+      />
+      
       {/* Default Route */}
       <Route
         path="/"
@@ -206,4 +233,3 @@ function App() {
 }
 
 export default App;
-

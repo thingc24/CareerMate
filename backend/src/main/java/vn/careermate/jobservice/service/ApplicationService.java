@@ -20,10 +20,12 @@ import vn.careermate.userservice.model.StudentProfile;
 import vn.careermate.userservice.model.User;
 import vn.careermate.userservice.repository.StudentProfileRepository;
 import vn.careermate.userservice.repository.UserRepository;
+import vn.careermate.notificationservice.service.NotificationService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -39,6 +41,7 @@ public class ApplicationService {
     private final CVRepository cvRepository;
     private final StudentProfileRepository studentProfileRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public Application applyForJob(UUID jobId, UUID cvId, String coverLetter) {
@@ -75,6 +78,19 @@ public class ApplicationService {
         // Update job applications count
         job.setApplicationsCount(job.getApplicationsCount() + 1);
         jobRepository.save(job);
+
+        // Send notification to recruiter
+        try {
+            if (job.getRecruiter() != null && job.getRecruiter().getUser() != null) {
+                UUID recruiterUserId = job.getRecruiter().getUser().getId();
+                String studentName = student.getUser() != null ? 
+                    (student.getUser().getFullName() != null ? student.getUser().getFullName() : student.getUser().getEmail()) 
+                    : "Ứng viên";
+                notificationService.notifyNewApplication(recruiterUserId, application.getId(), job.getTitle(), studentName);
+            }
+        } catch (Exception e) {
+            log.warn("Error sending notification for new application: {}", e.getMessage());
+        }
 
         return application;
     }
@@ -253,7 +269,36 @@ public class ApplicationService {
             log.warn("Could not create application history: {}", e.getMessage());
         }
 
+        // Send notification to student
+        try {
+            if (application.getStudent() != null && application.getStudent().getUser() != null) {
+                UUID studentUserId = application.getStudent().getUser().getId();
+                String statusText = getStatusText(status);
+                notificationService.notifyApplicationStatusChanged(
+                    studentUserId, 
+                    application.getId(), 
+                    application.getJob().getTitle(), 
+                    statusText
+                );
+            }
+        } catch (Exception e) {
+            log.warn("Error sending notification for application status change: {}", e.getMessage());
+        }
+
         return application;
+    }
+
+    private String getStatusText(Application.ApplicationStatus status) {
+        switch (status) {
+            case PENDING: return "Đang chờ";
+            case VIEWED: return "Đã xem";
+            case SHORTLISTED: return "Đã chọn";
+            case INTERVIEW: return "Phỏng vấn";
+            case OFFERED: return "Đã đề xuất";
+            case REJECTED: return "Đã từ chối";
+            case WITHDRAWN: return "Đã rút";
+            default: return status.name();
+        }
     }
 
     @Transactional
@@ -265,7 +310,25 @@ public class ApplicationService {
         application.setInterviewScheduledAt(interviewTime);
         application.setUpdatedAt(LocalDateTime.now());
 
-        return applicationRepository.save(application);
+        application = applicationRepository.save(application);
+
+        // Send notification to student
+        try {
+            if (application.getStudent() != null && application.getStudent().getUser() != null) {
+                UUID studentUserId = application.getStudent().getUser().getId();
+                String interviewTimeStr = interviewTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+                notificationService.notifyInterviewScheduled(
+                    studentUserId, 
+                    application.getId(), 
+                    application.getJob().getTitle(), 
+                    interviewTimeStr
+                );
+            }
+        } catch (Exception e) {
+            log.warn("Error sending notification for interview scheduled: {}", e.getMessage());
+        }
+
+        return application;
     }
 
     // ========== SAVED JOBS ==========

@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import ChatWidget from '../components/ChatWidget';
+import NotificationBell from '../components/NotificationBell';
 
 export default function RecruiterLayout({ children }) {
   const { user, logout } = useAuth();
@@ -147,16 +148,15 @@ export default function RecruiterLayout({ children }) {
 
         {/* Main area */}
         <div className="flex-1 flex flex-col">
-          <header className="md:hidden h-16 px-4 flex items-center justify-between bg-white border-b border-slate-200 shadow-sm">
-            <Link to="/recruiter/dashboard" className="text-lg font-semibold text-slate-900">
-              CareerMate
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="text-xs font-medium text-slate-600 border border-slate-200 rounded-full px-3 py-1"
-            >
-              Đăng xuất
-            </button>
+          <header className="h-16 px-4 md:px-6 flex items-center justify-between bg-white border-b border-slate-200 shadow-sm">
+            <div className="md:hidden">
+              <Link to="/recruiter/dashboard" className="text-lg font-semibold text-slate-900">
+                CareerMate
+              </Link>
+            </div>
+            <div className="flex items-center gap-3">
+              <NotificationBell />
+            </div>
           </header>
 
           <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">

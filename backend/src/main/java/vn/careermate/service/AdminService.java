@@ -17,6 +17,7 @@ import vn.careermate.jobservice.repository.JobSkillRepository;
 import vn.careermate.contentservice.repository.ArticleRepository;
 import vn.careermate.contentservice.repository.CompanyRepository;
 import vn.careermate.userservice.repository.UserRepository;
+import vn.careermate.notificationservice.service.NotificationService;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -32,6 +33,7 @@ public class AdminService {
     private final CompanyRepository companyRepository;
     private final ArticleRepository articleRepository;
     private final JobSkillRepository jobSkillRepository;
+    private final NotificationService notificationService;
 
     public AdminDashboardStats getDashboardStats() {
         return AdminDashboardStats.builder()
@@ -77,6 +79,18 @@ public class AdminService {
         
         job = jobRepository.save(job);
         jobRepository.flush(); // Force flush to database immediately
+        
+        // Send notification to recruiter
+        try {
+            if (job.getRecruiter() != null && job.getRecruiter().getUser() != null) {
+                UUID recruiterUserId = job.getRecruiter().getUser().getId();
+                notificationService.notifyJobApproved(recruiterUserId, jobId, job.getTitle());
+            }
+        } catch (Exception e) {
+            // Log but don't fail the operation
+            System.err.println("Error sending notification for job approval: " + e.getMessage());
+        }
+        
         return job;
     }
 
@@ -89,7 +103,20 @@ public class AdminService {
         job.setApprovedBy(userRepository.findById(adminId).orElse(null));
         job.setApprovedAt(LocalDateTime.now());
         
-        return jobRepository.save(job);
+        job = jobRepository.save(job);
+        
+        // Send notification to recruiter
+        try {
+            if (job.getRecruiter() != null && job.getRecruiter().getUser() != null) {
+                UUID recruiterUserId = job.getRecruiter().getUser().getId();
+                notificationService.notifyJobRejected(recruiterUserId, jobId, job.getTitle());
+            }
+        } catch (Exception e) {
+            // Log but don't fail the operation
+            System.err.println("Error sending notification for job rejection: " + e.getMessage());
+        }
+        
+        return job;
     }
 
     public Page<Job> getPendingJobs(Pageable pageable) {

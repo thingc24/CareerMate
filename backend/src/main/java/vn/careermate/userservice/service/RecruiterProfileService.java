@@ -1,6 +1,7 @@
 package vn.careermate.userservice.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -21,8 +22,10 @@ import vn.careermate.jobservice.repository.ApplicationRepository;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RecruiterProfileService {
@@ -71,29 +74,61 @@ public class RecruiterProfileService {
 
     @Transactional(readOnly = true)
     public Company getMyCompany() {
-        RecruiterProfile recruiter = getCurrentRecruiterProfile();
-        Company company = recruiter.getCompany();
-        if (company != null) {
-            // Force load by accessing ID to trigger fetch
-            company.getId();
-            company.getName();
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String email = auth.getName();
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            
+            log.info("Getting company for user: {} (ID: {})", email, user.getId());
+            
+            // Use findByUserIdWithCompany directly to ensure company is loaded with JOIN FETCH
+            Optional<RecruiterProfile> recruiterOpt = recruiterProfileRepository.findByUserIdWithCompany(user.getId());
+            
+            if (!recruiterOpt.isPresent()) {
+                log.warn("Recruiter profile not found for user: {}", user.getId());
+                return null;
+            }
+            
+            RecruiterProfile recruiter = recruiterOpt.get();
+            log.info("Found recruiter profile: {} (ID: {})", email, recruiter.getId());
+            
+            Company company = recruiter.getCompany();
+            
+            if (company != null) {
+                // Force load by accessing ID and name to trigger fetch
+                UUID companyId = company.getId();
+                String companyName = company.getName();
+                log.info("Found company for recruiter {}: id={}, name={}", recruiter.getId(), companyId, companyName);
+            } else {
+                log.warn("Recruiter {} does not have a company (company_id is null in database)", recruiter.getId());
+            }
+            return company;
+        } catch (Exception e) {
+            log.error("Error getting company: {}", e.getMessage(), e);
+            throw new RuntimeException("Error loading company: " + e.getMessage(), e);
         }
-        return company;
     }
 
     @Transactional
     public Company createOrUpdateCompany(Company company) {
-        RecruiterProfile recruiter = getCurrentRecruiterProfile();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
         
-        // Force load company if it exists
+        // Use findByUserIdWithCompany to ensure company is loaded
+        Optional<RecruiterProfile> recruiterOpt = recruiterProfileRepository.findByUserIdWithCompany(user.getId());
+        RecruiterProfile recruiter = recruiterOpt.orElseThrow(() -> new RuntimeException("Recruiter profile not found"));
+        
+        log.info("Creating/updating company for recruiter: {} (ID: {})", email, recruiter.getId());
+        
+        // Check if company exists
         Company existingCompany = recruiter.getCompany();
-        if (existingCompany != null) {
-            // Force load by accessing ID
-            existingCompany.getId();
-        }
         
         if (existingCompany != null) {
             // Update existing company
+            log.info("Updating existing company: id={}, name={}", existingCompany.getId(), existingCompany.getName());
             if (company.getName() != null) existingCompany.setName(company.getName());
             if (company.getWebsiteUrl() != null) existingCompany.setWebsiteUrl(company.getWebsiteUrl());
             if (company.getHeadquarters() != null) existingCompany.setHeadquarters(company.getHeadquarters());
@@ -103,14 +138,19 @@ public class RecruiterProfileService {
             if (company.getFoundedYear() != null) existingCompany.setFoundedYear(company.getFoundedYear());
             if (company.getLogoUrl() != null) existingCompany.setLogoUrl(company.getLogoUrl());
             company = companyRepository.save(existingCompany);
+            log.info("Company updated successfully: id={}, name={}", company.getId(), company.getName());
         } else {
             // Create new company
+            log.info("Creating new company for recruiter");
             company = companyRepository.save(company);
+            log.info("Company created: id={}, name={}", company.getId(), company.getName());
+            
             // Link company to recruiter
             recruiter.setCompany(company);
             recruiterProfileRepository.save(recruiter);
-            // Flush to ensure company_id is set
+            // Flush to ensure company_id is set in database
             recruiterProfileRepository.flush();
+            log.info("Company linked to recruiter profile: recruiterId={}, companyId={}", recruiter.getId(), company.getId());
         }
         
         return company;

@@ -15,6 +15,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
         "vn.careermate.aiservice",         // AI Service - Anh Vũ
         "vn.careermate.contentservice",     // Content Service - Hiệu Hiệu
         "vn.careermate.learningservice",    // Learning Service - Bảo Hân
+        "vn.careermate.notificationservice", // Notification Service
         "vn.careermate.common",            // Common code (will be created)
         "vn.careermate.config",            // Shared configs (if any remain at root)
         "vn.careermate.model",             // Models (remaining, will be moved to respective services)

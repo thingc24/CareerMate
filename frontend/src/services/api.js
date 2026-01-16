@@ -824,6 +824,27 @@ class CareerMateAPI {
     const response = await this.client.get('/admin/analytics');
     return response.data;
   }
+
+  // ========== NOTIFICATIONS ==========
+  async getNotifications(page = 0, size = 20) {
+    const response = await this.client.get(`/notifications?page=${page}&size=${size}`);
+    return response.data;
+  }
+
+  async getUnreadNotificationCount() {
+    const response = await this.client.get('/notifications/unread-count');
+    return response.data;
+  }
+
+  async markNotificationAsRead(notificationId) {
+    const response = await this.client.put(`/notifications/${notificationId}/read`);
+    return response.data;
+  }
+
+  async markAllNotificationsAsRead() {
+    const response = await this.client.put('/notifications/mark-all-read');
+    return response.data;
+  }
 }
 
 // Export singleton instance

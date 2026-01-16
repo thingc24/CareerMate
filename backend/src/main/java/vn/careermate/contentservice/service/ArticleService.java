@@ -15,6 +15,7 @@ import vn.careermate.userservice.model.User;
 import vn.careermate.contentservice.repository.ArticleRepository;
 import vn.careermate.userservice.repository.RecruiterProfileRepository;
 import vn.careermate.userservice.repository.UserRepository;
+import vn.careermate.notificationservice.service.NotificationService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,6 +29,7 @@ public class ArticleService {
     private final ArticleRepository articleRepository;
     private final UserRepository userRepository;
     private final RecruiterProfileRepository recruiterProfileRepository;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public Page<Article> getPublishedArticles(String keyword, String category, Pageable pageable) {
@@ -94,9 +96,11 @@ public class ArticleService {
                 .orElseThrow(() -> new RuntimeException("Article not found"));
         
         // Load author eagerly to avoid lazy loading issues
-        article.getAuthor().getId();
-        article.getAuthor().getFullName();
-        article.getAuthor().getRole();
+        if (article.getAuthor() != null) {
+            article.getAuthor().getId();
+            article.getAuthor().getFullName();
+            article.getAuthor().getRole();
+        }
         
         // Increment views
         article.setViewsCount(article.getViewsCount() + 1);
@@ -112,6 +116,9 @@ public class ArticleService {
      */
     public String getAuthorDisplayName(Article article) {
         User author = article.getAuthor();
+        if (author == null) {
+            return "Unknown";
+        }
         if (author.getRole() == User.UserRole.ADMIN) {
             return "Admin " + author.getFullName();
         } else if (author.getRole() == User.UserRole.RECRUITER) {
@@ -149,7 +156,34 @@ public class ArticleService {
             throw new RuntimeException("Only ADMIN or RECRUITER can create articles");
         }
         
-        return articleRepository.save(article);
+        article = articleRepository.save(article);
+        articleRepository.flush(); // Force flush to database immediately
+        
+        // Nếu admin đăng bài, gửi thông báo cho tất cả STUDENT và RECRUITER
+        if (author.getRole() == User.UserRole.ADMIN && article.getStatus() == Article.ArticleStatus.PUBLISHED) {
+            try {
+                notificationService.notifyAllUsersAboutNewArticle(article.getId(), article.getTitle());
+            } catch (Exception e) {
+                // Log nhưng không fail việc tạo article
+                log.warn("Error sending new article notifications: {}", e.getMessage());
+            }
+        }
+        
+        // Nếu recruiter đăng bài (status PENDING), gửi thông báo cho tất cả ADMIN
+        if (author.getRole() == User.UserRole.RECRUITER && article.getStatus() == Article.ArticleStatus.PENDING) {
+            try {
+                notificationService.notifyAdminsAboutPendingArticle(
+                    article.getId(), 
+                    article.getTitle(), 
+                    author.getFullName()
+                );
+            } catch (Exception e) {
+                // Log nhưng không fail việc tạo article
+                log.warn("Error sending pending article notifications to admins: {}", e.getMessage());
+            }
+        }
+        
+        return article;
     }
 
     @Transactional
@@ -179,6 +213,18 @@ public class ArticleService {
         
         article = articleRepository.save(article);
         articleRepository.flush(); // Force flush to database immediately
+        
+        // Send notification to author
+        try {
+            if (article.getAuthor() != null) {
+                UUID authorUserId = article.getAuthor().getId();
+                notificationService.notifyArticleApproved(authorUserId, articleId, article.getTitle());
+            }
+        } catch (Exception e) {
+            // Log but don't fail the operation
+            log.warn("Error sending notification for article approval: {}", e.getMessage());
+        }
+        
         return article;
     }
 
@@ -191,7 +237,20 @@ public class ArticleService {
         article.setApprovedBy(userRepository.findById(adminId).orElse(null));
         article.setApprovedAt(LocalDateTime.now());
         
-        return articleRepository.save(article);
+        article = articleRepository.save(article);
+        
+        // Send notification to author
+        try {
+            if (article.getAuthor() != null) {
+                UUID authorUserId = article.getAuthor().getId();
+                notificationService.notifyArticleRejected(authorUserId, articleId, article.getTitle());
+            }
+        } catch (Exception e) {
+            // Log but don't fail the operation
+            log.warn("Error sending notification for article rejection: {}", e.getMessage());
+        }
+        
+        return article;
     }
 
     @Transactional(readOnly = true)

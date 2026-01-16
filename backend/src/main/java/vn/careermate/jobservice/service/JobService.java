@@ -13,6 +13,7 @@ import vn.careermate.jobservice.repository.JobSkillRepository;
 import vn.careermate.contentservice.model.Company;
 import vn.careermate.userservice.model.RecruiterProfile;
 import vn.careermate.userservice.service.RecruiterProfileService;
+import vn.careermate.notificationservice.service.NotificationService;
 
 import java.util.List;
 import java.util.UUID;
@@ -25,27 +26,58 @@ public class JobService {
     private final JobRepository jobRepository;
     private final JobSkillRepository jobSkillRepository;
     private final RecruiterProfileService recruiterProfileService;
+    private final NotificationService notificationService;
 
     @Transactional
     public Job createJob(Job job, List<String> requiredSkills, List<String> optionalSkills) {
-        RecruiterProfile recruiter = recruiterProfileService.getCurrentRecruiterProfile();
+        log.info("Starting job creation process...");
         
-        // Force load company if it exists
-        Company recruiterCompany = recruiter.getCompany();
-        if (recruiterCompany != null) {
-            // Force load by accessing ID to trigger fetch
-            recruiterCompany.getId();
-            recruiterCompany.getName();
+        RecruiterProfile recruiter = recruiterProfileService.getCurrentRecruiterProfile();
+        log.info("Found recruiter profile: id={}", recruiter.getId());
+        
+        // Get company using the service method which properly loads it
+        Company recruiterCompany = recruiterProfileService.getMyCompany();
+        
+        // Validate company exists
+        if (recruiterCompany == null) {
+            log.error("Recruiter {} does not have a company. Cannot create job.", recruiter.getId());
+            throw new RuntimeException("Recruiter must have a company to post jobs. Please create a company profile first.");
         }
         
-        // Set recruiter and company
+        // Ensure company is fully loaded and has valid ID
+        UUID companyId = recruiterCompany.getId();
+        String companyName = recruiterCompany.getName();
+        if (companyId == null) {
+            log.error("Company has null ID for recruiter {}", recruiter.getId());
+            throw new RuntimeException("Company information is invalid. Please update your company profile.");
+        }
+        
+        log.info("Creating job with company: id={}, name={}", companyId, companyName);
+        
+        // Set recruiter and company - ALWAYS set company to ensure it's not null
         job.setRecruiter(recruiter);
-        if (job.getCompany() == null) {
-            if (recruiterCompany != null) {
-                job.setCompany(recruiterCompany);
-            } else {
-                throw new RuntimeException("Recruiter must have a company to post jobs. Please create a company profile first.");
-            }
+        job.setCompany(recruiterCompany); // Always set, don't check if null
+        
+        // Validate required fields
+        if (job.getTitle() == null || job.getTitle().trim().isEmpty()) {
+            throw new RuntimeException("Job title is required");
+        }
+        if (job.getDescription() == null || job.getDescription().trim().isEmpty()) {
+            throw new RuntimeException("Job description is required");
+        }
+        if (job.getLocation() == null || job.getLocation().trim().isEmpty()) {
+            throw new RuntimeException("Job location is required");
+        }
+        
+        // Validate salary values (max 999,999,999,999.99 with precision 12,2)
+        // But we increased to precision 18,2, so max is 9,999,999,999,999,999.99
+        // However, for practical purposes, limit to 999,999,999,999.99 (999 tỷ)
+        java.math.BigDecimal maxSalaryValue = new java.math.BigDecimal("999999999999.99");
+        if (job.getMinSalary() != null && job.getMinSalary().compareTo(maxSalaryValue) > 0) {
+            throw new RuntimeException("Mức lương tối thiểu quá lớn. Vui lòng nhập giá trị nhỏ hơn 999,999 triệu VND.");
+        }
+        if (job.getMaxSalary() != null && job.getMaxSalary().compareTo(maxSalaryValue) > 0) {
+            throw new RuntimeException("Mức lương tối đa quá lớn. Vui lòng nhập giá trị nhỏ hơn 999,999 triệu VND.");
         }
         
         // Ensure status is set
@@ -53,7 +85,15 @@ public class JobService {
             job.setStatus(Job.JobStatus.PENDING); // Needs admin approval
         }
         
-        job = jobRepository.save(job);
+        log.info("Saving job: title={}, companyId={}, recruiterId={}", job.getTitle(), companyId, recruiter.getId());
+        
+        try {
+            job = jobRepository.save(job);
+            log.info("Job saved successfully: id={}", job.getId());
+        } catch (Exception e) {
+            log.error("Error saving job to database: {}", e.getMessage(), e);
+            throw new RuntimeException("Error saving job: " + e.getMessage(), e);
+        }
 
         // Add required skills
         if (requiredSkills != null) {
@@ -76,6 +116,21 @@ public class JobService {
                         .isRequired(false)
                         .build();
                 jobSkillRepository.save(jobSkill);
+            }
+        }
+
+        // Nếu job có status PENDING, gửi thông báo cho tất cả ADMIN
+        if (job.getStatus() == Job.JobStatus.PENDING) {
+            try {
+                String recruiterName = recruiter.getUser() != null ? recruiter.getUser().getFullName() : "Nhà tuyển dụng";
+                notificationService.notifyAdminsAboutPendingJob(
+                    job.getId(), 
+                    job.getTitle(), 
+                    recruiterName
+                );
+            } catch (Exception e) {
+                // Log nhưng không fail việc tạo job
+                log.warn("Error sending pending job notifications to admins: {}", e.getMessage());
             }
         }
 

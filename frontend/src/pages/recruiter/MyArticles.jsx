@@ -10,23 +10,55 @@ export default function MyArticles() {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const [filter, setFilter] = useState('all'); // 'all', 'my', 'admin'
 
   useEffect(() => {
     loadArticles();
-  }, [page]);
+  }, [page, filter]);
 
   const loadArticles = async () => {
     try {
       setLoading(true);
-      const data = await api.getMyArticles(page, 10);
-      setArticles(data.content || []);
-      setTotalPages(data.totalPages || 0);
-      setTotalElements(data.totalElements || 0);
+      let data;
+      
+      if (filter === 'my') {
+        // Lấy bài viết của tôi
+        data = await api.getMyArticles(page, 10);
+        setArticles(data.content || []);
+        setTotalPages(data.totalPages || 0);
+        setTotalElements(data.totalElements || 0);
+      } else {
+        // Lấy tất cả bài viết (cho filter 'all' và 'admin')
+        data = await api.getArticles('', '', page, 20); // Lấy nhiều hơn để có đủ dữ liệu filter
+        
+        if (filter === 'admin') {
+          // Filter chỉ bài viết của admin
+          const adminArticles = (data.content || []).filter(
+            article => article.author && article.author.role === 'ADMIN'
+          );
+          setArticles(adminArticles);
+          
+          // Để tính pagination chính xác, cần lấy tổng số admin articles
+          // Tạm thời dùng ước lượng dựa trên số lượng hiện tại
+          setTotalElements(adminArticles.length * data.totalPages); // Ước lượng
+          setTotalPages(Math.ceil((adminArticles.length * data.totalPages) / 10));
+        } else {
+          // Filter 'all' - hiển thị tất cả
+          setArticles(data.content || []);
+          setTotalPages(data.totalPages || 0);
+          setTotalElements(data.totalElements || 0);
+        }
+      }
     } catch (error) {
       console.error('Error loading articles:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFilterChange = (newFilter) => {
+    setFilter(newFilter);
+    setPage(0); // Reset về trang đầu khi đổi filter
   };
 
   const getStatusBadge = (status) => {
@@ -60,7 +92,7 @@ export default function MyArticles() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-slate-900">Bài viết của tôi</h1>
+          <h1 className="text-3xl font-bold text-slate-900">Bài viết</h1>
         </div>
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-200 border-t-emerald-600"></div>
@@ -75,7 +107,7 @@ export default function MyArticles() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Bài viết của tôi</h1>
+          <h1 className="text-3xl font-bold text-slate-900">Bài viết</h1>
           <p className="text-slate-600 mt-1">
             Tổng cộng: {totalElements} bài viết
           </p>
@@ -89,23 +121,43 @@ export default function MyArticles() {
         </button>
       </div>
 
+      {/* Filter */}
+      <div className="flex items-center gap-4">
+        <label className="text-sm font-medium text-slate-700">Lọc theo:</label>
+        <select
+          value={filter}
+          onChange={(e) => handleFilterChange(e.target.value)}
+          className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+        >
+          <option value="all">Tất cả</option>
+          <option value="my">Bài viết của tôi</option>
+          <option value="admin">Bài viết của admin</option>
+        </select>
+      </div>
+
       {/* Articles List */}
       {articles.length === 0 ? (
         <div className="card p-12 text-center">
           <i className="fas fa-newspaper text-6xl text-slate-300 mb-4"></i>
           <h2 className="text-xl font-semibold text-slate-900 mb-2">
-            Chưa có bài viết nào
+            {filter === 'my' && 'Chưa có bài viết nào'}
+            {filter === 'admin' && 'Chưa có bài viết của admin'}
+            {filter === 'all' && 'Chưa có bài viết nào'}
           </h2>
           <p className="text-slate-600 mb-6">
-            Bắt đầu chia sẻ kiến thức và kinh nghiệm của bạn với cộng đồng!
+            {filter === 'my' && 'Bắt đầu chia sẻ kiến thức và kinh nghiệm của bạn với cộng đồng!'}
+            {filter === 'admin' && 'Hiện tại chưa có bài viết nào từ admin.'}
+            {filter === 'all' && 'Chưa có bài viết nào được đăng trên hệ thống.'}
           </p>
-          <button
-            onClick={() => navigate('/recruiter/articles/create')}
-            className="btn-primary"
-          >
-            <i className="fas fa-plus mr-2"></i>
-            Đăng bài viết đầu tiên
-          </button>
+          {filter === 'my' && (
+            <button
+              onClick={() => navigate('/recruiter/articles/create')}
+              className="btn-primary"
+            >
+              <i className="fas fa-plus mr-2"></i>
+              Đăng bài viết đầu tiên
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-6">
@@ -119,6 +171,11 @@ export default function MyArticles() {
                     {article.category && (
                       <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
                         {article.category}
+                      </span>
+                    )}
+                    {article.author && (
+                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                        {article.author.role === 'ADMIN' ? 'Admin' : 'Nhà tuyển dụng'}
                       </span>
                     )}
                   </div>
@@ -156,7 +213,7 @@ export default function MyArticles() {
               {/* Article Actions */}
               <div className="flex items-center gap-3 pt-4 border-t border-slate-200">
                 <button
-                  onClick={() => navigate(`/recruiter/articles/${article.id}`)}
+                  onClick={() => navigate(`/articles/${article.id}`)}
                   className="btn-secondary text-sm"
                 >
                   <i className="fas fa-eye mr-2"></i>

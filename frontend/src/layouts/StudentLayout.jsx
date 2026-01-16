@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import ChatWidget from '../components/ChatWidget';
+import NotificationBell from '../components/NotificationBell';
 import api from '../services/api';
 
 export default function StudentLayout({ children }) {
@@ -281,13 +282,9 @@ export default function StudentLayout({ children }) {
                 CareerMate
               </Link>
             </div>
-            <button
-              onClick={handleLogout}
-              className="text-xs font-medium text-slate-600 border border-slate-200 rounded-full px-3 py-1 hover:bg-slate-50 transition-colors"
-            >
-              <i className="fas fa-sign-out-alt md:hidden"></i>
-              <span className="hidden md:inline">Đăng xuất</span>
-            </button>
+            <div className="flex items-center gap-3">
+              <NotificationBell />
+            </div>
           </header>
 
           <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">

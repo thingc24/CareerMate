@@ -66,10 +66,10 @@ public class Job {
     @Column(name = "experience_level")
     private ExperienceLevel experienceLevel;
 
-    @Column(name = "min_salary", precision = 12, scale = 2)
+    @Column(name = "min_salary", precision = 18, scale = 2)
     private BigDecimal minSalary;
 
-    @Column(name = "max_salary", precision = 12, scale = 2)
+    @Column(name = "max_salary", precision = 18, scale = 2)
     private BigDecimal maxSalary;
 
     @Builder.Default
