@@ -3,6 +3,7 @@ package vn.careermate.aiservice.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import vn.careermate.userservice.model.StudentProfile;
+import vn.careermate.userservice.model.CV;
 import vn.careermate.jobservice.model.Job;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -49,7 +50,7 @@ public class MockInterview {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cv_id")
     @JsonIgnore
-    private vn.careermate.model.CV cv;
+    private CV cv;
 
     @Enumerated(EnumType.STRING)
     @Builder.Default

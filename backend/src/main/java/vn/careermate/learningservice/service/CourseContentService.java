@@ -1,4 +1,4 @@
-package vn.careermate.service;
+package vn.careermate.learningservice.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;

@@ -1,10 +1,10 @@
-package vn.careermate.dto;
+package vn.careermate.userservice.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import vn.careermate.model.StudentSkill;
+import vn.careermate.userservice.model.StudentSkill;
 
 import java.math.BigDecimal;
 import java.util.UUID;

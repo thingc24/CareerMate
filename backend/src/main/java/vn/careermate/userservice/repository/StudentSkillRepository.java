@@ -1,8 +1,8 @@
-package vn.careermate.repository;
+package vn.careermate.userservice.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import vn.careermate.model.StudentSkill;
+import vn.careermate.userservice.model.StudentSkill;
 
 import java.util.List;
 import java.util.UUID;

@@ -3,7 +3,7 @@ package vn.careermate.jobservice.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import vn.careermate.userservice.model.StudentProfile;
-import vn.careermate.model.CV;
+import vn.careermate.userservice.model.CV;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

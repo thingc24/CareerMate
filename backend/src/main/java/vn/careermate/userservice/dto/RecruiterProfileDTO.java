@@ -1,4 +1,4 @@
-package vn.careermate.dto;
+package vn.careermate.userservice.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

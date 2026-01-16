@@ -115,7 +115,7 @@ public class AIService {
      * Analyze CV asynchronously (for background processing)
      */
     @Async
-    public void analyzeCVAsync(vn.careermate.model.CV cv) {
+    public void analyzeCVAsync(vn.careermate.userservice.model.CV cv) {
         try {
             // Extract CV content
             String cvContent = extractCVContent(cv);
@@ -135,7 +135,7 @@ public class AIService {
         }
     }
 
-    private String extractCVContent(vn.careermate.model.CV cv) {
+    private String extractCVContent(vn.careermate.userservice.model.CV cv) {
         // This would extract content from file
         // For now, return empty string
         return "";

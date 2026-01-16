@@ -1,4 +1,4 @@
-package vn.careermate.dto;
+package vn.careermate.contentservice.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

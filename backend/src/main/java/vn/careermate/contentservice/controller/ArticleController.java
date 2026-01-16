@@ -9,7 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import vn.careermate.dto.CreateArticleRequest;
+import vn.careermate.contentservice.dto.CreateArticleRequest;
 import vn.careermate.contentservice.model.Article;
 import vn.careermate.contentservice.model.ArticleComment;
 import vn.careermate.contentservice.model.ArticleReaction;
@@ -170,7 +170,7 @@ public class ArticleController {
         try {
             System.out.println("=== GET /articles/" + articleId + "/comments ===");
             // Use DTO to avoid serialization issues
-            List<vn.careermate.dto.ArticleCommentDTO> comments = commentService.getCommentsAsDTO(articleId);
+            List<vn.careermate.contentservice.dto.ArticleCommentDTO> comments = commentService.getCommentsAsDTO(articleId);
             System.out.println("Found " + comments.size() + " comments");
             return ResponseEntity.ok(comments);
         } catch (Exception e) {

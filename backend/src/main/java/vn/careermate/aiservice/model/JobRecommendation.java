@@ -1,4 +1,4 @@
-package vn.careermate.model;
+package vn.careermate.aiservice.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;

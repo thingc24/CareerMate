@@ -1,4 +1,4 @@
-package vn.careermate.model;
+package vn.careermate.userservice.model;
 
 import jakarta.persistence.*;
 import vn.careermate.userservice.model.StudentProfile;

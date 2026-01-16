@@ -5,7 +5,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.careermate.dto.ArticleCommentDTO;
+import vn.careermate.contentservice.dto.ArticleCommentDTO;
 import vn.careermate.contentservice.model.Article;
 import vn.careermate.contentservice.model.ArticleComment;
 import vn.careermate.userservice.model.User;

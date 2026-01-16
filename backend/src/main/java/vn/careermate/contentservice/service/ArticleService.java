@@ -8,7 +8,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.careermate.dto.CreateArticleRequest;
+import vn.careermate.contentservice.dto.CreateArticleRequest;
 import vn.careermate.contentservice.model.Article;
 import vn.careermate.userservice.model.RecruiterProfile;
 import vn.careermate.userservice.model.User;

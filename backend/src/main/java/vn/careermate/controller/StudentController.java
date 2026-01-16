@@ -8,13 +8,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import vn.careermate.model.*;
 import vn.careermate.jobservice.model.Application;
 import vn.careermate.jobservice.model.Job;
 import vn.careermate.jobservice.model.SavedJob;
 import vn.careermate.jobservice.service.ApplicationService;
 import vn.careermate.jobservice.service.JobService;
 import vn.careermate.service.StudentService;
+import vn.careermate.userservice.model.CV;
+import vn.careermate.aiservice.model.AIChatConversation;
+import vn.careermate.aiservice.model.AIChatMessage;
+import vn.careermate.aiservice.model.JobRecommendation;
 
 import java.io.IOException;
 import java.util.HashMap;
