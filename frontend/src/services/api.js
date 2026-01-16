@@ -577,6 +577,18 @@ class CareerMateAPI {
     return response.data;
   }
 
+  async getMyCompanyRating(companyId) {
+    try {
+      const response = await this.client.get(`/companies/${companyId}/ratings/my`);
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
   async submitCompanyRating(companyId, rating) {
     // Backend expects rating and reviewText as request params
     const params = new URLSearchParams();
@@ -584,6 +596,23 @@ class CareerMateAPI {
     if (rating.comment) params.append('reviewText', rating.comment);
     const response = await this.client.post(`/companies/${companyId}/ratings?${params.toString()}`);
     return response.data;
+  }
+
+  async deleteCompanyRating(companyId) {
+    const response = await this.client.delete(`/companies/${companyId}/ratings`);
+    return response.data;
+  }
+
+  async getCompanyRecruiter(companyId) {
+    try {
+      const response = await this.client.get(`/companies/${companyId}/recruiter`);
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   // CV Template APIs

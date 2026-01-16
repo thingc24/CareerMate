@@ -10,10 +10,12 @@ export default function CompanyDetailModal({ isOpen, onClose, company, recruiter
   const [showRatingForm, setShowRatingForm] = useState(false);
   const [rating, setRating] = useState(5);
   const [reviewText, setReviewText] = useState('');
+  const [myRating, setMyRating] = useState(null);
 
   useEffect(() => {
     if (isOpen && company) {
       loadAverageRating();
+      loadMyRating();
     }
   }, [isOpen, company]);
 
@@ -28,6 +30,49 @@ export default function CompanyDetailModal({ isOpen, onClose, company, recruiter
     }
   };
 
+  const loadMyRating = async () => {
+    if (!company?.id) return;
+    try {
+      const data = await api.getMyCompanyRating(company.id);
+      setMyRating(data);
+      // Pre-fill form if rating exists
+      if (data) {
+        setRating(data.rating || 5);
+        setReviewText(data.reviewText || '');
+      } else {
+        setRating(5);
+        setReviewText('');
+      }
+    } catch (error) {
+      if (error.response?.status !== 404) {
+        console.error('Error loading my rating:', error);
+      }
+      setMyRating(null);
+      setRating(5);
+      setReviewText('');
+    }
+  };
+
+  const handleDeleteRating = async () => {
+    if (!company?.id || !myRating) return;
+    if (!confirm('Bạn có chắc chắn muốn xóa đánh giá này?')) return;
+
+    try {
+      setLoading(true);
+      await api.deleteCompanyRating(company.id);
+      setMyRating(null);
+      setRating(5);
+      setReviewText('');
+      setShowRatingForm(false);
+      await loadAverageRating();
+      alert('Đã xóa đánh giá!');
+    } catch (error) {
+      alert('Lỗi: ' + (error.response?.data?.error || 'Không thể xóa đánh giá'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmitRating = async (e) => {
     e.preventDefault();
     if (!company?.id) return;
@@ -35,10 +80,9 @@ export default function CompanyDetailModal({ isOpen, onClose, company, recruiter
     try {
       setLoading(true);
       await api.submitCompanyRating(company.id, { rating, comment: reviewText });
-      alert('Cảm ơn bạn đã đánh giá!');
+      alert(myRating ? 'Đã cập nhật đánh giá!' : 'Cảm ơn bạn đã đánh giá!');
       setShowRatingForm(false);
-      setRating(5);
-      setReviewText('');
+      await loadMyRating(); // Reload my rating
       await loadAverageRating(); // Reload average rating
     } catch (error) {
       alert('Lỗi: ' + (error.response?.data?.error || 'Không thể gửi đánh giá'));
@@ -178,12 +222,24 @@ export default function CompanyDetailModal({ isOpen, onClose, company, recruiter
           <div className="mb-6 border-t pt-6">
             <div className="flex items-center justify-between mb-4">
               <h4 className="font-semibold text-gray-900">Đánh giá công ty</h4>
-              <button
-                onClick={() => setShowRatingForm(!showRatingForm)}
-                className="text-blue-600 hover:text-blue-700 font-medium"
-              >
-                {showRatingForm ? 'Hủy' : 'Viết đánh giá'}
-              </button>
+              <div className="flex gap-2">
+                {myRating && (
+                  <button
+                    onClick={handleDeleteRating}
+                    disabled={loading}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 text-sm"
+                  >
+                    <i className="fas fa-trash mr-1"></i>
+                    Xóa đánh giá
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowRatingForm(!showRatingForm)}
+                  className="text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  {showRatingForm ? 'Hủy' : (myRating ? 'Thay đổi đánh giá' : 'Viết đánh giá')}
+                </button>
+              </div>
             </div>
             {showRatingForm && (
               <form onSubmit={handleSubmitRating} className="space-y-4">

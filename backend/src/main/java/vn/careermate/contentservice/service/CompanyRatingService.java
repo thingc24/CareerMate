@@ -25,13 +25,66 @@ public class CompanyRatingService {
     private final StudentProfileRepository studentProfileRepository;
     private final UserRepository userRepository;
 
+    @Transactional(readOnly = true)
     public List<CompanyRating> getCompanyRatings(UUID companyId) {
-        return ratingRepository.findByCompanyId(companyId);
+        List<CompanyRating> ratings = ratingRepository.findByCompanyId(companyId);
+        // Force load student and user for each rating
+        ratings.forEach(rating -> {
+            if (rating.getStudent() != null) {
+                // Access student to trigger lazy load within transaction
+                rating.getStudent().getId();
+                // Load user even though it's @JsonIgnore - we'll need it in DTO
+                try {
+                    if (rating.getStudent().getUser() != null) {
+                        rating.getStudent().getUser().getId();
+                        rating.getStudent().getUser().getFullName();
+                        rating.getStudent().getUser().getEmail();
+                        rating.getStudent().getUser().getAvatarUrl();
+                    }
+                } catch (Exception e) {
+                    // If user can't be loaded, continue
+                }
+            }
+        });
+        return ratings;
     }
 
     public Double getAverageRating(UUID companyId) {
         Double avg = ratingRepository.getAverageRatingByCompanyId(companyId);
         return avg != null ? avg : 0.0;
+    }
+    
+    @Transactional(readOnly = true)
+    public CompanyRating getMyRating(UUID companyId) {
+        try {
+            UUID studentId = getCurrentStudentId();
+            CompanyRating rating = ratingRepository.findByCompanyIdAndStudentId(companyId, studentId);
+            // Force load student and user if rating exists
+            if (rating != null && rating.getStudent() != null) {
+                rating.getStudent().getId();
+                // Load user for potential use
+                try {
+                    if (rating.getStudent().getUser() != null) {
+                        rating.getStudent().getUser().getId();
+                        rating.getStudent().getUser().getFullName();
+                    }
+                } catch (Exception e) {
+                    // Continue if user can't be loaded
+                }
+            }
+            return rating;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+    
+    @Transactional
+    public void deleteMyRating(UUID companyId) {
+        UUID studentId = getCurrentStudentId();
+        CompanyRating rating = ratingRepository.findByCompanyIdAndStudentId(companyId, studentId);
+        if (rating != null) {
+            ratingRepository.delete(rating);
+        }
     }
 
     @Transactional
