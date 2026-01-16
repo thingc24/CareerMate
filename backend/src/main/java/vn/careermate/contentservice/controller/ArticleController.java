@@ -1,6 +1,7 @@
 package vn.careermate.contentservice.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/articles")
 @RequiredArgsConstructor
@@ -155,13 +157,17 @@ public class ArticleController {
     }
 
     @GetMapping("/{articleId}/reactions/my")
-    @PreAuthorize("hasRole('STUDENT') or hasRole('RECRUITER') or hasRole('ADMIN')")
     public ResponseEntity<ArticleReaction> getMyReaction(@PathVariable UUID articleId) {
-        ArticleReaction reaction = reactionService.getUserReaction(articleId);
-        if (reaction == null) {
+        try {
+            ArticleReaction reaction = reactionService.getUserReaction(articleId);
+            if (reaction == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(reaction);
+        } catch (Exception e) {
+            log.error("Error getting my reaction: {}", e.getMessage(), e);
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(reaction);
     }
 
     // Comments endpoints

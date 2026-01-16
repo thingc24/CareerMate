@@ -84,8 +84,27 @@ public class JobService {
 
     @Transactional(readOnly = true)
     public Page<Job> getMyJobs(Pageable pageable) {
-        RecruiterProfile recruiter = recruiterProfileService.getCurrentRecruiterProfile();
-        return jobRepository.findByRecruiterId(recruiter.getId(), pageable);
+        try {
+            RecruiterProfile recruiter = recruiterProfileService.getCurrentRecruiterProfile();
+            Page<Job> jobs = jobRepository.findByRecruiterId(recruiter.getId(), pageable);
+            
+            // Force load company for each job to avoid lazy loading issues
+            if (jobs != null && jobs.getContent() != null) {
+                jobs.getContent().forEach(job -> {
+                    if (job.getCompany() != null) {
+                        job.getCompany().getId(); // Force load
+                        job.getCompany().getName(); // Force load
+                    }
+                    // Set recruiter to null to avoid circular reference
+                    job.setRecruiter(null);
+                });
+            }
+            
+            return jobs;
+        } catch (Exception e) {
+            log.error("Error getting my jobs: {}", e.getMessage(), e);
+            throw new RuntimeException("Error getting my jobs: " + e.getMessage(), e);
+        }
     }
 
     @Transactional(readOnly = true)

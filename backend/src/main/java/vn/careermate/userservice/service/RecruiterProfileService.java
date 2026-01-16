@@ -13,8 +13,15 @@ import vn.careermate.userservice.repository.UserRepository;
 import vn.careermate.service.FileStorageService;
 import vn.careermate.contentservice.model.Company;
 import vn.careermate.contentservice.repository.CompanyRepository;
+import vn.careermate.jobservice.model.Job;
+import vn.careermate.jobservice.model.Application;
+import vn.careermate.jobservice.repository.JobRepository;
+import vn.careermate.jobservice.repository.ApplicationRepository;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +31,8 @@ public class RecruiterProfileService {
     private final UserRepository userRepository;
     private final CompanyRepository companyRepository;
     private final FileStorageService fileStorageService;
+    private final JobRepository jobRepository;
+    private final ApplicationRepository applicationRepository;
 
     public RecruiterProfile getCurrentRecruiterProfile() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -145,5 +154,33 @@ public class RecruiterProfileService {
         companyRepository.save(company);
 
         return filePath;
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> getDashboardStats() {
+        RecruiterProfile recruiter = getCurrentRecruiterProfile();
+        UUID recruiterId = recruiter.getId();
+        
+        // Count active jobs
+        long activeJobsCount = jobRepository.countByRecruiterIdAndStatus(recruiterId, Job.JobStatus.ACTIVE);
+        
+        // Count new applications (PENDING status)
+        long newApplicationsCount = applicationRepository.countByJobRecruiterIdAndStatus(
+            recruiterId, Application.ApplicationStatus.PENDING);
+        
+        // Count upcoming interviews (INTERVIEW status with scheduled time in future)
+        long upcomingInterviewsCount = applicationRepository.countUpcomingInterviewsByRecruiter(
+            recruiterId, LocalDateTime.now());
+        
+        // Count successful hires (OFFERED status)
+        long successfulHiresCount = applicationRepository.countByJobRecruiterIdAndStatus(
+            recruiterId, Application.ApplicationStatus.OFFERED);
+        
+        return Map.of(
+            "activeJobs", activeJobsCount,
+            "newApplications", newApplicationsCount,
+            "upcomingInterviews", upcomingInterviewsCount,
+            "successfulHires", successfulHiresCount
+        );
     }
 }

@@ -50,12 +50,19 @@ public class RecruiterController {
     }
 
     @GetMapping("/jobs")
+    @PreAuthorize("hasRole('RECRUITER') or hasRole('ADMIN')")
     public ResponseEntity<Page<Job>> getMyJobs(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(jobService.getMyJobs(pageable));
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            return ResponseEntity.ok(jobService.getMyJobs(pageable));
+        } catch (Exception e) {
+            log.error("Error getting my jobs: {}", e.getMessage(), e);
+            return ResponseEntity.status(500)
+                .body(Page.empty());
+        }
     }
 
     @GetMapping("/jobs/{jobId}/applicants")

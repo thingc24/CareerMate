@@ -40,7 +40,6 @@ public class RecruiterProfileController {
     }
 
     @GetMapping("/company")
-    @PreAuthorize("hasRole('RECRUITER')")
     public ResponseEntity<?> getMyCompany() {
         try {
             Company company = recruiterProfileService.getMyCompany();
@@ -48,9 +47,13 @@ public class RecruiterProfileController {
                 return ResponseEntity.notFound().build();
             }
             return ResponseEntity.ok(company);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.error("Error getting company: {}", e.getMessage(), e);
             return ResponseEntity.status(400)
+                .body(Map.of("error", "Error loading company: " + e.getMessage()));
+        } catch (Exception e) {
+            log.error("Unexpected error getting company: {}", e.getMessage(), e);
+            return ResponseEntity.status(500)
                 .body(Map.of("error", "Error loading company: " + e.getMessage()));
         }
     }
@@ -86,6 +89,18 @@ public class RecruiterProfileController {
         } catch (Exception e) {
             return ResponseEntity.status(500)
                 .body(Map.of("error", "Error uploading logo: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/dashboard/stats")
+    @PreAuthorize("hasRole('RECRUITER')")
+    public ResponseEntity<Map<String, Object>> getDashboardStats() {
+        try {
+            return ResponseEntity.ok(recruiterProfileService.getDashboardStats());
+        } catch (Exception e) {
+            log.error("Error getting dashboard stats: {}", e.getMessage(), e);
+            return ResponseEntity.status(500)
+                .body(Map.of("error", "Error loading dashboard stats: " + e.getMessage()));
         }
     }
 }
