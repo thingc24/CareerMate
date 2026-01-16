@@ -76,13 +76,7 @@ export default function Challenges() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Thử thách & Huy hiệu</h1>
-        <p className="text-lg text-gray-600">Hoàn thành thử thách để nhận huy hiệu</p>
-      </div>
-
+    <div className="max-w-7xl mx-auto px-4 py-4">
       {/* Tabs */}
       <div className="mb-6 flex gap-4 border-b">
         <button

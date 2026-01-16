@@ -323,9 +323,9 @@ export default function ProfileEdit() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 animate-fade-in">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6">
         <button
           onClick={() => navigate('/student/profile/view')}
           className="mb-4 text-gray-600 hover:text-gray-900 flex items-center gap-2"
@@ -333,12 +333,6 @@ export default function ProfileEdit() {
           <i className="fas fa-arrow-left"></i>
           <span>Quay lại</span>
         </button>
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">
-          Cập nhật hồ sơ
-        </h1>
-        <p className="text-lg text-gray-600">
-          Chỉnh sửa thông tin cá nhân và học vấn của bạn
-        </p>
       </div>
 
       {/* Success/Error Message */}

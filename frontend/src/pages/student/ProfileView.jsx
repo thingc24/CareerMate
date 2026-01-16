@@ -122,9 +122,9 @@ export default function ProfileView() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-4">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6">
         <button
           onClick={() => navigate(-1)}
           className="mb-4 text-gray-600 hover:text-gray-900 flex items-center gap-2"
@@ -132,8 +132,6 @@ export default function ProfileView() {
           <i className="fas fa-arrow-left"></i>
           <span>Quay lại</span>
         </button>
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Hồ sơ cá nhân</h1>
-        <p className="text-lg text-gray-600">Thông tin cá nhân và học vấn</p>
       </div>
 
       {/* Profile Card */}

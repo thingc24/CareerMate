@@ -72,7 +72,8 @@ public class Notification {
         NEW_COMMENT,          // Có comment mới trên bài viết
         NEW_REACTION,         // Có reaction mới trên bài viết
         INTERVIEW_SCHEDULED,  // Đã lên lịch phỏng vấn
-        SYSTEM_ANNOUNCEMENT   // Thông báo hệ thống
+        SYSTEM_ANNOUNCEMENT,  // Thông báo hệ thống
+        NEW_MESSAGE           // Tin nhắn mới
     }
 
     public enum NotificationStatus {

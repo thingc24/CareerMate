@@ -37,26 +37,42 @@ public class ArticleService {
             log.info("Getting published articles: keyword={}, category={}, page={}, size={}", 
                 keyword, category, pageable.getPageNumber(), pageable.getPageSize());
             
-            // Get ALL published articles with publishedAt not null (without pagination first)
+            // Get all published articles first
             List<Article> allArticles = articleRepository.findAll().stream()
                 .filter(a -> a.getStatus() == Article.ArticleStatus.PUBLISHED)
                 .filter(a -> a.getPublishedAt() != null)
-                .filter(a -> keyword == null || keyword.trim().isEmpty() || 
-                    (a.getTitle() != null && a.getTitle().toLowerCase().contains(keyword.toLowerCase())))
-                .filter(a -> category == null || category.trim().isEmpty() || 
-                    (a.getCategory() != null && a.getCategory().equals(category)))
+                .filter(a -> {
+                    // Filter by keyword
+                    if (keyword != null && !keyword.trim().isEmpty()) {
+                        return a.getTitle() != null && 
+                               a.getTitle().toLowerCase().contains(keyword.toLowerCase());
+                    }
+                    return true;
+                })
+                .filter(a -> {
+                    // Filter by category
+                    if (category != null && !category.trim().isEmpty()) {
+                        return a.getCategory() != null && a.getCategory().equals(category);
+                    }
+                    return true;
+                })
                 .sorted((a1, a2) -> {
-                    if (a1.getPublishedAt() == null || a2.getPublishedAt() == null) return 0;
-                    return a2.getPublishedAt().compareTo(a1.getPublishedAt()); // DESC
+                    // Sort by publishedAt DESC
+                    if (a1.getPublishedAt() == null || a2.getPublishedAt() == null) {
+                        return 0;
+                    }
+                    return a2.getPublishedAt().compareTo(a1.getPublishedAt());
                 })
                 .collect(java.util.stream.Collectors.toList());
             
-            // Force load author for each article to avoid lazy loading issues
+            // Force load author fields to ensure they're initialized within transaction
             allArticles.forEach(article -> {
                 if (article.getAuthor() != null) {
                     article.getAuthor().getId();
                     article.getAuthor().getFullName();
+                    article.getAuthor().getEmail();
                     article.getAuthor().getRole();
+                    article.getAuthor().getAvatarUrl(); // Ensure avatarUrl is loaded
                 }
             });
             
@@ -75,7 +91,7 @@ public class ArticleService {
             log.error("Error getting published articles: keyword={}, category={}, error={}", 
                 keyword, category, e.getMessage(), e);
             e.printStackTrace();
-            return Page.empty(pageable);
+            throw new RuntimeException("Error loading articles: " + e.getMessage(), e);
         }
     }
 

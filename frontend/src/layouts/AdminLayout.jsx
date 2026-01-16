@@ -125,6 +125,17 @@ export default function AdminLayout({ children }) {
               <i className="fas fa-chart-bar text-sm" />
               <span>Phân Tích & Báo Cáo</span>
             </Link>
+            <Link
+              to="/admin/messages"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                isActive('/admin/messages')
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <i className="fas fa-comments text-sm" />
+              <span>Tin nhắn</span>
+            </Link>
           </nav>
 
           <div className="border-t border-slate-100 px-4 py-3 text-xs text-slate-500">

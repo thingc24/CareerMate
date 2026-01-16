@@ -49,13 +49,7 @@ export default function CVTemplates() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Mẫu CV</h1>
-        <p className="text-lg text-gray-600">Chọn mẫu CV phù hợp và tạo CV của bạn</p>
-      </div>
-
+    <div className="max-w-7xl mx-auto px-4 py-4">
       {/* Filters */}
       <div className="card p-6 mb-6">
         <div className="flex flex-col md:flex-row gap-4">

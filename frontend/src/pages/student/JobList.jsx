@@ -47,17 +47,7 @@ export default function JobList() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">
-          Tìm việc làm
-        </h1>
-        <p className="text-lg text-gray-600">
-          Khám phá hàng ngàn cơ hội việc làm hấp dẫn
-        </p>
-      </div>
-
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 animate-fade-in">
       {/* Search and Filters */}
       <div className="card p-6 mb-8">
         <form onSubmit={handleSearch} className="space-y-4">

@@ -207,12 +207,6 @@ export default function CompanyEdit() {
           <i className="fas fa-arrow-left"></i>
           <span>Quay lại</span>
         </button>
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">
-          {formData.name ? 'Cập nhật thông tin công ty' : 'Tạo thông tin công ty'}
-        </h1>
-        <p className="text-lg text-gray-600">
-          Chỉnh sửa thông tin và mô tả về công ty của bạn
-        </p>
       </div>
 
       {/* Success/Error Message */}

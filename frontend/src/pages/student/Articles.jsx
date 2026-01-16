@@ -56,13 +56,7 @@ export default function Articles() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Bài viết</h1>
-        <p className="text-lg text-gray-600">Kiến thức và kinh nghiệm nghề nghiệp</p>
-      </div>
-
+    <div className="max-w-7xl mx-auto px-4 py-4">
       {/* Search and Filter */}
       <div className="card p-6 mb-6">
         <div className="flex flex-col md:flex-row gap-4">

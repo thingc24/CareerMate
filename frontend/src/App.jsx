@@ -34,6 +34,7 @@ import CoursePlayer from './pages/student/CoursePlayer';
 import Challenges from './pages/student/Challenges';
 import ChallengeDetail from './pages/student/ChallengeDetail';
 import Packages from './pages/student/Packages';
+import Messages from './pages/student/Messages';
 
 // Recruiter Pages
 import RecruiterDashboard from './pages/recruiter/Dashboard';
@@ -46,6 +47,7 @@ import CompanyEdit from './pages/recruiter/CompanyEdit';
 import RecruiterProfile from './pages/recruiter/Profile';
 import RecruiterCreateArticle from './pages/recruiter/CreateArticle';
 import MyArticles from './pages/recruiter/MyArticles';
+import RecruiterMessages from './pages/recruiter/Messages';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -56,6 +58,7 @@ import ArticleManagement from './pages/admin/ArticleManagement';
 import CVTemplatesManagement from './pages/admin/CVTemplatesManagement';
 import PackagesManagement from './pages/admin/PackagesManagement';
 import Analytics from './pages/admin/Analytics';
+import AdminMessages from './pages/admin/Messages';
 
 // Shared Pages
 import Notifications from './pages/Notifications';
@@ -111,6 +114,7 @@ function AppRoutes() {
                 <Route path="articles/:id" element={<ArticleDetail />} />
                 <Route path="companies" element={<Companies />} />
                 <Route path="companies/:id" element={<CompanyDetail />} />
+                <Route path="messages" element={<Messages />} />
                 <Route path="cv-templates" element={<CVTemplates />} />
                 <Route path="cv-templates/:id" element={<CVTemplateEditor />} />
                 <Route path="courses" element={<Courses />} />
@@ -146,6 +150,7 @@ function AppRoutes() {
                 <Route path="profile" element={<RecruiterProfile />} />
                 <Route path="articles/create" element={<RecruiterCreateArticle />} />
                 <Route path="articles" element={<MyArticles />} />
+                <Route path="messages" element={<RecruiterMessages />} />
                 <Route path="" element={<Navigate to="dashboard" replace />} />
               </Routes>
             </RecruiterLayout>
@@ -168,6 +173,7 @@ function AppRoutes() {
                 <Route path="cv-templates" element={<CVTemplatesManagement />} />
                 <Route path="packages" element={<PackagesManagement />} />
                 <Route path="analytics" element={<Analytics />} />
+                <Route path="messages" element={<AdminMessages />} />
                 <Route path="" element={<Navigate to="dashboard" replace />} />
               </Routes>
             </AdminLayout>

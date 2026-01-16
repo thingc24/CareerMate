@@ -90,13 +90,7 @@ export default function Courses() {
   const displayCourses = activeTab === 'all' ? courses : myEnrollments.map(e => e.course);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Learning Hub</h1>
-        <p className="text-lg text-gray-600">Khóa học và tài liệu học tập</p>
-      </div>
-
+    <div className="max-w-7xl mx-auto px-4 py-4">
       {/* Tabs */}
       <div className="mb-6 flex gap-4 border-b">
         <button

@@ -337,6 +337,93 @@ class CareerMateAPI {
     return response.data;
   }
 
+  async getRecruiterByUserId(userId) {
+    const response = await this.client.get(`/recruiters/by-user/${userId}`);
+    return response.data;
+  }
+
+  async getCompanyAverageRating(companyId) {
+    const response = await this.client.get(`/companies/${companyId}/rating/average`);
+    return response.data;
+  }
+
+  // Messaging APIs
+  async getMyConversations() {
+    const response = await this.client.get('/messaging/conversations');
+    return response.data;
+  }
+
+  async getConversation(conversationId) {
+    const response = await this.client.get(`/messaging/conversations/${conversationId}`);
+    return response.data;
+  }
+
+  async getOrCreateConversation(otherUserId) {
+    const response = await this.client.post(`/messaging/conversations?otherUserId=${otherUserId}`);
+    return response.data;
+  }
+
+  async getMessages(conversationId, page = 0, size = 50) {
+    const response = await this.client.get(`/messaging/conversations/${conversationId}/messages?page=${page}&size=${size}`);
+    return response.data;
+  }
+
+  async sendMessage(conversationId, content) {
+    const response = await this.client.post(`/messaging/conversations/${conversationId}/messages`, { content });
+    return response.data;
+  }
+
+  async sendMessageToUser(recipientId, content) {
+    const response = await this.client.post(`/messaging/messages?recipientId=${recipientId}`, { content });
+    return response.data;
+  }
+
+  async markConversationAsRead(conversationId) {
+    const response = await this.client.put(`/messaging/conversations/${conversationId}/read`);
+    return response.data;
+  }
+
+  async getUnreadCount() {
+    const response = await this.client.get('/messaging/unread-count');
+    return response.data;
+  }
+
+  async deleteAllMessages(conversationId) {
+    const response = await this.client.delete(`/messaging/conversations/${conversationId}/messages`);
+    return response.data;
+  }
+
+  // Admin messaging APIs
+  async getAllRecruiters() {
+    const response = await this.client.get('/messaging/admin/recruiters');
+    return response.data;
+  }
+
+  async getAdminConversations() {
+    const response = await this.client.get('/messaging/admin/conversations');
+    return response.data;
+  }
+
+  async getAdminMessages(conversationId, page = 0, size = 50) {
+    const response = await this.client.get(`/messaging/admin/conversations/${conversationId}/messages?page=${page}&size=${size}`);
+    return response.data;
+  }
+
+  async sendAdminMessage(conversationId, content) {
+    const response = await this.client.post(`/messaging/admin/conversations/${conversationId}/messages`, { content });
+    return response.data;
+  }
+
+  async getOrCreateAdminConversation(recruiterId) {
+    const response = await this.client.post(`/messaging/admin/conversations?recruiterId=${recruiterId}`);
+    return response.data;
+  }
+
+  async markAdminConversationAsRead(conversationId) {
+    const response = await this.client.put(`/messaging/admin/conversations/${conversationId}/read`);
+    return response.data;
+  }
+
   // CV APIs
   async getCVs() {
     const response = await this.client.get('/students/cv');

@@ -23,6 +23,15 @@ public interface ArticleRepository extends JpaRepository<Article, UUID> {
     Page<Article> findByStatusAndPublishedAtIsNotNullOrderByPublishedAtDesc(
         @Param("status") Article.ArticleStatus status, Pageable pageable);
     
+    @Query("SELECT a FROM Article a WHERE a.status = :status AND a.publishedAt IS NOT NULL " +
+           "AND (:keyword IS NULL OR :keyword = '' OR LOWER(a.title) LIKE LOWER(CONCAT(CONCAT('%', :keyword), '%'))) " +
+           "AND (:category IS NULL OR :category = '' OR a.category = :category) " +
+           "ORDER BY a.publishedAt DESC")
+    List<Article> findPublishedArticlesWithFilters(
+        @Param("status") Article.ArticleStatus status,
+        @Param("keyword") String keyword,
+        @Param("category") String category);
+    
     List<Article> findByAuthorId(UUID authorId);
     
     Page<Article> findByAuthorIdOrderByCreatedAtDesc(UUID authorId, Pageable pageable);

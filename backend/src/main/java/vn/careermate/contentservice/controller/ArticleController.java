@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import vn.careermate.contentservice.dto.CreateArticleRequest;
 import vn.careermate.contentservice.model.Article;
@@ -36,6 +37,7 @@ public class ArticleController {
     private final UserRepository userRepository;
 
     @GetMapping
+    @Transactional(readOnly = true)
     public ResponseEntity<Page<Article>> getPublishedArticles(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String category,
@@ -43,27 +45,45 @@ public class ArticleController {
             @RequestParam(defaultValue = "10") int size
     ) {
         try {
-            System.out.println("=== ArticleController.getPublishedArticles ===");
-            System.out.println("keyword: " + keyword + ", category: " + category + ", page: " + page + ", size: " + size);
+            log.info("=== ArticleController.getPublishedArticles ===");
+            log.info("keyword: {}, category: {}, page: {}, size: {}", keyword, category, page, size);
             
             Pageable pageable = PageRequest.of(page, size);
-            System.out.println("Calling articleService.getPublishedArticles...");
+            log.info("Calling articleService.getPublishedArticles...");
             
             Page<Article> articles = articleService.getPublishedArticles(keyword, category, pageable);
             
-            System.out.println("Articles retrieved: " + articles.getTotalElements() + " total, " + articles.getContent().size() + " in page");
+            log.info("Articles retrieved: {} total, {} in page", articles.getTotalElements(), articles.getContent().size());
+            
+            // Ensure author is properly initialized to avoid lazy loading issues during serialization
+            articles.getContent().forEach(article -> {
+                if (article.getAuthor() != null) {
+                    // Force initialization of author fields including avatarUrl
+                    try {
+                        article.getAuthor().getId();
+                        article.getAuthor().getFullName();
+                        article.getAuthor().getEmail();
+                        article.getAuthor().getRole();
+                        article.getAuthor().getAvatarUrl(); // Ensure avatarUrl is loaded
+                    } catch (Exception ex) {
+                        log.warn("Error accessing author fields for article {}: {}", article.getId(), ex.getMessage());
+                    }
+                }
+            });
             
             // Log first article if exists
             if (!articles.getContent().isEmpty()) {
                 Article first = articles.getContent().get(0);
-                System.out.println("First article: id=" + first.getId() + ", title=" + first.getTitle() + ", author=" + (first.getAuthor() != null ? first.getAuthor().getFullName() : "null"));
+                log.info("First article: id={}, title={}, author={}", 
+                    first.getId(), first.getTitle(), 
+                    first.getAuthor() != null ? first.getAuthor().getFullName() : "null");
             }
             
             return ResponseEntity.ok(articles);
         } catch (Exception e) {
-            System.err.println("ERROR in getPublishedArticles: " + e.getMessage());
+            log.error("ERROR in getPublishedArticles: {}", e.getMessage(), e);
             e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.status(500).build();
         }
     }
 

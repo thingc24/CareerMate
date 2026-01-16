@@ -56,7 +56,7 @@ export default function CreateArticle() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-4">
       <div className="mb-6">
         <button
           onClick={() => navigate('/recruiter/articles')}
@@ -65,8 +65,6 @@ export default function CreateArticle() {
           <i className="fas fa-arrow-left"></i>
           <span>Quay lại</span>
         </button>
-        <h1 className="text-3xl font-bold text-gray-900">Đăng bài viết</h1>
-        <p className="text-gray-600 mt-2">Bài viết của bạn sẽ được admin xem xét trước khi được xuất bản.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="card p-8 space-y-6">

@@ -121,7 +121,7 @@ export default function CVTemplateEditor() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-4">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
@@ -132,7 +132,6 @@ export default function CVTemplateEditor() {
             <i className="fas fa-arrow-left"></i>
             <span>Quay lại</span>
           </button>
-          <h1 className="text-3xl font-bold text-gray-900">Tạo CV từ mẫu: {template.name}</h1>
         </div>
         <button onClick={handleSave} className="btn-primary">
           <i className="fas fa-save mr-2"></i>

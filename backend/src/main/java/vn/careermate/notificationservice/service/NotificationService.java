@@ -234,6 +234,18 @@ public class NotificationService {
      * Gửi thông báo cho tất cả ADMIN khi có job mới cần duyệt
      */
     @Transactional
+    public Notification notifyNewMessage(UUID userId, UUID conversationId, String senderName, String messagePreview) {
+        return createNotification(
+            userId,
+            "Tin nhắn mới từ " + senderName,
+            messagePreview.length() > 100 ? messagePreview.substring(0, 100) + "..." : messagePreview,
+            Notification.NotificationType.NEW_MESSAGE,
+            "/messages?conversationId=" + conversationId,
+            "conversation",
+            conversationId
+        );
+    }
+
     public void notifyAdminsAboutPendingJob(UUID jobId, String jobTitle, String recruiterName) {
         try {
             // Lấy tất cả users có role ADMIN

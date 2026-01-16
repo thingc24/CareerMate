@@ -99,9 +99,8 @@ export default function Applicants() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto px-4 py-4">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Quản lý ứng viên</h1>
         <select
           className="px-4 py-2 border border-gray-300 rounded-lg"
           value={selectedJobId}

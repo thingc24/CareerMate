@@ -49,13 +49,7 @@ export default function JobRecommendations() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Việc làm phù hợp với bạn</h1>
-        <p className="text-gray-600">
-          Dựa trên CV và kỹ năng của bạn, chúng tôi đã tìm thấy những việc làm phù hợp
-        </p>
-      </div>
+    <div className="max-w-7xl mx-auto px-4 py-4">
 
       {recommendations.length === 0 ? (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">

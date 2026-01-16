@@ -115,6 +115,17 @@ export default function RecruiterLayout({ children }) {
               <span>Bài viết của tôi</span>
             </Link>
             <Link
+              to="/recruiter/messages"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                isActive('/recruiter/messages')
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <i className="fas fa-comments text-sm" />
+              <span>Tin nhắn</span>
+            </Link>
+            <Link
               to="/recruiter/articles/create"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                 isActive('/recruiter/articles/create')

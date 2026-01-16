@@ -44,13 +44,7 @@ export default function Companies() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Tìm kiếm công ty</h1>
-        <p className="text-lg text-gray-600">Khám phá các công ty hàng đầu và đánh giá của nhân viên</p>
-      </div>
-
+    <div className="max-w-7xl mx-auto px-4 py-4">
       {/* Search */}
       <div className="card p-6 mb-6">
         <form onSubmit={handleSearch} className="flex gap-4">

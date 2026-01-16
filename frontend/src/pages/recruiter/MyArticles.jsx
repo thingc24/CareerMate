@@ -103,12 +103,11 @@ export default function MyArticles() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 py-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Bài viết</h1>
-          <p className="text-slate-600 mt-1">
+          <p className="text-slate-600">
             Tổng cộng: {totalElements} bài viết
           </p>
         </div>

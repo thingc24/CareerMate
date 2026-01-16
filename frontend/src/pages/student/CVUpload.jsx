@@ -108,13 +108,9 @@ export default function CVUpload() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Quản lý CV</h1>
-          <p className="text-lg text-gray-600">Tải lên và quản lý CV của bạn</p>
-        </div>
+      <div className="flex items-center justify-between mb-6">
         <button
           onClick={() => document.getElementById('cvFileInput')?.click()}
           className="btn-primary"

@@ -54,14 +54,7 @@ export default function FindCandidates() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Tìm ứng viên phù hợp</h1>
-        <p className="text-lg text-gray-600">
-          Sử dụng AI để tìm ứng viên phù hợp với mô tả công việc của bạn
-        </p>
-      </div>
-
+    <div className="max-w-7xl mx-auto px-4 py-4">
       {/* Job Selection */}
       <div className="card p-6 mb-6">
         <div className="mb-4">

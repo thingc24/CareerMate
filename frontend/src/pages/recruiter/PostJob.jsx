@@ -77,9 +77,7 @@ export default function PostJob() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Đăng tin tuyển dụng mới</h1>
-
+    <div className="max-w-4xl mx-auto px-4 py-4">
       <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">

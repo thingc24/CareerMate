@@ -156,7 +156,7 @@ export default function CourseDetail() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-4">
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
           <p className="mt-4 text-gray-600 font-medium">Đang tải khóa học...</p>
@@ -167,7 +167,7 @@ export default function CourseDetail() {
 
   if (!course) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-4">
         <div className="card p-12 text-center">
           <i className="fas fa-exclamation-circle text-red-500 text-6xl mb-4"></i>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Không tìm thấy khóa học</h2>

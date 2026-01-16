@@ -66,13 +66,7 @@ export default function Packages() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Gói dịch vụ</h1>
-        <p className="text-lg text-gray-600">Nâng cấp tài khoản để trải nghiệm đầy đủ tính năng</p>
-      </div>
-
+    <div className="max-w-7xl mx-auto px-4 py-4">
       {/* Current Subscription */}
       {mySubscription && (
         <div className="card p-6 mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">

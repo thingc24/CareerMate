@@ -104,7 +104,7 @@ export default function CVAnalysis() {
   const missingSkills = analysis.missingSkills || [];
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto px-4 py-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -114,7 +114,6 @@ export default function CVAnalysis() {
           >
             <i className="fas fa-arrow-left mr-2"></i>Quay lại danh sách CV
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Kết quả phân tích CV</h1>
         </div>
         <button
           onClick={handleReanalyze}

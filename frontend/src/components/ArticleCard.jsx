@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import CompanyDetailModal from './CompanyDetailModal';
 
 // Component for rendering nested replies recursively
 function ReplyComment({ reply, onReply, replyingTo, setReplyingTo, replyContent, setReplyContent, formatDate, depth = 0 }) {
@@ -85,6 +86,9 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
   const [replyContent, setReplyContent] = useState('');
   const [authorName, setAuthorName] = useState('');
   const [authorAvatar, setAuthorAvatar] = useState(null);
+  const [showCompanyModal, setShowCompanyModal] = useState(false);
+  const [recruiterProfile, setRecruiterProfile] = useState(null);
+  const [company, setCompany] = useState(null);
 
   useEffect(() => {
     loadReactions();
@@ -93,7 +97,15 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
       loadComments();
       setShowComments(true);
     }
-  }, [article.id, showFullComments]);
+    
+    // Also try to load avatar directly from article.author if available
+    if (article.author && article.author.avatarUrl) {
+      const avatarUrl = article.author.avatarUrl.startsWith('http') 
+        ? article.author.avatarUrl 
+        : `http://localhost:8080/api${article.author.avatarUrl}`;
+      setAuthorAvatar(avatarUrl);
+    }
+  }, [article.id, showFullComments, article.author]);
 
   const loadReactions = async () => {
     try {
@@ -116,18 +128,52 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
       const authorDisplayName = await api.getAuthorDisplayName(article.id);
       setAuthorName(authorDisplayName);
       
-      // Get author avatar
+      // Get author avatar - prioritize article.author.avatarUrl
       if (article.author) {
+        // First, try to get from article.author directly
         if (article.author.avatarUrl) {
-          setAuthorAvatar(article.author.avatarUrl.startsWith('http') 
+          const avatarUrl = article.author.avatarUrl.startsWith('http') 
             ? article.author.avatarUrl 
-            : `http://localhost:8080/api${article.author.avatarUrl}`);
+            : `http://localhost:8080/api${article.author.avatarUrl}`;
+          setAuthorAvatar(avatarUrl);
+          return; // Exit early if we have avatar
+        }
+        
+        // If no avatarUrl in article.author, try to get from user profile
+        try {
+          if (article.author.role === 'RECRUITER') {
+            const profile = await api.getRecruiterByUserId(article.author.id);
+            if (profile?.user?.avatarUrl) {
+              const avatarUrl = profile.user.avatarUrl.startsWith('http') 
+                ? profile.user.avatarUrl 
+                : `http://localhost:8080/api${profile.user.avatarUrl}`;
+              setAuthorAvatar(avatarUrl);
+            }
+          } else if (article.author.role === 'STUDENT') {
+            // For students, try to get from student profile
+            const profile = await api.getStudentProfile?.();
+            if (profile?.user?.avatarUrl) {
+              const avatarUrl = profile.user.avatarUrl.startsWith('http') 
+                ? profile.user.avatarUrl 
+                : `http://localhost:8080/api${profile.user.avatarUrl}`;
+              setAuthorAvatar(avatarUrl);
+            }
+          }
+        } catch (err) {
+          console.error('Error loading user avatar:', err);
         }
       }
     } catch (error) {
       console.error('Error loading author info:', error);
       if (article.author) {
         setAuthorName(article.author.fullName || 'Người dùng');
+        // Try to get avatar from article.author directly
+        if (article.author.avatarUrl) {
+          const avatarUrl = article.author.avatarUrl.startsWith('http') 
+            ? article.author.avatarUrl 
+            : `http://localhost:8080/api${article.author.avatarUrl}`;
+          setAuthorAvatar(avatarUrl);
+        }
       }
     }
   };
@@ -215,10 +261,11 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
     if (article.author && article.author.role === 'RECRUITER') {
       try {
         // Get recruiter profile to find company
-        const recruiterProfile = await api.getRecruiterByUserId(article.author.id);
-        if (recruiterProfile && recruiterProfile.company) {
-          // Navigate to company detail
-          navigate(`/student/companies/${recruiterProfile.company.id}`);
+        const profile = await api.getRecruiterByUserId(article.author.id);
+        if (profile && profile.company) {
+          setRecruiterProfile(profile);
+          setCompany(profile.company);
+          setShowCompanyModal(true);
         } else {
           // If no company, show recruiter info or navigate to companies list
           alert(`Nhà tuyển dụng: ${authorName}\nChưa có thông tin công ty.`);
@@ -248,12 +295,15 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
                 src={authorAvatar}
                 alt={authorName}
                 className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
               />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold">
-                {authorName.charAt(0).toUpperCase()}
-              </div>
-            )}
+            ) : null}
+            <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold ${authorAvatar ? 'hidden' : ''}`}>
+              {authorName?.charAt(0).toUpperCase() || 'U'}
+            </div>
           </button>
           <div className="flex-1">
             <button
@@ -443,6 +493,19 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
           </div>
         </div>
       )}
+
+      {/* Company Detail Modal */}
+      <CompanyDetailModal
+        isOpen={showCompanyModal}
+        onClose={() => {
+          setShowCompanyModal(false);
+          setRecruiterProfile(null);
+          setCompany(null);
+        }}
+        company={company}
+        recruiter={recruiterProfile}
+        recruiterUser={article.author}
+      />
     </div>
   );
 }

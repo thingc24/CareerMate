@@ -40,9 +40,7 @@ export default function CareerRoadmap() {
   ];
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Lộ trình nghề nghiệp</h1>
-
+    <div className="max-w-6xl mx-auto px-4 py-4">
       {!roadmap ? (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
           <form onSubmit={handleGenerate} className="space-y-6">
