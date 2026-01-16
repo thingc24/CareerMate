@@ -32,16 +32,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String authHeader = request.getHeader("Authorization");
         final String requestPath = request.getRequestURI();
         
-        // Log authentication attempts for profile endpoints
-        if (requestPath.contains("/students/profile")) {
-            logger.debug("JWT Filter - Request to: " + requestPath + " with Authorization header: " + 
-                (authHeader != null ? "Present" : "Missing"));
+        // Skip JWT processing for public endpoints
+        if (requestPath.startsWith("/auth/") || requestPath.startsWith("/api/auth/")) {
+            filterChain.doFilter(request, response);
+            return;
         }
         
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            if (requestPath.contains("/students/profile")) {
-                logger.warn("JWT Filter - No Bearer token found for: " + requestPath);
-            }
+            // No token provided - let Spring Security handle it (will reject if endpoint requires auth)
             filterChain.doFilter(request, response);
             return;
         }
@@ -49,10 +47,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             final String jwt = authHeader.substring(7);
             final String userEmail = jwtService.extractUsername(jwt);
-            
-            if (requestPath.contains("/students/profile")) {
-                logger.debug("JWT Filter - Extracted email from token: " + (userEmail != null ? userEmail : "null"));
-            }
 
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
@@ -66,28 +60,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                     
-                    if (requestPath.contains("/students/profile")) {
-                        logger.info("JWT Filter - Authentication set successfully for user: " + userEmail);
-                    }
+                    logger.debug("JWT Filter - Authentication set successfully for user: " + userEmail + " on path: " + requestPath);
                 } else {
-                    if (requestPath.contains("/students/profile")) {
-                        logger.warn("JWT Filter - Token is invalid for user: " + userEmail);
-                    }
-                }
-            } else {
-                if (requestPath.contains("/students/profile")) {
-                    if (userEmail == null) {
-                        logger.warn("JWT Filter - Could not extract email from token");
-                    } else {
-                        logger.debug("JWT Filter - Authentication already set or userEmail is null");
-                    }
+                    logger.warn("JWT Filter - Token is invalid for user: " + userEmail + " on path: " + requestPath);
                 }
             }
         } catch (Exception e) {
             logger.error("JWT Filter - Cannot set user authentication for path: " + requestPath, e);
-            if (requestPath.contains("/students/profile")) {
-                logger.error("JWT Filter - Error details: " + e.getMessage());
-            }
+            // Continue filter chain - let Spring Security handle the rejection
         }
 
         filterChain.doFilter(request, response);
