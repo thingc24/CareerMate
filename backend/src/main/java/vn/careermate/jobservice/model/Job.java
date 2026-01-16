@@ -1,9 +1,10 @@
-package vn.careermate.model;
+package vn.careermate.jobservice.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import vn.careermate.userservice.model.RecruiterProfile;
 import vn.careermate.userservice.model.User;
+import vn.careermate.model.Company;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -125,4 +126,3 @@ public class Job {
         DRAFT, PENDING, ACTIVE, CLOSED, REJECTED
     }
 }
-

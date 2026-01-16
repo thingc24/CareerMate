@@ -5,8 +5,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.careermate.model.CareerRoadmap;
+import vn.careermate.model.CV;
+import vn.careermate.model.StudentSkill;
 import vn.careermate.userservice.model.StudentProfile;
 import vn.careermate.repository.CareerRoadmapRepository;
+import vn.careermate.repository.CVRepository;
+import vn.careermate.repository.StudentSkillRepository;
 import vn.careermate.userservice.repository.StudentProfileRepository;
 
 import java.util.*;
@@ -20,6 +24,8 @@ public class CareerRoadmapService {
 
     private final CareerRoadmapRepository roadmapRepository;
     private final StudentProfileRepository studentProfileRepository;
+    private final StudentSkillRepository studentSkillRepository;
+    private final CVRepository cvRepository;
     private final AIService aiService;
 
     @Transactional
@@ -78,9 +84,11 @@ public class CareerRoadmapService {
             info.append("Giới thiệu: ").append(student.getBio()).append("\n");
         }
         
-        if (student.getSkills() != null && !student.getSkills().isEmpty()) {
+        // Get skills using repository
+        List<StudentSkill> skills = studentSkillRepository.findByStudentId(student.getId());
+        if (skills != null && !skills.isEmpty()) {
             info.append("\n=== KỸ NĂNG HIỆN TẠI ===\n");
-            student.getSkills().forEach(skill -> {
+            skills.forEach(skill -> {
                 info.append("- ").append(skill.getSkillName());
                 if (skill.getProficiencyLevel() != null) {
                     info.append(" (Mức độ: ").append(skill.getProficiencyLevel()).append(")");
@@ -94,10 +102,11 @@ public class CareerRoadmapService {
             info.append("\nKỹ năng: Chưa cập nhật\n");
         }
         
-        // Add CV information if available
-        if (student.getCvs() != null && !student.getCvs().isEmpty()) {
+        // Get CVs using repository
+        List<CV> cvs = cvRepository.findByStudentId(student.getId());
+        if (cvs != null && !cvs.isEmpty()) {
             info.append("\n=== CV ===\n");
-            info.append("Đã có ").append(student.getCvs().size()).append(" CV trong hệ thống\n");
+            info.append("Đã có ").append(cvs.size()).append(" CV trong hệ thống\n");
         }
         
         return info.toString();

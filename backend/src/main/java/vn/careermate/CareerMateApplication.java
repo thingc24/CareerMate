@@ -11,7 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
     exclude = {OAuth2ClientAutoConfiguration.class},
     scanBasePackages = {
         "vn.careermate.userservice",      // User Service - Văn Tân
-        "vn.careermate.job.service",       // Job Service - Ngọc Thi (will be created)
+        "vn.careermate.jobservice",       // Job Service - Ngọc Thi
         "vn.careermate.ai.service",        // AI Service - Anh Vũ (will be created)
         "vn.careermate.content.service",   // Content Service - Hiệu Hiệu (will be created)
         "vn.careermate.learning.service",  // Learning Service - Bảo Hân (will be created)

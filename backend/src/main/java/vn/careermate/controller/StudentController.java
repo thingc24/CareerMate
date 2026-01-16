@@ -9,6 +9,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import vn.careermate.model.*;
+import vn.careermate.jobservice.model.Application;
+import vn.careermate.jobservice.model.Job;
+import vn.careermate.jobservice.model.SavedJob;
+import vn.careermate.jobservice.service.ApplicationService;
+import vn.careermate.jobservice.service.JobService;
 import vn.careermate.service.StudentService;
 
 import java.io.IOException;
@@ -27,6 +32,8 @@ import java.util.UUID;
 public class StudentController {
 
     private final StudentService studentService;
+    private final JobService jobService;
+    private final ApplicationService applicationService;
 
     @PostMapping("/cv/upload")
     public ResponseEntity<?> uploadCV(@RequestParam("file") MultipartFile file) {
@@ -95,7 +102,7 @@ public class StudentController {
     ) {
         try {
             Pageable pageable = PageRequest.of(page, size);
-            Page<Job> jobs = studentService.searchJobs(keyword, location, pageable);
+            Page<Job> jobs = jobService.searchJobs(keyword, location, pageable);
             return ResponseEntity.ok(jobs);
         } catch (RuntimeException e) {
             log.error("Runtime error searching jobs: {}", e.getMessage());
@@ -111,7 +118,7 @@ public class StudentController {
     @GetMapping("/jobs/{jobId}")
     public ResponseEntity<Job> getJob(@PathVariable UUID jobId) {
         try {
-            Job job = studentService.getJob(jobId);
+            Job job = jobService.getJob(jobId);
             // Detach lazy-loaded relations
             // KHÔNG set null cho collections có cascade="all-delete-orphan" (skills, applications)
             // @JsonIgnore sẽ đảm bảo chúng không được serialize
@@ -137,7 +144,7 @@ public class StudentController {
             @RequestParam(required = false) String coverLetter
     ) {
         try {
-            Application application = studentService.applyForJob(jobId, cvId, coverLetter);
+            Application application = applicationService.applyForJob(jobId, cvId, coverLetter);
             // Detach lazy-loaded relations
             if (application != null) {
                 if (application.getJob() != null) {
@@ -170,7 +177,7 @@ public class StudentController {
     @GetMapping("/applications/check/{jobId}")
     public ResponseEntity<Map<String, Object>> checkApplication(@PathVariable UUID jobId) {
         try {
-            Optional<Application> application = studentService.checkApplication(jobId);
+            Optional<Application> application = applicationService.checkApplication(jobId);
             if (application.isPresent()) {
                 return ResponseEntity.ok(Map.of(
                     "applied", true,
@@ -194,7 +201,7 @@ public class StudentController {
         try {
             log.info("GET /students/applications - page={}, size={}", page, size);
             Pageable pageable = PageRequest.of(page, size);
-            Page<Application> applications = studentService.getApplications(pageable);
+            Page<Application> applications = applicationService.getApplications(pageable);
             
             log.info("Applications retrieved: {} total, {} in page", 
                 applications.getTotalElements(), applications.getContent().size());
@@ -248,7 +255,7 @@ public class StudentController {
     @PostMapping("/saved-jobs")
     public ResponseEntity<?> saveJob(@RequestParam UUID jobId, @RequestParam(required = false) String notes) {
         try {
-            SavedJob savedJob = studentService.saveJob(jobId, notes);
+            SavedJob savedJob = applicationService.saveJob(jobId, notes);
             // Detach lazy-loaded relations
             if (savedJob.getJob() != null) {
                 savedJob.getJob().setRecruiter(null);
@@ -272,7 +279,7 @@ public class StudentController {
     ) {
         try {
             Pageable pageable = PageRequest.of(page, size);
-            Page<SavedJob> savedJobs = studentService.getSavedJobs(pageable);
+            Page<SavedJob> savedJobs = applicationService.getSavedJobs(pageable);
             // Detach lazy-loaded relations
             savedJobs.getContent().forEach(savedJob -> {
                 if (savedJob.getJob() != null) {
@@ -290,7 +297,7 @@ public class StudentController {
     @DeleteMapping("/saved-jobs/{jobId}")
     public ResponseEntity<?> deleteSavedJob(@PathVariable UUID jobId) {
         try {
-            studentService.deleteSavedJob(jobId);
+            applicationService.deleteSavedJob(jobId);
             return ResponseEntity.ok(Map.of("message", "Job removed from saved list"));
         } catch (Exception e) {
             log.error("Error deleting saved job", e);
@@ -302,7 +309,7 @@ public class StudentController {
     @GetMapping("/saved-jobs/check/{jobId}")
     public ResponseEntity<Map<String, Boolean>> checkJobSaved(@PathVariable UUID jobId) {
         try {
-            boolean isSaved = studentService.isJobSaved(jobId);
+            boolean isSaved = applicationService.isJobSaved(jobId);
             return ResponseEntity.ok(Map.of("isSaved", isSaved));
         } catch (Exception e) {
             log.error("Error checking saved job", e);

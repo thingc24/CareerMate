@@ -1,10 +1,10 @@
-package vn.careermate.dto;
+package vn.careermate.jobservice.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import vn.careermate.model.Job;
+import vn.careermate.jobservice.model.Job;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

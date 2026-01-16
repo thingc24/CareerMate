@@ -1,8 +1,8 @@
-package vn.careermate.repository;
+package vn.careermate.jobservice.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import vn.careermate.model.ApplicationHistory;
+import vn.careermate.jobservice.model.ApplicationHistory;
 
 import java.util.List;
 import java.util.UUID;
@@ -11,4 +11,3 @@ import java.util.UUID;
 public interface ApplicationHistoryRepository extends JpaRepository<ApplicationHistory, UUID> {
     List<ApplicationHistory> findByApplicationIdOrderByCreatedAtDesc(UUID applicationId);
 }
-

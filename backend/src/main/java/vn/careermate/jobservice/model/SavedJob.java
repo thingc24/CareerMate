@@ -1,4 +1,4 @@
-package vn.careermate.model;
+package vn.careermate.jobservice.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -47,4 +47,3 @@ public class SavedJob {
     @Column(name = "saved_at", updatable = false)
     private LocalDateTime savedAt;
 }
-

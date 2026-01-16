@@ -1,10 +1,10 @@
-package vn.careermate.dto;
+package vn.careermate.jobservice.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import vn.careermate.model.Application;
+import vn.careermate.jobservice.model.Application;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -29,4 +29,3 @@ public class ApplicationDTO {
     private LocalDateTime viewedAt;
     private LocalDateTime interviewScheduledAt;
 }
-

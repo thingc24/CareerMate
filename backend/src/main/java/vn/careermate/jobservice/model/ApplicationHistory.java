@@ -1,4 +1,4 @@
-package vn.careermate.model;
+package vn.careermate.jobservice.model;
 
 import jakarta.persistence.*;
 import vn.careermate.userservice.model.User;
@@ -43,4 +43,3 @@ public class ApplicationHistory {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 }
-

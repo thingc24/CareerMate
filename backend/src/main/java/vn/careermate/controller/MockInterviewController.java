@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import vn.careermate.model.Job;
-import vn.careermate.repository.JobRepository;
+import vn.careermate.jobservice.model.Job;
+import vn.careermate.jobservice.repository.JobRepository;
 import vn.careermate.service.MockInterviewService;
 
 import java.util.Map;

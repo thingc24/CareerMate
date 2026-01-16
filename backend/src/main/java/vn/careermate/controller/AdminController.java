@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import vn.careermate.dto.AdminAnalytics;
 import vn.careermate.dto.AdminDashboardStats;
 import vn.careermate.model.CVTemplate;
-import vn.careermate.model.Job;
+import vn.careermate.jobservice.model.Job;
 import vn.careermate.model.Package;
 import vn.careermate.model.Subscription;
 import vn.careermate.userservice.model.User;

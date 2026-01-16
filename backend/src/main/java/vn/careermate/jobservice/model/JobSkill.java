@@ -1,4 +1,4 @@
-package vn.careermate.model;
+package vn.careermate.jobservice.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -41,4 +41,3 @@ public class JobSkill {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 }
-

@@ -1,8 +1,8 @@
-package vn.careermate.repository;
+package vn.careermate.jobservice.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import vn.careermate.model.JobSkill;
+import vn.careermate.jobservice.model.JobSkill;
 
 import java.util.List;
 import java.util.UUID;
@@ -15,4 +15,3 @@ public interface JobSkillRepository extends JpaRepository<JobSkill, UUID> {
            "FROM JobSkill js GROUP BY js.skillName ORDER BY jobCount DESC")
     List<Object[]> findTopSkillsByJobCount();
 }
-

@@ -9,9 +9,10 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import vn.careermate.model.Application;
-import vn.careermate.model.Job;
-import vn.careermate.service.RecruiterService;
+import vn.careermate.jobservice.model.Application;
+import vn.careermate.jobservice.model.Job;
+import vn.careermate.jobservice.service.ApplicationService;
+import vn.careermate.jobservice.service.JobService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,7 +26,8 @@ import java.util.UUID;
 @CrossOrigin(origins = "*")
 public class RecruiterController {
 
-    private final RecruiterService recruiterService;
+    private final JobService jobService;
+    private final ApplicationService applicationService;
 
     @PostMapping("/jobs")
     @PreAuthorize("hasRole('RECRUITER') or hasRole('ADMIN')")
@@ -35,7 +37,7 @@ public class RecruiterController {
             @RequestParam(required = false) List<String> optionalSkills
     ) {
         try {
-            return ResponseEntity.ok(recruiterService.createJob(job, requiredSkills, optionalSkills));
+            return ResponseEntity.ok(jobService.createJob(job, requiredSkills, optionalSkills));
         } catch (RuntimeException e) {
             log.error("Error creating job: {}", e.getMessage(), e);
             return ResponseEntity.status(400)
@@ -53,7 +55,7 @@ public class RecruiterController {
             @RequestParam(defaultValue = "10") int size
     ) {
         Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(recruiterService.getMyJobs(pageable));
+        return ResponseEntity.ok(jobService.getMyJobs(pageable));
     }
 
     @GetMapping("/jobs/{jobId}/applicants")
@@ -65,7 +67,7 @@ public class RecruiterController {
         try {
             log.info("GET /recruiters/jobs/{}/applicants - page={}, size={}", jobId, page, size);
             Pageable pageable = PageRequest.of(page, size);
-            Page<Application> applications = recruiterService.getJobApplicants(jobId, pageable);
+            Page<Application> applications = applicationService.getJobApplicants(jobId, pageable);
             
             log.info("Found {} applicants (total: {})", 
                 applications.getContent().size(), applications.getTotalElements());
@@ -110,7 +112,7 @@ public class RecruiterController {
             @RequestParam Application.ApplicationStatus status,
             @RequestParam(required = false) String notes
     ) {
-        return ResponseEntity.ok(recruiterService.updateApplicationStatus(applicationId, status, notes));
+        return ResponseEntity.ok(applicationService.updateApplicationStatus(applicationId, status, notes));
     }
 
     @PostMapping("/applications/{applicationId}/interview")
@@ -118,7 +120,7 @@ public class RecruiterController {
             @PathVariable UUID applicationId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime interviewTime
     ) {
-        return ResponseEntity.ok(recruiterService.scheduleInterview(applicationId, interviewTime));
+        return ResponseEntity.ok(applicationService.scheduleInterview(applicationId, interviewTime));
     }
 
 }
