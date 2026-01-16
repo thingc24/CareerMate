@@ -5,9 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import vn.careermate.model.CourseModule;
-import vn.careermate.model.Lesson;
-import vn.careermate.model.LessonProgress;
+import vn.careermate.learningservice.model.CourseModule;
+import vn.careermate.learningservice.model.Lesson;
+import vn.careermate.learningservice.model.LessonProgress;
 import vn.careermate.service.CourseContentService;
 
 import java.util.List;

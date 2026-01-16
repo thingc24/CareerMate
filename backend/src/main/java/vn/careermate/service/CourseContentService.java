@@ -5,8 +5,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.careermate.model.*;
-import vn.careermate.repository.*;
+import vn.careermate.learningservice.model.*;
+import vn.careermate.learningservice.repository.*;
 import vn.careermate.userservice.repository.StudentProfileRepository;
 import vn.careermate.userservice.repository.UserRepository;
 

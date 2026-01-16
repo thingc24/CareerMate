@@ -6,8 +6,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import vn.careermate.model.*;
-import vn.careermate.repository.*;
+import vn.careermate.learningservice.model.*;
+import vn.careermate.learningservice.repository.*;
 
 import java.math.BigDecimal;
 

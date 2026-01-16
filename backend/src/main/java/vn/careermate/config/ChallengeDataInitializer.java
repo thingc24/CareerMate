@@ -6,10 +6,10 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import vn.careermate.model.Badge;
-import vn.careermate.model.Challenge;
-import vn.careermate.repository.BadgeRepository;
-import vn.careermate.repository.ChallengeRepository;
+import vn.careermate.learningservice.model.Badge;
+import vn.careermate.learningservice.model.Challenge;
+import vn.careermate.learningservice.repository.BadgeRepository;
+import vn.careermate.learningservice.repository.ChallengeRepository;
 
 import java.time.LocalDateTime;
 
