@@ -17,10 +17,12 @@ public interface JobRepository extends JpaRepository<Job, UUID> {
     
     // Use native query to avoid bytea casting issues
     @Query(value = "SELECT * FROM jobservice.jobs j WHERE j.status = 'ACTIVE' AND " +
+           "(j.hidden IS NULL OR j.hidden = false) AND " +
            "(:location IS NULL OR LOWER(CAST(j.location AS TEXT)) LIKE LOWER(CONCAT('%', CAST(:location AS TEXT), '%'))) AND " +
            "(:keyword IS NULL OR LOWER(CAST(j.title AS TEXT)) LIKE LOWER(CONCAT('%', CAST(:keyword AS TEXT), '%')) OR LOWER(CAST(j.description AS TEXT)) LIKE LOWER(CONCAT('%', CAST(:keyword AS TEXT), '%'))) " +
            "ORDER BY j.created_at DESC",
            countQuery = "SELECT COUNT(*) FROM jobservice.jobs j WHERE j.status = 'ACTIVE' AND " +
+           "(j.hidden IS NULL OR j.hidden = false) AND " +
            "(:location IS NULL OR LOWER(CAST(j.location AS TEXT)) LIKE LOWER(CONCAT('%', CAST(:location AS TEXT), '%'))) AND " +
            "(:keyword IS NULL OR LOWER(CAST(j.title AS TEXT)) LIKE LOWER(CONCAT('%', CAST(:keyword AS TEXT), '%')) OR LOWER(CAST(j.description AS TEXT)) LIKE LOWER(CONCAT('%', CAST(:keyword AS TEXT), '%')))",
            nativeQuery = true)

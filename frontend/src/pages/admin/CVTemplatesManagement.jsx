@@ -95,8 +95,8 @@ export default function CVTemplatesManagement() {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
-          <p className="mt-4 text-gray-600 font-medium">Đang tải templates...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 dark:border-gray-700 border-t-blue-600 dark:border-t-blue-500"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Đang tải templates...</p>
         </div>
       </div>
     );
@@ -106,8 +106,8 @@ export default function CVTemplatesManagement() {
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Quản lý CV Templates</h1>
-          <p className="text-lg text-gray-600">Quản lý các mẫu CV trong hệ thống</p>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Quản lý CV Templates</h1>
+          <p className="text-lg text-gray-600 dark:text-gray-300">Quản lý các mẫu CV trong hệ thống</p>
         </div>
         <button
           onClick={() => {
@@ -115,7 +115,7 @@ export default function CVTemplatesManagement() {
             setEditingTemplate(null);
             resetForm();
           }}
-          className="btn-primary"
+          className="btn-primary dark:bg-blue-700 dark:hover:bg-blue-800"
         >
           <i className="fas fa-plus mr-2"></i>
           Tạo template mới
@@ -124,69 +124,69 @@ export default function CVTemplatesManagement() {
 
       {/* Form */}
       {showForm && (
-        <div className="card p-6 mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+        <div className="card p-6 mb-6 dark:bg-gray-900 dark:border-gray-800">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
             {editingTemplate ? 'Chỉnh sửa template' : 'Tạo template mới'}
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tên template *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tên template *</label>
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="input-field"
+                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Danh mục</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Danh mục</label>
                 <input
                   type="text"
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="input-field"
+                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   placeholder="IT, Design, Marketing..."
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Mô tả</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mô tả</label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="input-field"
+                className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                 rows="3"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">HTML Template *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">HTML Template *</label>
               <textarea
                 required
                 value={formData.templateHtml}
                 onChange={(e) => setFormData({ ...formData, templateHtml: e.target.value })}
-                className="input-field font-mono text-sm"
+                className="input-field font-mono text-sm dark:bg-gray-800 dark:text-white dark:border-gray-700"
                 rows="10"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">CSS</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">CSS</label>
               <textarea
                 value={formData.templateCss}
                 onChange={(e) => setFormData({ ...formData, templateCss: e.target.value })}
-                className="input-field font-mono text-sm"
+                className="input-field font-mono text-sm dark:bg-gray-800 dark:text-white dark:border-gray-700"
                 rows="5"
               />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Preview Image URL</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview Image URL</label>
                 <input
                   type="url"
                   value={formData.previewImageUrl}
                   onChange={(e) => setFormData({ ...formData, previewImageUrl: e.target.value })}
-                  className="input-field"
+                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                 />
               </div>
               <div className="flex items-center">
@@ -197,12 +197,12 @@ export default function CVTemplatesManagement() {
                     onChange={(e) => setFormData({ ...formData, isPremium: e.target.checked })}
                     className="mr-2"
                   />
-                  <span className="text-sm font-medium text-gray-700">Premium Template</span>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Premium Template</span>
                 </label>
               </div>
             </div>
             <div className="flex gap-2">
-              <button type="submit" className="btn-primary">
+              <button type="submit" className="btn-primary dark:bg-blue-700 dark:hover:bg-blue-800">
                 {editingTemplate ? 'Cập nhật' : 'Tạo mới'}
               </button>
               <button
@@ -212,7 +212,7 @@ export default function CVTemplatesManagement() {
                   setEditingTemplate(null);
                   resetForm();
                 }}
-                className="btn-secondary"
+                className="btn-secondary dark:bg-gray-800 dark:text-white dark:border-gray-700 dark:hover:bg-gray-700"
               >
                 Hủy
               </button>
@@ -223,45 +223,45 @@ export default function CVTemplatesManagement() {
 
       {/* Templates List */}
       {templates.length === 0 ? (
-        <div className="card p-12 text-center">
-          <i className="fas fa-file-alt text-gray-400 text-6xl mb-4"></i>
-          <p className="text-gray-600 text-lg">Không có template nào</p>
+        <div className="card p-12 text-center dark:bg-gray-900 dark:border-gray-800">
+          <i className="fas fa-file-alt text-gray-400 dark:text-gray-500 text-6xl mb-4"></i>
+          <p className="text-gray-600 dark:text-gray-300 text-lg">Không có template nào</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {templates.map((template) => (
-            <div key={template.id} className="card p-6">
+            <div key={template.id} className="card p-6 dark:bg-gray-900 dark:border-gray-800">
               {template.previewImageUrl && (
                 <img
                   src={template.previewImageUrl}
                   alt={template.name}
-                  className="w-full h-48 object-cover rounded-lg mb-4"
+                  className="w-full h-48 object-cover rounded-lg mb-4 dark:border-gray-700"
                 />
               )}
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-lg font-semibold text-gray-900">{template.name}</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{template.name}</h3>
                 {template.isPremium && (
-                  <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                  <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-100">
                     Premium
                   </span>
                 )}
               </div>
               {template.category && (
-                <p className="text-sm text-gray-500 mb-2">Danh mục: {template.category}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Danh mục: {template.category}</p>
               )}
               {template.description && (
-                <p className="text-sm text-gray-600 mb-4 line-clamp-2">{template.description}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">{template.description}</p>
               )}
               <div className="flex gap-2">
                 <button
                   onClick={() => handleEdit(template)}
-                  className="flex-1 btn-secondary text-sm"
+                  className="flex-1 btn-secondary text-sm dark:bg-gray-800 dark:text-white dark:border-gray-700 dark:hover:bg-gray-700"
                 >
                   <i className="fas fa-edit mr-2"></i>Chỉnh sửa
                 </button>
                 <button
                   onClick={() => handleDelete(template.id)}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm"
+                  className="px-4 py-2 bg-red-600 dark:bg-red-700 text-white rounded-lg hover:bg-red-700 dark:hover:bg-red-800 transition text-sm"
                 >
                   <i className="fas fa-trash"></i>
                 </button>

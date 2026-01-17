@@ -124,21 +124,21 @@ export default function Notifications() {
   const unreadCount = notifications.filter(n => n.status === 'UNREAD').length;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-black">
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm dark:border dark:border-gray-800 p-6 mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">Thông báo</h1>
-              <p className="text-sm text-slate-500 mt-1">
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Thông báo</h1>
+              <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
                 {unreadCount > 0 ? `${unreadCount} thông báo chưa đọc` : 'Tất cả đã đọc'}
               </p>
             </div>
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllAsRead}
-                className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-gray-300 bg-slate-100 dark:bg-gray-800 hover:bg-slate-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
                 Đánh dấu tất cả đã đọc
               </button>
@@ -149,23 +149,23 @@ export default function Notifications() {
         {/* Notifications List */}
         <div className="space-y-3">
           {loading && notifications.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-              <i className="fas fa-spinner fa-spin text-3xl text-slate-400 mb-4"></i>
-              <p className="text-slate-500">Đang tải thông báo...</p>
+            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm dark:border dark:border-gray-800 p-12 text-center">
+              <i className="fas fa-spinner fa-spin text-3xl text-slate-400 dark:text-gray-500 mb-4"></i>
+              <p className="text-slate-500 dark:text-gray-400">Đang tải thông báo...</p>
             </div>
           ) : notifications.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-              <i className="fas fa-bell-slash text-4xl text-slate-300 mb-4"></i>
-              <p className="text-slate-500 text-lg">Chưa có thông báo nào</p>
+            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm dark:border dark:border-gray-800 p-12 text-center">
+              <i className="fas fa-bell-slash text-4xl text-slate-300 dark:text-gray-600 mb-4"></i>
+              <p className="text-slate-500 dark:text-gray-300 text-lg">Chưa có thông báo nào</p>
             </div>
           ) : (
             notifications.map((notification) => (
               <div
                 key={notification.id}
                 onClick={() => handleNotificationClick(notification)}
-                className={`bg-white rounded-lg shadow-sm p-4 cursor-pointer hover:shadow-md transition-all ${
+                className={`bg-white dark:bg-gray-900 rounded-lg shadow-sm dark:border dark:border-gray-800 p-4 cursor-pointer hover:shadow-md transition-all ${
                   notification.status === 'UNREAD'
-                    ? 'border-l-4 border-blue-500 bg-blue-50'
+                    ? 'border-l-4 border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-gray-800'
                     : 'border-l-4 border-transparent'
                 }`}
               >
@@ -176,21 +176,21 @@ export default function Notifications() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-slate-900 mb-1">
+                        <h3 className="font-semibold text-slate-900 dark:text-white mb-1">
                           {notification.title}
                         </h3>
                         {notification.message && (
-                          <p className="text-sm text-slate-600 mb-2">
+                          <p className="text-sm text-slate-600 dark:text-gray-300 mb-2">
                             {notification.message}
                           </p>
                         )}
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-slate-400 dark:text-gray-500">
                           {formatDate(notification.createdAt)}
                         </p>
                       </div>
                       {notification.status === 'UNREAD' && (
                         <div className="flex-shrink-0">
-                          <span className="inline-block w-2 h-2 bg-blue-500 rounded-full"></span>
+                          <span className="inline-block w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full"></span>
                         </div>
                       )}
                     </div>
@@ -205,7 +205,7 @@ export default function Notifications() {
             <div className="text-center pt-4">
               <button
                 onClick={() => setPage(prev => prev + 1)}
-                className="px-6 py-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors"
+                className="px-6 py-2 text-sm font-medium text-slate-700 dark:text-gray-300 bg-white dark:bg-gray-900 hover:bg-slate-50 dark:hover:bg-gray-800 border border-slate-200 dark:border-gray-800 rounded-lg transition-colors"
               >
                 Tải thêm
               </button>
@@ -214,7 +214,7 @@ export default function Notifications() {
 
           {loading && notifications.length > 0 && (
             <div className="text-center py-4">
-              <i className="fas fa-spinner fa-spin text-slate-400"></i>
+              <i className="fas fa-spinner fa-spin text-slate-400 dark:text-gray-500"></i>
             </div>
           )}
         </div>

@@ -99,7 +99,7 @@ export default function MyArticles() {
         </div>
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-200 border-t-emerald-600"></div>
-          <p className="mt-4 text-slate-600 font-medium">Đang tải bài viết...</p>
+          <p className="mt-4 text-slate-600 dark:text-gray-300 font-medium">Đang tải bài viết...</p>
         </div>
       </div>
     );
@@ -108,17 +108,17 @@ export default function MyArticles() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-4 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between bg-gradient-to-r from-emerald-50 to-teal-50 p-6 rounded-xl border-2 border-emerald-200 shadow-lg">
+      <div className="flex items-center justify-between bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-gray-800 dark:to-gray-800 p-6 rounded-xl border-2 border-emerald-200 dark:border-gray-700 shadow-lg">
         <div>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-md">
               <i className="fas fa-newspaper text-xl"></i>
             </div>
             <div>
-              <p className="text-lg font-bold text-gray-900">
-                Tổng cộng: <span className="text-emerald-600">{totalElements}</span> bài viết
+              <p className="text-lg font-bold text-gray-900 dark:text-white">
+                Tổng cộng: <span className="text-emerald-600 dark:text-emerald-400">{totalElements}</span> bài viết
               </p>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                 Quản lý và theo dõi bài viết của bạn
               </p>
             </div>
@@ -134,16 +134,16 @@ export default function MyArticles() {
       </div>
 
       {/* Enhanced Filter */}
-      <div className="card p-5 shadow-lg bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+      <div className="card p-5 shadow-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-800 border-blue-200 dark:border-gray-700">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <i className="fas fa-filter text-blue-600"></i>
-            <label className="text-sm font-bold text-gray-900">Lọc theo:</label>
+            <i className="fas fa-filter text-blue-600 dark:text-blue-400"></i>
+            <label className="text-sm font-bold text-gray-900 dark:text-white">Lọc theo:</label>
           </div>
           <select
             value={filter}
             onChange={(e) => handleFilterChange(e.target.value)}
-            className="px-5 py-3 border-2 border-blue-200 rounded-xl text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white font-medium shadow-sm hover:shadow-md transition-all cursor-pointer"
+            className="px-5 py-3 border-2 border-blue-200 dark:border-gray-700 rounded-xl text-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-900 font-medium shadow-sm hover:shadow-md transition-all cursor-pointer"
           >
             <option value="all">Tất cả</option>
             <option value="my">Bài viết của tôi</option>
@@ -158,12 +158,12 @@ export default function MyArticles() {
           <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 mb-6">
             <i className="fas fa-newspaper text-emerald-500 text-5xl"></i>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             {filter === 'my' && 'Chưa có bài viết nào'}
             {filter === 'admin' && 'Chưa có bài viết của admin'}
             {filter === 'all' && 'Chưa có bài viết nào'}
           </h2>
-          <p className="text-gray-600 mb-6 text-lg">
+          <p className="text-gray-600 dark:text-gray-300 mb-6 text-lg">
             {filter === 'my' && 'Bắt đầu chia sẻ kiến thức và kinh nghiệm của bạn với cộng đồng!'}
             {filter === 'admin' && 'Hiện tại chưa có bài viết nào từ admin.'}
             {filter === 'all' && 'Chưa có bài viết nào được đăng trên hệ thống.'}
@@ -183,7 +183,7 @@ export default function MyArticles() {
           {articles.map((article, index) => (
             <div 
               key={article.id} 
-              className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg p-6 border-2 border-gray-100 hover:border-emerald-200 hover:shadow-2xl hover:shadow-emerald-500/20 hover:-translate-y-1 transition-all duration-300 animate-fade-in"
+              className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-900 rounded-xl shadow-lg p-6 border-2 border-gray-100 dark:border-gray-800 hover:border-emerald-200 dark:hover:border-emerald-600 hover:shadow-2xl hover:shadow-emerald-500/20 hover:-translate-y-1 transition-all duration-300 animate-fade-in"
               style={{ animationDelay: `${index * 0.05}s` }}
             >
               {/* Article Header */}
@@ -202,15 +202,15 @@ export default function MyArticles() {
                       </span>
                     )}
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-3 hover:text-emerald-600 transition-colors">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
                     {article.title}
                   </h2>
                   {article.excerpt && (
-                    <p className="text-gray-700 text-sm mb-4 line-clamp-2 leading-relaxed">
+                    <p className="text-gray-700 dark:text-gray-300 text-sm mb-4 line-clamp-2 leading-relaxed">
                       {article.excerpt}
                     </p>
                   )}
-                  <div className="flex items-center gap-4 text-xs text-gray-600 flex-wrap">
+                  <div className="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-300 flex-wrap">
                     <span className="flex items-center gap-1 bg-gray-100 px-3 py-1.5 rounded-full">
                       <i className="fas fa-calendar text-emerald-600"></i>
                       {formatDate(article.createdAt)}
@@ -234,7 +234,7 @@ export default function MyArticles() {
               </div>
 
               {/* Article Actions */}
-              <div className="flex items-center gap-3 pt-4 border-t-2 border-gray-200">
+              <div className="flex items-center gap-3 pt-4 border-t-2 border-gray-200 dark:border-gray-800">
                 <button
                   onClick={() => navigate(`/articles/${article.id}`)}
                   className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105 font-semibold text-sm flex items-center gap-2"

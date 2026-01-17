@@ -102,7 +102,7 @@ export default function Applicants() {
     <div className="max-w-7xl mx-auto px-4 py-4">
       <div className="flex items-center justify-between mb-6">
         <select
-          className="px-4 py-2 border border-gray-300 rounded-lg"
+          className="px-4 py-2 bg-white dark:bg-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 rounded-lg"
           value={selectedJobId}
           onChange={(e) => setSelectedJobId(e.target.value)}
         >
@@ -120,9 +120,9 @@ export default function Applicants() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* New Applicants */}
-          <div className="bg-gray-100 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-700 mb-4">
-              Mới ứng tuyển <span className="bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded-full ml-1">
+          <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-4">
+            <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-4">
+              Mới ứng tuyển <span className="bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs px-2 py-1 rounded-full ml-1">
                 {columns.new.length}
               </span>
             </h3>
@@ -137,15 +137,15 @@ export default function Applicants() {
                 />
               ))}
               {columns.new.length === 0 && (
-                <p className="text-center text-gray-400 text-sm py-4">Chưa có ứng viên</p>
+                <p className="text-center text-gray-400 dark:text-gray-500 text-sm py-4">Chưa có ứng viên</p>
               )}
             </div>
           </div>
 
           {/* Viewed */}
-          <div className="bg-gray-100 rounded-lg p-4">
-            <h3 className="font-semibold text-blue-700 mb-4">
-              Đã xem <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full ml-1">
+          <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-4">
+            <h3 className="font-semibold text-blue-700 dark:text-blue-400 mb-4">
+              Đã xem <span className="bg-blue-100 dark:bg-gray-800 text-blue-700 dark:text-blue-300 text-xs px-2 py-1 rounded-full ml-1">
                 {columns.viewed.length}
               </span>
             </h3>
@@ -160,15 +160,15 @@ export default function Applicants() {
                 />
               ))}
               {columns.viewed.length === 0 && (
-                <p className="text-center text-gray-400 text-sm py-4">Chưa có ứng viên</p>
+                <p className="text-center text-gray-400 dark:text-gray-500 text-sm py-4">Chưa có ứng viên</p>
               )}
             </div>
           </div>
 
           {/* Interview */}
-          <div className="bg-gray-100 rounded-lg p-4">
-            <h3 className="font-semibold text-purple-700 mb-4">
-              Phỏng vấn <span className="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full ml-1">
+          <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-4">
+            <h3 className="font-semibold text-purple-700 dark:text-purple-400 mb-4">
+              Phỏng vấn <span className="bg-purple-100 dark:bg-gray-800 text-purple-700 dark:text-purple-300 text-xs px-2 py-1 rounded-full ml-1">
                 {columns.interview.length}
               </span>
             </h3>
@@ -183,15 +183,15 @@ export default function Applicants() {
                 />
               ))}
               {columns.interview.length === 0 && (
-                <p className="text-center text-gray-400 text-sm py-4">Chưa có ứng viên</p>
+                <p className="text-center text-gray-400 dark:text-gray-500 text-sm py-4">Chưa có ứng viên</p>
               )}
             </div>
           </div>
 
           {/* Offered */}
-          <div className="bg-gray-100 rounded-lg p-4">
-            <h3 className="font-semibold text-green-700 mb-4">
-              Đã Offer <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full ml-1">
+          <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-4">
+            <h3 className="font-semibold text-green-700 dark:text-green-400 mb-4">
+              Đã Offer <span className="bg-green-100 dark:bg-gray-800 text-green-700 dark:text-green-300 text-xs px-2 py-1 rounded-full ml-1">
                 {columns.offered.length}
               </span>
             </h3>

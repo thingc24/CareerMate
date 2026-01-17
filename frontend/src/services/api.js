@@ -963,6 +963,43 @@ class CareerMateAPI {
     return response.data;
   }
 
+  async hideJob(jobId, reason) {
+    const response = await this.client.post(`/admin/jobs/${jobId}/hide`, { reason });
+    return response.data;
+  }
+
+  async unhideJob(jobId) {
+    const response = await this.client.post(`/admin/jobs/${jobId}/unhide`);
+    return response.data;
+  }
+
+  async deleteJob(jobId, reason) {
+    await this.client.delete(`/admin/jobs/${jobId}`, { data: { reason } });
+  }
+
+  async hideArticle(articleId, reason) {
+    const response = await this.client.post(`/admin/articles/${articleId}/hide`, { reason });
+    return response.data;
+  }
+
+  async unhideArticle(articleId) {
+    const response = await this.client.post(`/admin/articles/${articleId}/unhide`);
+    return response.data;
+  }
+
+  async deleteArticle(articleId, reason) {
+    await this.client.delete(`/admin/articles/${articleId}`, { data: { reason } });
+  }
+
+  async deleteUser(userId) {
+    await this.client.delete(`/admin/users/${userId}`);
+  }
+
+  async getAuditLogs(page = 0, size = 20) {
+    const response = await this.client.get(`/admin/audit-logs?page=${page}&size=${size}`);
+    return response.data;
+  }
+
   // CV Templates Management
   async getAdminCVTemplates() {
     const response = await this.client.get('/admin/cv-templates');

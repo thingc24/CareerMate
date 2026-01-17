@@ -30,22 +30,10 @@ export default function ProfileView() {
     try {
       setLoading(true);
       // Force fresh data by adding cache busting
-      console.log('ProfileView - Loading profile from server...');
       const data = await api.getStudentProfile(true);
-      console.log('=== PROFILEVIEW - LOADED DATA ===');
-      console.log('Full data:', data);
-      console.log('Data details:', {
-        gender: data?.gender,
-        address: data?.address,
-        city: data?.city,
-        university: data?.university,
-        major: data?.major
-      });
       
       if (data && !data.error) {
-        console.log('Setting profile state in ProfileView');
         setProfile(data);
-        console.log('Profile state set. Current profile:', data);
       } else if (data?.error) {
         console.error('Profile API error:', data.error);
         // Show error but don't crash
@@ -97,7 +85,7 @@ export default function ProfileView() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
-          <p className="mt-4 text-gray-600 font-medium">Đang tải thông tin...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Đang tải thông tin...</p>
         </div>
       </div>
     );
@@ -127,7 +115,7 @@ export default function ProfileView() {
       <div className="mb-6">
         <button
           onClick={() => navigate(-1)}
-          className="mb-4 text-gray-600 hover:text-gray-900 flex items-center gap-2"
+          className="mb-4 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white flex items-center gap-2"
         >
           <i className="fas fa-arrow-left"></i>
           <span>Quay lại</span>
@@ -166,18 +154,18 @@ export default function ProfileView() {
         <div className="p-8 space-y-6">
           {/* Personal Information */}
           <div>
-            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <i className="fas fa-user-circle text-blue-600"></i>
               Thông tin cá nhân
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-500 mb-1">Ngày sinh</p>
-                <p className="text-gray-900 font-medium">{formatDate(profile?.dateOfBirth)}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Ngày sinh</p>
+                <p className="text-gray-900 dark:text-white font-medium">{formatDate(profile?.dateOfBirth)}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500 mb-1">Giới tính</p>
-                <p className="text-gray-900 font-medium">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Giới tính</p>
+                <p className="text-gray-900 dark:text-white font-medium">
                   {profile?.gender === 'MALE' && 'Nam'}
                   {profile?.gender === 'FEMALE' && 'Nữ'}
                   {profile?.gender === 'OTHER' && 'Khác'}
@@ -185,46 +173,46 @@ export default function ProfileView() {
                 </p>
               </div>
               <div className="md:col-span-2">
-                <p className="text-sm text-gray-500 mb-1">Địa chỉ</p>
-                <p className="text-gray-900 font-medium">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Địa chỉ</p>
+                <p className="text-gray-900 dark:text-white font-medium">
                   {profile?.address || 'Chưa cập nhật'}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500 mb-1">Thành phố</p>
-                <p className="text-gray-900 font-medium">{profile?.city || 'Chưa cập nhật'}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Thành phố</p>
+                <p className="text-gray-900 dark:text-white font-medium">{profile?.city || 'Chưa cập nhật'}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500 mb-1">Quốc gia</p>
-                <p className="text-gray-900 font-medium">{profile?.country || 'Việt Nam'}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Quốc gia</p>
+                <p className="text-gray-900 dark:text-white font-medium">{profile?.country || 'Việt Nam'}</p>
               </div>
             </div>
           </div>
 
           {/* Education */}
           <div className="border-t pt-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <i className="fas fa-graduation-cap text-green-600"></i>
               Học vấn
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-500 mb-1">Trường đại học</p>
-                <p className="text-gray-900 font-medium">{profile?.university || 'Chưa cập nhật'}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Trường đại học</p>
+                <p className="text-gray-900 dark:text-white font-medium">{profile?.university || 'Chưa cập nhật'}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500 mb-1">Chuyên ngành</p>
-                <p className="text-gray-900 font-medium">{profile?.major || 'Chưa cập nhật'}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Chuyên ngành</p>
+                <p className="text-gray-900 dark:text-white font-medium">{profile?.major || 'Chưa cập nhật'}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500 mb-1">Năm tốt nghiệp</p>
-                <p className="text-gray-900 font-medium">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Năm tốt nghiệp</p>
+                <p className="text-gray-900 dark:text-white font-medium">
                   {profile?.graduationYear || 'Chưa cập nhật'}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500 mb-1">GPA</p>
-                <p className="text-gray-900 font-medium">{profile?.gpa || 'Chưa cập nhật'}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">GPA</p>
+                <p className="text-gray-900 dark:text-white font-medium">{profile?.gpa || 'Chưa cập nhật'}</p>
               </div>
             </div>
           </div>
@@ -232,18 +220,18 @@ export default function ProfileView() {
           {/* Bio */}
           {profile?.bio && (
             <div className="border-t pt-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <i className="fas fa-file-alt text-purple-600"></i>
                 Giới thiệu
               </h3>
-              <p className="text-gray-700 leading-relaxed whitespace-pre-line">{profile.bio}</p>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">{profile.bio}</p>
             </div>
           )}
 
           {/* Social Links */}
           {(profile?.linkedinUrl || profile?.githubUrl || profile?.portfolioUrl) && (
             <div className="border-t pt-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <i className="fas fa-share-alt text-indigo-600"></i>
                 Liên kết mạng xã hội
               </h3>
@@ -264,7 +252,7 @@ export default function ProfileView() {
                     href={profile.githubUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-gray-900 hover:text-gray-700"
+                    className="flex items-center gap-2 text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300"
                   >
                     <i className="fab fa-github"></i>
                     <span>GitHub</span>

@@ -310,8 +310,8 @@ export default function CoursePlayer() {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
-          <p className="mt-4 text-gray-600 font-medium">Đang tải khóa học...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 dark:border-gray-700 border-t-blue-600 dark:border-t-blue-500"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Đang tải khóa học...</p>
         </div>
       </div>
     );
@@ -320,10 +320,10 @@ export default function CoursePlayer() {
   if (!enrollment || !currentLesson) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="card p-12 text-center">
-          <i className="fas fa-exclamation-circle text-red-500 text-6xl mb-4"></i>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Không tìm thấy bài học</h2>
-          <button onClick={() => navigate('/student/courses')} className="btn-primary mt-4">
+        <div className="card p-12 text-center dark:bg-gray-900 dark:border-gray-800">
+          <i className="fas fa-exclamation-circle text-red-500 dark:text-red-400 text-6xl mb-4"></i>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Không tìm thấy bài học</h2>
+          <button onClick={() => navigate('/student/courses')} className="btn-primary mt-4 dark:bg-blue-700 dark:hover:bg-blue-800">
             Quay lại danh sách
           </button>
         </div>
@@ -336,26 +336,26 @@ export default function CoursePlayer() {
   const courseProgress = totalLessons > 0 ? (completedLessons / totalLessons * 100).toFixed(1) : 0;
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-100 dark:bg-black">
       {/* Sidebar - Course Content */}
-      <div className="w-80 bg-white border-r overflow-y-auto">
-        <div className="p-4 border-b">
+      <div className="w-80 bg-white dark:bg-gray-900 border-r dark:border-gray-800 overflow-y-auto">
+        <div className="p-4 border-b dark:border-gray-800">
           <button
             onClick={() => navigate(`/student/courses/${enrollment.course.id}`)}
-            className="text-gray-600 hover:text-gray-900 flex items-center gap-2 mb-2"
+            className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-blue-400 flex items-center gap-2 mb-2"
           >
             <i className="fas fa-arrow-left"></i>
             <span>Quay lại</span>
           </button>
-          <h2 className="text-lg font-bold text-gray-900">{enrollment.course?.title}</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">{enrollment.course?.title}</h2>
           <div className="mt-2">
-            <div className="flex justify-between text-sm text-gray-600 mb-1">
+            <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300 mb-1">
               <span>Tiến độ khóa học</span>
               <span>{courseProgress}%</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
               <div
-                className="bg-blue-600 h-2 rounded-full transition-all"
+                className="bg-blue-600 dark:bg-blue-500 h-2 rounded-full transition-all"
                 style={{ width: `${courseProgress}%` }}
               ></div>
             </div>
@@ -365,7 +365,7 @@ export default function CoursePlayer() {
         <div className="p-4">
           {modules.map((module, moduleIndex) => (
             <div key={module.id} className="mb-6">
-              <h3 className="font-semibold text-gray-900 mb-2">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
                 Module {moduleIndex + 1}: {module.title}
               </h3>
               {module.lessons && module.lessons.length > 0 ? (
@@ -380,21 +380,21 @@ export default function CoursePlayer() {
                         onClick={() => navigate(`/student/courses/${enrollment.course.id}/learn/${enrollmentId}/${lesson.id}`)}
                         className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
                           isActive
-                            ? 'bg-blue-100 text-blue-700 font-semibold'
+                            ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold'
                             : isCompleted
-                            ? 'text-gray-700 hover:bg-gray-100'
-                            : 'text-gray-600 hover:bg-gray-50'
+                            ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
                         }`}
                       >
                         <div className="flex items-center gap-2">
                           {isCompleted ? (
-                            <i className="fas fa-check-circle text-green-500"></i>
+                            <i className="fas fa-check-circle text-green-500 dark:text-green-400"></i>
                           ) : (
-                            <i className="far fa-circle text-gray-400"></i>
+                            <i className="far fa-circle text-gray-400 dark:text-gray-600"></i>
                           )}
                           <span>{lessonIndex + 1}. {lesson.title}</span>
                           {lesson.durationMinutes && (
-                            <span className="ml-auto text-xs text-gray-500">
+                            <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
                               {lesson.durationMinutes} phút
                             </span>
                           )}
@@ -404,7 +404,7 @@ export default function CoursePlayer() {
                   })}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">Chưa có bài học</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Chưa có bài học</p>
               )}
             </div>
           ))}
@@ -637,16 +637,16 @@ export default function CoursePlayer() {
         </div>
 
         {/* Lesson Info & Controls */}
-        <div className="bg-white border-t p-6">
+        <div className="bg-white dark:bg-gray-900 border-t dark:border-gray-800 p-6">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">{currentLesson.title}</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{currentLesson.title}</h1>
                 {currentLesson.description && (
-                  <p className="text-gray-600">{currentLesson.description}</p>
+                  <p className="text-gray-600 dark:text-gray-300">{currentLesson.description}</p>
                 )}
                 {currentLesson.durationMinutes && (
-                  <p className="text-sm text-gray-500 mt-2">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                     <i className="fas fa-clock mr-1"></i>
                     Thời lượng: {currentLesson.durationMinutes} phút
                   </p>
@@ -656,14 +656,14 @@ export default function CoursePlayer() {
                 {!lessonProgress?.isCompleted && (
                   <button
                     onClick={handleMarkComplete}
-                    className="btn-primary"
+                    className="btn-primary dark:bg-blue-700 dark:hover:bg-blue-800"
                   >
                     <i className="fas fa-check mr-2"></i>
                     Đánh dấu hoàn thành
                   </button>
                 )}
                 {lessonProgress?.isCompleted && (
-                  <span className="badge badge-success px-4 py-2">
+                  <span className="badge badge-success px-4 py-2 dark:bg-green-800 dark:text-green-200">
                     <i className="fas fa-check-circle mr-2"></i>
                     Đã hoàn thành
                   </span>
@@ -674,7 +674,7 @@ export default function CoursePlayer() {
             {/* Progress Bar */}
             {currentLesson.type === 'VIDEO' && videoRef.current && (
               <div className="mb-4">
-                <div className="flex justify-between text-sm text-gray-600 mb-1">
+                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300 mb-1">
                   <span>Tiến độ bài học</span>
                   <span>
                     {Math.floor(currentPosition / 60)}:{(currentPosition % 60).toString().padStart(2, '0')} / 
@@ -683,9 +683,9 @@ export default function CoursePlayer() {
                       : '--:--'}
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                   <div
-                    className="bg-blue-600 h-2 rounded-full transition-all"
+                    className="bg-blue-600 dark:bg-blue-500 h-2 rounded-full transition-all"
                     style={{
                       width: videoRef.current.duration
                         ? `${(currentPosition / videoRef.current.duration) * 100}%`
@@ -700,7 +700,7 @@ export default function CoursePlayer() {
             <div className="flex justify-between">
               <button
                 onClick={() => navigate(`/student/courses/${enrollment.course.id}`)}
-                className="btn-secondary"
+                className="btn-secondary dark:bg-gray-900 dark:text-white dark:border-gray-800 dark:hover:bg-gray-800"
               >
                 <i className="fas fa-arrow-left mr-2"></i>
                 Về trang khóa học
@@ -708,7 +708,7 @@ export default function CoursePlayer() {
               {getNextLesson() ? (
                 <button
                   onClick={handleNextLesson}
-                  className="btn-primary"
+                  className="btn-primary dark:bg-blue-700 dark:hover:bg-blue-800"
                 >
                   Bài tiếp theo
                   <i className="fas fa-arrow-right ml-2"></i>
@@ -716,7 +716,7 @@ export default function CoursePlayer() {
               ) : currentLesson?.type === 'QUIZ' && !quizPassed ? (
                 <button
                   disabled
-                  className="btn-primary opacity-50 cursor-not-allowed"
+                  className="btn-primary opacity-50 cursor-not-allowed dark:bg-gray-700"
                   title="Cần đạt ít nhất 50% để qua bài tiếp theo"
                 >
                   <i className="fas fa-lock mr-2"></i>

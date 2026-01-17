@@ -240,8 +240,8 @@ export default function PackagesManagement() {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
-          <p className="mt-4 text-gray-600 font-medium">Đang tải dữ liệu...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 dark:border-gray-700 border-t-blue-600 dark:border-t-blue-500"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Đang tải dữ liệu...</p>
         </div>
       </div>
     );
@@ -250,19 +250,19 @@ export default function PackagesManagement() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Quản lý Gói Dịch Vụ</h1>
-        <p className="text-lg text-gray-600">Quản lý các gói dịch vụ và đăng ký</p>
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Quản lý Gói Dịch Vụ</h1>
+        <p className="text-lg text-gray-600 dark:text-gray-300">Quản lý các gói dịch vụ và đăng ký</p>
       </div>
 
       {/* Tabs */}
-      <div className="mb-6 border-b border-gray-200">
+      <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
         <div className="flex gap-4">
           <button
             onClick={() => setActiveTab('packages')}
             className={`px-4 py-2 font-medium border-b-2 transition ${
               activeTab === 'packages'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white'
             }`}
           >
             Gói Dịch Vụ
@@ -274,8 +274,8 @@ export default function PackagesManagement() {
             }}
             className={`px-4 py-2 font-medium border-b-2 transition ${
               activeTab === 'subscriptions'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white'
             }`}
           >
             Đăng Ký
@@ -293,7 +293,7 @@ export default function PackagesManagement() {
                 setEditingPackage(null);
                 resetForm();
               }}
-              className="btn-primary"
+              className="btn-primary dark:bg-blue-700 dark:hover:bg-blue-800"
             >
               <i className="fas fa-plus mr-2"></i>
               Tạo gói mới
@@ -302,24 +302,24 @@ export default function PackagesManagement() {
 
           {/* Form */}
           {showForm && (
-            <div className="card p-6 mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <div className="card p-6 mb-6 dark:bg-gray-900 dark:border-gray-800">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
                 {editingPackage ? 'Chỉnh sửa gói' : 'Tạo gói mới'}
               </h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Tên gói *</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tên gói *</label>
                     <input
                       type="text"
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="input-field"
+                      className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Giá (VND) *</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Giá (VND) *</label>
                     <input
                       type="number"
                       required
@@ -327,29 +327,29 @@ export default function PackagesManagement() {
                       step="1000"
                       value={formData.price}
                       onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                      className="input-field"
+                      className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Mô tả</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mô tả</label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="input-field"
+                    className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                     rows="3"
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Thời hạn (ngày) *</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Thời hạn (ngày) *</label>
                     <input
                       type="number"
                       required
                       min="1"
                       value={formData.durationDays}
                       onChange={(e) => setFormData({ ...formData, durationDays: e.target.value })}
-                      className="input-field"
+                      className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                     />
                   </div>
                   <div className="flex items-center">
@@ -360,22 +360,22 @@ export default function PackagesManagement() {
                         onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                         className="mr-2"
                       />
-                      <span className="text-sm font-medium text-gray-700">Kích hoạt</span>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Kích hoạt</span>
                     </label>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Tính năng (phân cách bằng dấu phẩy)</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tính năng (phân cách bằng dấu phẩy)</label>
                   <textarea
                     value={formData.features}
                     onChange={(e) => setFormData({ ...formData, features: e.target.value })}
-                    className="input-field"
+                    className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                     rows="3"
                     placeholder="Tính năng 1, Tính năng 2, Tính năng 3..."
                   />
                 </div>
                 <div className="flex gap-2">
-                  <button type="submit" className="btn-primary">
+                  <button type="submit" className="btn-primary dark:bg-blue-700 dark:hover:bg-blue-800">
                     {editingPackage ? 'Cập nhật' : 'Tạo mới'}
                   </button>
                   <button
@@ -385,7 +385,7 @@ export default function PackagesManagement() {
                       setEditingPackage(null);
                       resetForm();
                     }}
-                    className="btn-secondary"
+                    className="btn-secondary dark:bg-gray-800 dark:text-white dark:border-gray-700 dark:hover:bg-gray-700"
                   >
                     Hủy
                   </button>
@@ -396,34 +396,34 @@ export default function PackagesManagement() {
 
           {/* Packages List */}
           {packages.length === 0 ? (
-            <div className="card p-12 text-center">
-              <i className="fas fa-box text-gray-400 text-6xl mb-4"></i>
-              <p className="text-gray-600 text-lg">Không có gói nào</p>
+            <div className="card p-12 text-center dark:bg-gray-900 dark:border-gray-800">
+              <i className="fas fa-box text-gray-400 dark:text-gray-500 text-6xl mb-4"></i>
+              <p className="text-gray-600 dark:text-gray-300 text-lg">Không có gói nào</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {packages.map((pkg) => (
-                <div key={pkg.id} className="card p-6">
+                <div key={pkg.id} className="card p-6 dark:bg-gray-900 dark:border-gray-800">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-xl font-bold text-gray-900">{pkg.name}</h3>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">{pkg.name}</h3>
                     {!pkg.isActive && (
-                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100">
                         Không hoạt động
                       </span>
                     )}
                   </div>
-                  <p className="text-3xl font-bold text-blue-600 mb-2">
+                  <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
                     {pkg.price?.toLocaleString('vi-VN')} VND
                   </p>
-                  <p className="text-sm text-gray-500 mb-4">Thời hạn: {pkg.durationDays} ngày</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Thời hạn: {pkg.durationDays} ngày</p>
                   {pkg.description && (
-                    <p className="text-sm text-gray-600 mb-4">{pkg.description}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">{pkg.description}</p>
                   )}
                   {pkg.features && pkg.features.length > 0 && (
-                    <ul className="text-sm text-gray-600 mb-4 space-y-1">
+                    <ul className="text-sm text-gray-600 dark:text-gray-300 mb-4 space-y-1">
                       {pkg.features.map((feature, idx) => (
                         <li key={idx} className="flex items-center gap-2">
-                          <i className="fas fa-check text-green-500"></i>
+                          <i className="fas fa-check text-green-500 dark:text-green-400"></i>
                           <span>{feature}</span>
                         </li>
                       ))}
@@ -432,13 +432,13 @@ export default function PackagesManagement() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleEdit(pkg)}
-                      className="flex-1 btn-secondary text-sm"
+                      className="flex-1 btn-secondary text-sm dark:bg-gray-800 dark:text-white dark:border-gray-700 dark:hover:bg-gray-700"
                     >
                       <i className="fas fa-edit mr-2"></i>Chỉnh sửa
                     </button>
                     <button
                       onClick={() => handleDelete(pkg.id)}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm"
+                      className="px-4 py-2 bg-red-600 dark:bg-red-700 text-white rounded-lg hover:bg-red-700 dark:hover:bg-red-800 transition text-sm"
                     >
                       <i className="fas fa-trash"></i>
                     </button>
@@ -454,14 +454,14 @@ export default function PackagesManagement() {
       {activeTab === 'subscriptions' && (
         <>
           {/* Sub-tabs for subscriptions */}
-          <div className="mb-6 border-b border-gray-200">
+          <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex gap-4">
               <button
                 onClick={() => setSubscriptionTab('pending')}
                 className={`px-4 py-2 font-medium border-b-2 transition ${
                   subscriptionTab === 'pending'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white'
                 }`}
               >
                 Đang chờ duyệt
@@ -470,8 +470,8 @@ export default function PackagesManagement() {
                 onClick={() => setSubscriptionTab('approved')}
                 className={`px-4 py-2 font-medium border-b-2 transition ${
                   subscriptionTab === 'approved'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white'
                 }`}
               >
                 Đã duyệt
@@ -480,8 +480,8 @@ export default function PackagesManagement() {
                 onClick={() => setSubscriptionTab('history')}
                 className={`px-4 py-2 font-medium border-b-2 transition ${
                   subscriptionTab === 'history'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white'
                 }`}
               >
                 Lịch sử duyệt
@@ -493,46 +493,46 @@ export default function PackagesManagement() {
           {subscriptionTab === 'pending' && (
             <>
               {subscriptions.length === 0 ? (
-                <div className="card p-12 text-center">
-                  <i className="fas fa-inbox text-gray-400 text-6xl mb-4"></i>
-                  <p className="text-gray-600 text-lg">Không có yêu cầu đăng ký đang chờ duyệt</p>
+                <div className="card p-12 text-center dark:bg-gray-900 dark:border-gray-800">
+                  <i className="fas fa-inbox text-gray-400 dark:text-gray-500 text-6xl mb-4"></i>
+                  <p className="text-gray-600 dark:text-gray-300 text-lg">Không có yêu cầu đăng ký đang chờ duyệt</p>
                 </div>
               ) : (
-            <div className="card overflow-hidden">
+            <div className="card overflow-hidden dark:bg-gray-900 dark:border-gray-800">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-gray-50 dark:bg-gray-800">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Người dùng</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gói</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ngày yêu cầu</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thao tác</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Người dùng</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Email</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Gói</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Trạng thái</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Ngày yêu cầu</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Thao tác</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
                     {subscriptions.map((sub) => (
-                      <tr key={sub.id} className="hover:bg-gray-50">
+                      <tr key={sub.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
                             {sub.user?.fullName || 'N/A'}
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-gray-600">
+                          <div className="text-sm text-gray-600 dark:text-gray-300">
                             {sub.user?.email || 'N/A'}
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900">{sub.packageEntity?.name || 'N/A'}</div>
+                          <div className="text-sm text-gray-900 dark:text-white">{sub.packageEntity?.name || 'N/A'}</div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(sub.status)}`}>
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(sub.status)} dark:bg-yellow-800 dark:text-yellow-100 dark:bg-green-800 dark:text-green-100 dark:bg-red-800 dark:text-red-100 dark:bg-blue-800 dark:text-blue-100 dark:bg-gray-800 dark:text-gray-100`}>
                             {getStatusText(sub.status)}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
+                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                           {formatDate(sub.createdAt)}
                         </td>
                         <td className="px-6 py-4">
@@ -540,7 +540,7 @@ export default function PackagesManagement() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleApprove(sub.id)}
-                                className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm"
+                                className="px-3 py-1 bg-green-600 dark:bg-green-700 text-white rounded hover:bg-green-700 dark:hover:bg-green-800 transition text-sm"
                                 title="Duyệt"
                               >
                                 <i className="fas fa-check mr-1"></i>
@@ -548,7 +548,7 @@ export default function PackagesManagement() {
                               </button>
                               <button
                                 onClick={() => handleReject(sub.id)}
-                                className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm"
+                                className="px-3 py-1 bg-red-600 dark:bg-red-700 text-white rounded hover:bg-red-700 dark:hover:bg-red-800 transition text-sm"
                                 title="Từ chối"
                               >
                                 <i className="fas fa-times mr-1"></i>
@@ -557,7 +557,7 @@ export default function PackagesManagement() {
                             </div>
                           )}
                           {sub.status !== 'PENDING' && (
-                            <span className="text-xs text-gray-500">Đã xử lý</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">Đã xử lý</span>
                           )}
                         </td>
                       </tr>
@@ -574,53 +574,53 @@ export default function PackagesManagement() {
           {subscriptionTab === 'approved' && (
             <>
               {approvedSubscriptions.length === 0 ? (
-                <div className="card p-12 text-center">
-                  <i className="fas fa-check-circle text-gray-400 text-6xl mb-4"></i>
-                  <p className="text-gray-600 text-lg">Không có gói dịch vụ nào đã được duyệt</p>
+                <div className="card p-12 text-center dark:bg-gray-900 dark:border-gray-800">
+                  <i className="fas fa-check-circle text-gray-400 dark:text-gray-500 text-6xl mb-4"></i>
+                  <p className="text-gray-600 dark:text-gray-300 text-lg">Không có gói dịch vụ nào đã được duyệt</p>
                 </div>
               ) : (
-                <div className="card overflow-hidden">
+                <div className="card overflow-hidden dark:bg-gray-900 dark:border-gray-800">
                   <div className="overflow-x-auto">
                     <table className="w-full">
-                      <thead className="bg-gray-50">
+                      <thead className="bg-gray-50 dark:bg-gray-800">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Người dùng</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gói</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bắt đầu</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kết thúc</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ngày duyệt</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Người dùng</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Email</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Gói</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Trạng thái</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Bắt đầu</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Kết thúc</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Ngày duyệt</th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
+                      <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
                         {approvedSubscriptions.map((sub) => (
-                          <tr key={sub.id} className="hover:bg-gray-50">
+                          <tr key={sub.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                             <td className="px-6 py-4">
-                              <div className="text-sm font-medium text-gray-900">
+                              <div className="text-sm font-medium text-gray-900 dark:text-white">
                                 {sub.user?.fullName || 'N/A'}
                               </div>
                             </td>
                             <td className="px-6 py-4">
-                              <div className="text-sm text-gray-600">
+                              <div className="text-sm text-gray-600 dark:text-gray-300">
                                 {sub.user?.email || 'N/A'}
                               </div>
                             </td>
                             <td className="px-6 py-4">
-                              <div className="text-sm text-gray-900">{sub.packageEntity?.name || 'N/A'}</div>
+                              <div className="text-sm text-gray-900 dark:text-white">{sub.packageEntity?.name || 'N/A'}</div>
                             </td>
                             <td className="px-6 py-4">
-                              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(sub.status)}`}>
+                              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(sub.status)} dark:bg-yellow-800 dark:text-yellow-100 dark:bg-green-800 dark:text-green-100 dark:bg-red-800 dark:text-red-100 dark:bg-blue-800 dark:text-blue-100 dark:bg-gray-800 dark:text-gray-100`}>
                                 {getStatusText(sub.status)}
                               </span>
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-500">
+                            <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                               {formatDate(sub.startDate)}
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-500">
+                            <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                               {formatDate(sub.endDate)}
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-500">
+                            <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                               {formatDate(sub.createdAt)}
                             </td>
                           </tr>
@@ -637,53 +637,53 @@ export default function PackagesManagement() {
           {subscriptionTab === 'history' && (
             <>
               {subscriptionsHistory.length === 0 ? (
-                <div className="card p-12 text-center">
-                  <i className="fas fa-history text-gray-400 text-6xl mb-4"></i>
-                  <p className="text-gray-600 text-lg">Chưa có lịch sử đăng ký</p>
+                <div className="card p-12 text-center dark:bg-gray-900 dark:border-gray-800">
+                  <i className="fas fa-history text-gray-400 dark:text-gray-500 text-6xl mb-4"></i>
+                  <p className="text-gray-600 dark:text-gray-300 text-lg">Chưa có lịch sử đăng ký</p>
                 </div>
               ) : (
-                <div className="card overflow-hidden">
+                <div className="card overflow-hidden dark:bg-gray-900 dark:border-gray-800">
                   <div className="overflow-x-auto">
                     <table className="w-full">
-                      <thead className="bg-gray-50">
+                      <thead className="bg-gray-50 dark:bg-gray-800">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Người dùng</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gói</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bắt đầu</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kết thúc</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ngày yêu cầu</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Người dùng</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Email</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Gói</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Trạng thái</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Bắt đầu</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Kết thúc</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Ngày yêu cầu</th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
+                      <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
                         {subscriptionsHistory.map((sub) => (
-                          <tr key={sub.id} className="hover:bg-gray-50">
+                          <tr key={sub.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                             <td className="px-6 py-4">
-                              <div className="text-sm font-medium text-gray-900">
+                              <div className="text-sm font-medium text-gray-900 dark:text-white">
                                 {sub.user?.fullName || 'N/A'}
                               </div>
                             </td>
                             <td className="px-6 py-4">
-                              <div className="text-sm text-gray-600">
+                              <div className="text-sm text-gray-600 dark:text-gray-300">
                                 {sub.user?.email || 'N/A'}
                               </div>
                             </td>
                             <td className="px-6 py-4">
-                              <div className="text-sm text-gray-900">{sub.packageEntity?.name || 'N/A'}</div>
+                              <div className="text-sm text-gray-900 dark:text-white">{sub.packageEntity?.name || 'N/A'}</div>
                             </td>
                             <td className="px-6 py-4">
-                              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(sub.status)}`}>
+                              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(sub.status)} dark:bg-yellow-800 dark:text-yellow-100 dark:bg-green-800 dark:text-green-100 dark:bg-red-800 dark:text-red-100 dark:bg-blue-800 dark:text-blue-100 dark:bg-gray-800 dark:text-gray-100`}>
                                 {getStatusText(sub.status)}
                               </span>
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-500">
+                            <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                               {formatDate(sub.startDate)}
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-500">
+                            <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                               {formatDate(sub.endDate)}
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-500">
+                            <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                               {formatDate(sub.createdAt)}
                             </td>
                           </tr>

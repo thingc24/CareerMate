@@ -56,15 +56,15 @@ export default function FindCandidates() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-4">
       {/* Job Selection */}
-      <div className="card p-6 mb-6">
+      <div className="card p-6 mb-6 dark:bg-gray-900 dark:border-gray-800">
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Chọn tin tuyển dụng
           </label>
           <select
             value={selectedJobId}
             onChange={(e) => setSelectedJobId(e.target.value)}
-            className="input-field"
+            className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
           >
             <option value="">-- Chọn tin tuyển dụng --</option>
             {jobs.map(job => (
@@ -76,17 +76,17 @@ export default function FindCandidates() {
         </div>
 
         {selectedJobId && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <div className="bg-blue-50 dark:bg-gray-800 border border-blue-200 dark:border-gray-700 rounded-lg p-4 mb-4">
             {(() => {
               const job = jobs.find(j => j.id === selectedJobId);
               return job ? (
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">{job.title}</h3>
-                  <p className="text-sm text-gray-700 mb-2">{job.description}</p>
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">{job.title}</h3>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">{job.description}</p>
                   {job.requirements && (
                     <div>
-                      <p className="text-sm font-medium text-gray-700 mb-1">Yêu cầu:</p>
-                      <p className="text-sm text-gray-600">{job.requirements}</p>
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Yêu cầu:</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{job.requirements}</p>
                     </div>
                   )}
                 </div>
@@ -116,17 +116,17 @@ export default function FindCandidates() {
 
       {/* Results */}
       {matchingCandidates.length > 0 && (
-        <div className="card p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+        <div className="card p-6 dark:bg-gray-900 dark:border-gray-800">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
             Tìm thấy {matchingCandidates.length} ứng viên phù hợp
           </h2>
           <div className="space-y-4">
             {matchingCandidates.map((candidate, index) => (
-              <div key={index} className="border border-gray-200 rounded-lg p-4">
-                <p className="text-sm text-gray-600">
+              <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 dark:bg-gray-800">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   CV ID: {candidate}
                 </p>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                   (Tính năng này cần thêm API để load chi tiết ứng viên từ CV ID)
                 </p>
               </div>
@@ -136,12 +136,12 @@ export default function FindCandidates() {
       )}
 
       {/* Info Message */}
-      <div className="card p-6 bg-yellow-50 border border-yellow-200">
+      <div className="card p-6 bg-yellow-50 dark:bg-gray-800 border border-yellow-200 dark:border-gray-700">
         <div className="flex items-start gap-3">
-          <i className="fas fa-info-circle text-yellow-600 text-xl mt-1"></i>
+          <i className="fas fa-info-circle text-yellow-600 dark:text-yellow-400 text-xl mt-1"></i>
           <div>
-            <h3 className="font-semibold text-gray-900 mb-2">Cách hoạt động</h3>
-            <ul className="text-sm text-gray-700 space-y-1 list-disc list-inside">
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Cách hoạt động</h3>
+            <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-1 list-disc list-inside">
               <li>Hệ thống sẽ phân tích mô tả công việc và yêu cầu kỹ năng</li>
               <li>Sử dụng AI và Vector Database để tìm CV phù hợp nhất</li>
               <li>Kết quả được sắp xếp theo điểm matching từ cao đến thấp</li>

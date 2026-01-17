@@ -99,28 +99,28 @@ export default function RecruiterCompany() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Thông tin công ty</h1>
+      <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">Thông tin công ty</h1>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-6">
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-6 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tên công ty *</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tên công ty *</label>
             <input
               type="text"
               name="name"
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
               value={formData.name}
               onChange={handleChange}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Website</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Website</label>
             <input
               type="url"
               name="websiteUrl"
               placeholder="https://example.com"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
               value={formData.websiteUrl}
               onChange={handleChange}
             />
@@ -128,12 +128,12 @@ export default function RecruiterCompany() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Địa chỉ *</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Địa chỉ *</label>
           <input
             type="text"
             name="address"
             required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
             value={formData.address}
             onChange={handleChange}
           />
@@ -141,21 +141,21 @@ export default function RecruiterCompany() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Thành phố</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Thành phố</label>
             <input
               type="text"
               name="city"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
               value={formData.city}
               onChange={handleChange}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Quốc gia</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Quốc gia</label>
             <input
               type="text"
               name="country"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
               value={formData.country}
               onChange={handleChange}
             />
@@ -163,13 +163,13 @@ export default function RecruiterCompany() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Mô tả công ty *</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mô tả công ty *</label>
           <textarea
             name="description"
             rows="6"
             required
             placeholder="Giới thiệu về công ty, lĩnh vực hoạt động, văn hóa công ty..."
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
             value={formData.description}
             onChange={handleChange}
           />
@@ -177,10 +177,10 @@ export default function RecruiterCompany() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Quy mô nhân sự</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Quy mô nhân sự</label>
             <select
               name="companySize"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
               value={formData.companySize}
               onChange={handleChange}
             >
@@ -194,42 +194,42 @@ export default function RecruiterCompany() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Lĩnh vực hoạt động</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Lĩnh vực hoạt động</label>
             <input
               type="text"
               name="industry"
               placeholder="VD: Công nghệ thông tin"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
               value={formData.industry}
               onChange={handleChange}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Năm thành lập</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Năm thành lập</label>
             <input
               type="number"
               name="foundedYear"
               min="1900"
               max="2024"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
               value={formData.foundedYear}
               onChange={handleChange}
             />
           </div>
         </div>
 
-        <div className="flex gap-4 pt-6 border-t border-gray-200">
+        <div className="flex gap-4 pt-6 border-t border-gray-200 dark:border-gray-800">
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50"
+            className="flex-1 bg-blue-600 dark:bg-blue-500 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition disabled:opacity-50"
           >
             {loading ? 'Đang lưu...' : 'Lưu thông tin'}
           </button>
           <button
             type="button"
             onClick={() => navigate('/recruiter/dashboard')}
-            className="px-6 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition"
+            className="px-6 py-3 border border-gray-300 dark:border-gray-700 rounded-lg font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition dark:text-gray-300"
           >
             Hủy
           </button>

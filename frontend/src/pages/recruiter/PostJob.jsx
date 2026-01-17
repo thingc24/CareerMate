@@ -78,9 +78,9 @@ export default function PostJob() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-4">
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-6">
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-6 space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Tiêu đề công việc *
           </label>
           <input
@@ -88,7 +88,7 @@ export default function PostJob() {
             name="title"
             required
             placeholder="VD: Backend Developer (Java/Spring Boot)"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
             value={formData.title}
             onChange={handleChange}
           />
@@ -96,11 +96,11 @@ export default function PostJob() {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Địa điểm *</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Địa điểm *</label>
             <select
               name="location"
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
               value={formData.location}
               onChange={handleChange}
             >
@@ -112,13 +112,13 @@ export default function PostJob() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Mức lương (triệu VND)</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mức lương (triệu VND)</label>
             <div className="flex gap-2">
               <input
                 type="number"
                 name="minSalary"
                 placeholder="Từ"
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
                 value={formData.minSalary}
                 onChange={handleChange}
               />
@@ -126,7 +126,7 @@ export default function PostJob() {
                 type="number"
                 name="maxSalary"
                 placeholder="Đến"
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
                 value={formData.maxSalary}
                 onChange={handleChange}
               />
@@ -135,10 +135,10 @@ export default function PostJob() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Kinh nghiệm yêu cầu</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Kinh nghiệm yêu cầu</label>
           <select
             name="experienceLevel"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
             value={formData.experienceLevel}
             onChange={handleChange}
           >
@@ -153,10 +153,10 @@ export default function PostJob() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Loại công việc</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Loại công việc</label>
           <select
             name="jobType"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
             value={formData.jobType}
             onChange={handleChange}
           >
@@ -168,32 +168,32 @@ export default function PostJob() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Mô tả công việc *</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mô tả công việc *</label>
           <textarea
             name="description"
             rows="6"
             required
             placeholder="Mô tả chi tiết về công việc, trách nhiệm..."
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
             value={formData.description}
             onChange={handleChange}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Yêu cầu ứng viên</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Yêu cầu ứng viên</label>
           <textarea
             name="requirements"
             rows="4"
             placeholder="Các yêu cầu cụ thể về trình độ, kỹ năng..."
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
             value={formData.requirements}
             onChange={handleChange}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Kỹ năng yêu cầu (phân cách bằng dấu phẩy) *
           </label>
           <input
@@ -201,33 +201,33 @@ export default function PostJob() {
             name="requiredSkills"
             required
             placeholder="VD: Java, Spring Boot, MySQL"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
             value={formData.requiredSkills}
             onChange={handleChange}
           />
-          <p className="text-xs text-gray-500 mt-1">Các kỹ năng bắt buộc ứng viên phải có</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Các kỹ năng bắt buộc ứng viên phải có</p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Kỹ năng ưu tiên (tùy chọn)</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Kỹ năng ưu tiên (tùy chọn)</label>
           <input
             type="text"
             name="optionalSkills"
             placeholder="VD: Docker, Kubernetes, AWS"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
             value={formData.optionalSkills}
             onChange={handleChange}
           />
-          <p className="text-xs text-gray-500 mt-1">Các kỹ năng sẽ được ưu tiên nhưng không bắt buộc</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Các kỹ năng sẽ được ưu tiên nhưng không bắt buộc</p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Ngày hết hạn</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ngày hết hạn</label>
             <input
               type="date"
               name="expiresAt"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
               value={formData.expiresAt}
               onChange={handleChange}
             />
@@ -238,14 +238,14 @@ export default function PostJob() {
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50"
+            className="flex-1 px-6 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition disabled:opacity-50"
           >
             {loading ? 'Đang đăng tin...' : 'Đăng tin ngay'}
           </button>
           <button
             type="button"
             onClick={() => navigate('/recruiter/dashboard')}
-            className="px-6 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition"
+            className="px-6 py-3 border border-gray-300 dark:border-gray-700 rounded-lg font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition dark:text-gray-300"
           >
             Hủy
           </button>

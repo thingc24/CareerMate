@@ -20,8 +20,10 @@ import vn.careermate.userservice.model.User;
 import vn.careermate.userservice.repository.UserRepository;
 import vn.careermate.learningservice.service.CVTemplateService;
 import vn.careermate.learningservice.service.PackageService;
+import vn.careermate.contentservice.model.Article;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -175,5 +177,160 @@ public class AdminController {
     @GetMapping("/analytics")
     public ResponseEntity<AdminAnalytics> getAnalytics() {
         return ResponseEntity.ok(adminService.getAnalytics());
+    }
+
+    // Hide Job
+    @PostMapping("/jobs/{jobId}/hide")
+    public ResponseEntity<Job> hideJob(
+            @PathVariable UUID jobId,
+            @RequestBody Map<String, String> request,
+            @RequestHeader(value = "X-Forwarded-For", required = false) String ipAddress
+    ) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        UUID adminId = userRepository.findByEmail(email)
+                .map(User::getId)
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        
+        String reason = request.get("reason");
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new RuntimeException("Reason is required");
+        }
+        
+        try {
+            Job job = adminService.hideJob(jobId, adminId, email, reason, ipAddress != null ? ipAddress : "unknown");
+            return ResponseEntity.ok(job);
+        } catch (Exception e) {
+            System.err.println("Error in hideJob controller: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+    // Unhide Job
+    @PostMapping("/jobs/{jobId}/unhide")
+    public ResponseEntity<Job> unhideJob(
+            @PathVariable UUID jobId,
+            @RequestHeader(value = "X-Forwarded-For", required = false) String ipAddress
+    ) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        UUID adminId = userRepository.findByEmail(email)
+                .map(User::getId)
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        
+        return ResponseEntity.ok(adminService.unhideJob(jobId, adminId, email, ipAddress != null ? ipAddress : "unknown"));
+    }
+
+    // Delete Job (hard delete)
+    @DeleteMapping("/jobs/{jobId}")
+    public ResponseEntity<Void> deleteJob(
+            @PathVariable UUID jobId,
+            @RequestBody Map<String, String> request,
+            @RequestHeader(value = "X-Forwarded-For", required = false) String ipAddress
+    ) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        UUID adminId = userRepository.findByEmail(email)
+                .map(User::getId)
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        
+        String reason = request.get("reason");
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new RuntimeException("Reason is required");
+        }
+        
+        try {
+            adminService.deleteJob(jobId, adminId, email, reason, ipAddress != null ? ipAddress : "unknown");
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            System.err.println("Error in deleteJob controller: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+    // Hide Article
+    @PostMapping("/articles/{articleId}/hide")
+    public ResponseEntity<Article> hideArticle(
+            @PathVariable UUID articleId,
+            @RequestBody Map<String, String> request,
+            @RequestHeader(value = "X-Forwarded-For", required = false) String ipAddress
+    ) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        UUID adminId = userRepository.findByEmail(email)
+                .map(User::getId)
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        
+        String reason = request.get("reason");
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new RuntimeException("Reason is required");
+        }
+        
+        return ResponseEntity.ok(adminService.hideArticle(articleId, adminId, email, reason, ipAddress != null ? ipAddress : "unknown"));
+    }
+
+    // Unhide Article
+    @PostMapping("/articles/{articleId}/unhide")
+    public ResponseEntity<Article> unhideArticle(
+            @PathVariable UUID articleId,
+            @RequestHeader(value = "X-Forwarded-For", required = false) String ipAddress
+    ) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        UUID adminId = userRepository.findByEmail(email)
+                .map(User::getId)
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        
+        return ResponseEntity.ok(adminService.unhideArticle(articleId, adminId, email, ipAddress != null ? ipAddress : "unknown"));
+    }
+
+    // Delete Article (hard delete)
+    @DeleteMapping("/articles/{articleId}")
+    public ResponseEntity<Void> deleteArticle(
+            @PathVariable UUID articleId,
+            @RequestBody Map<String, String> request,
+            @RequestHeader(value = "X-Forwarded-For", required = false) String ipAddress
+    ) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        UUID adminId = userRepository.findByEmail(email)
+                .map(User::getId)
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        
+        String reason = request.get("reason");
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new RuntimeException("Reason is required");
+        }
+        
+        adminService.deleteArticle(articleId, adminId, email, reason, ipAddress != null ? ipAddress : "unknown");
+        return ResponseEntity.ok().build();
+    }
+
+    // Delete User (hard delete)
+    @DeleteMapping("/users/{userId}")
+    public ResponseEntity<Void> deleteUser(
+            @PathVariable UUID userId,
+            @RequestHeader(value = "X-Forwarded-For", required = false) String ipAddress
+    ) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        UUID adminId = userRepository.findByEmail(email)
+                .map(User::getId)
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        
+        adminService.deleteUser(userId, adminId, email, ipAddress != null ? ipAddress : "unknown");
+        return ResponseEntity.ok().build();
+    }
+
+    // Get Audit Logs
+    @GetMapping("/audit-logs")
+    public ResponseEntity<Page<vn.careermate.adminservice.model.AuditLog>> getAuditLogs(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(adminService.getAuditLogs(pageable));
     }
 }

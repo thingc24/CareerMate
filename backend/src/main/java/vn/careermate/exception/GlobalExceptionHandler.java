@@ -87,11 +87,18 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+        // Log the full exception for debugging
+        System.err.println("=== UNHANDLED EXCEPTION ===");
+        System.err.println("Exception type: " + ex.getClass().getName());
+        System.err.println("Message: " + ex.getMessage());
+        ex.printStackTrace();
+        System.err.println("===========================");
+        
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .error("Internal Server Error")
-                .message("An unexpected error occurred")
+                .message(ex.getMessage() != null ? ex.getMessage() : "An unexpected error occurred")
                 .build();
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);

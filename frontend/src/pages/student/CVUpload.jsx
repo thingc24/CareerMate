@@ -130,15 +130,15 @@ export default function CVUpload() {
 
       {/* Upload Preview */}
       {selectedFile && (
-        <div className="card p-6 mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 animate-slide-up">
+        <div className="card p-6 mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-800 border-blue-200 dark:border-gray-700 animate-slide-up dark:bg-gray-900 dark:border-gray-800">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
                 <i className="fas fa-file-pdf text-white text-2xl"></i>
               </div>
               <div>
-                <p className="font-semibold text-gray-900">{selectedFile.name}</p>
-                <p className="text-sm text-gray-600">
+                <p className="font-semibold text-gray-900 dark:text-white">{selectedFile.name}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   {formatFileSize(selectedFile.size)} • {selectedFile.type || 'PDF/DOCX'}
                 </p>
               </div>
@@ -181,7 +181,7 @@ export default function CVUpload() {
       {loading ? (
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="card p-6">
+            <div key={i} className="card p-6 dark:bg-gray-900 dark:border-gray-800">
               <div className="skeleton h-6 w-1/3 mb-4"></div>
               <div className="skeleton h-4 w-1/4 mb-2"></div>
               <div className="skeleton h-4 w-1/2"></div>
@@ -189,12 +189,12 @@ export default function CVUpload() {
           ))}
         </div>
       ) : cvs.length === 0 ? (
-        <div className="card p-12 text-center">
-          <div className="inline-flex h-24 w-24 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 items-center justify-center mb-6">
-            <i className="fas fa-file-pdf text-gray-400 text-4xl"></i>
+        <div className="card p-12 text-center dark:bg-gray-900 dark:border-gray-800">
+          <div className="inline-flex h-24 w-24 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 items-center justify-center mb-6">
+            <i className="fas fa-file-pdf text-gray-400 dark:text-gray-500 text-4xl"></i>
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Bạn chưa có CV nào</h3>
-          <p className="text-gray-600 mb-6">Tải lên CV đầu tiên để bắt đầu ứng tuyển</p>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Bạn chưa có CV nào</h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">Tải lên CV đầu tiên để bắt đầu ứng tuyển</p>
           <button
             onClick={() => document.getElementById('cvFileInput')?.click()}
             className="btn-primary"
@@ -208,7 +208,7 @@ export default function CVUpload() {
           {cvs.map((cv, index) => (
             <div
               key={cv.id}
-              className="card card-hover p-6 animate-slide-up"
+              className="card card-hover p-6 animate-slide-up dark:bg-gray-900 dark:border-gray-800"
               style={{ animationDelay: `${index * 50}ms` }}
             >
               <div className="flex items-center justify-between">
@@ -217,17 +217,17 @@ export default function CVUpload() {
                     <i className="fas fa-file-pdf text-white text-2xl"></i>
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900 text-lg mb-1">
+                    <h3 className="font-bold text-gray-900 dark:text-white text-lg mb-1">
                       {cv.fileName || `CV ${cv.id?.substring(0, 8) || 'Unknown'}`}
                     </h3>
-                    <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                    <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-300">
                       <span className="flex items-center">
-                        <i className="far fa-calendar text-gray-400 mr-2"></i>
+                        <i className="far fa-calendar text-gray-400 dark:text-gray-500 mr-2"></i>
                         {formatDate(cv.createdAt)}
                       </span>
                       {cv.fileSize && (
                         <span className="flex items-center">
-                          <i className="fas fa-weight text-gray-400 mr-2"></i>
+                          <i className="fas fa-weight text-gray-400 dark:text-gray-500 mr-2"></i>
                           {formatFileSize(cv.fileSize)}
                         </span>
                       )}
@@ -240,10 +240,10 @@ export default function CVUpload() {
                     </div>
                     {cv.aiScore && (
                       <div className="mt-2">
-                        <span className="text-sm font-medium text-gray-700">Điểm AI: </span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Điểm AI: </span>
                         <span className={`text-sm font-bold ${
-                          cv.aiScore >= 80 ? 'text-green-600' :
-                          cv.aiScore >= 60 ? 'text-yellow-600' : 'text-red-600'
+                          cv.aiScore >= 80 ? 'text-green-600 dark:text-green-400' :
+                          cv.aiScore >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'
                         }`}>
                           {cv.aiScore}/100
                         </span>

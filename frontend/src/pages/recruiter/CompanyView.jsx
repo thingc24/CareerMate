@@ -69,8 +69,8 @@ export default function CompanyView() {
     return (
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
-          <p className="mt-4 text-gray-600 font-medium">Đang tải thông tin công ty...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 dark:border-gray-700 border-t-blue-600 dark:border-t-blue-500"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Đang tải thông tin công ty...</p>
         </div>
       </div>
     );
@@ -79,13 +79,13 @@ export default function CompanyView() {
   if (!company) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-          <i className="fas fa-building text-yellow-600 text-4xl mb-4"></i>
-          <h2 className="text-xl font-bold text-yellow-900 mb-2">Chưa có thông tin công ty</h2>
-          <p className="text-yellow-700 mb-4">Vui lòng tạo thông tin công ty để bắt đầu đăng tin tuyển dụng.</p>
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6 text-center">
+          <i className="fas fa-building text-yellow-600 dark:text-yellow-400 text-4xl mb-4"></i>
+          <h2 className="text-xl font-bold text-yellow-900 dark:text-yellow-100 mb-2">Chưa có thông tin công ty</h2>
+          <p className="text-yellow-700 dark:text-yellow-200 mb-4">Vui lòng tạo thông tin công ty để bắt đầu đăng tin tuyển dụng.</p>
           <button
             onClick={() => navigate('/recruiter/company/edit')}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            className="px-6 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition"
           >
             <i className="fas fa-plus mr-2"></i>
             Tạo thông tin công ty
@@ -111,7 +111,7 @@ export default function CompanyView() {
       </div>
 
       {/* Company Card */}
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden dark:border dark:border-gray-800">
         {/* Logo Section */}
         <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-8 text-center">
           <div className="relative inline-block">
@@ -139,23 +139,23 @@ export default function CompanyView() {
         <div className="p-8 space-y-6">
           {/* Basic Information */}
           <div>
-            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <i className="fas fa-info-circle text-blue-600"></i>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <i className="fas fa-info-circle text-blue-600 dark:text-blue-400"></i>
               Thông tin cơ bản
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-500 mb-1">Tên công ty</p>
-                <p className="text-gray-900 font-medium">{company.name}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Tên công ty</p>
+                <p className="text-gray-900 dark:text-white font-medium">{company.name}</p>
               </div>
               {company.websiteUrl && (
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Website</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Website</p>
                   <a
                     href={company.websiteUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 font-medium"
+                    className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
                   >
                     {company.websiteUrl}
                     <i className="fas fa-external-link-alt ml-2 text-xs"></i>
@@ -164,32 +164,32 @@ export default function CompanyView() {
               )}
               {headquarters.address && (
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Địa chỉ</p>
-                  <p className="text-gray-900 font-medium">{headquarters.address}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Địa chỉ</p>
+                  <p className="text-gray-900 dark:text-white font-medium">{headquarters.address}</p>
                 </div>
               )}
               {headquarters.city && (
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Thành phố</p>
-                  <p className="text-gray-900 font-medium">{headquarters.city}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Thành phố</p>
+                  <p className="text-gray-900 dark:text-white font-medium">{headquarters.city}</p>
                 </div>
               )}
               {headquarters.country && (
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Quốc gia</p>
-                  <p className="text-gray-900 font-medium">{headquarters.country}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Quốc gia</p>
+                  <p className="text-gray-900 dark:text-white font-medium">{headquarters.country}</p>
                 </div>
               )}
               {company.companySize && (
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Quy mô nhân sự</p>
-                  <p className="text-gray-900 font-medium">{company.companySize}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Quy mô nhân sự</p>
+                  <p className="text-gray-900 dark:text-white font-medium">{company.companySize}</p>
                 </div>
               )}
               {company.foundedYear && (
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Năm thành lập</p>
-                  <p className="text-gray-900 font-medium">{company.foundedYear}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Năm thành lập</p>
+                  <p className="text-gray-900 dark:text-white font-medium">{company.foundedYear}</p>
                 </div>
               )}
             </div>
@@ -197,12 +197,12 @@ export default function CompanyView() {
 
           {/* Description */}
           {company.description && (
-            <div className="border-t pt-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <i className="fas fa-file-alt text-purple-600"></i>
+            <div className="border-t dark:border-gray-800 pt-6">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <i className="fas fa-file-alt text-purple-600 dark:text-purple-400"></i>
                 Mô tả công ty
               </h3>
-              <p className="text-gray-700 leading-relaxed whitespace-pre-line">{company.description}</p>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">{company.description}</p>
             </div>
           )}
 

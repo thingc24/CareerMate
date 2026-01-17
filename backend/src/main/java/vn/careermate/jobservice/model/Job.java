@@ -106,6 +106,16 @@ public class Job {
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
 
+    @Builder.Default
+    @Column(name = "hidden")
+    private Boolean hidden = false;
+
+    @Column(name = "hidden_reason", columnDefinition = "TEXT")
+    private String hiddenReason;
+
+    @Column(name = "hidden_at")
+    private LocalDateTime hiddenAt;
+
     @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<JobSkill> skills;

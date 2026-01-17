@@ -27,8 +27,8 @@ export default function AdminDashboard() {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
-          <p className="mt-4 text-gray-600 font-medium">Đang tải dữ liệu...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 dark:border-gray-700 border-t-blue-600 dark:border-t-blue-500"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Đang tải dữ liệu...</p>
         </div>
       </div>
     );
@@ -37,8 +37,8 @@ export default function AdminDashboard() {
   if (!stats) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <p className="text-red-700">Không thể tải dữ liệu dashboard</p>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
+          <p className="text-red-700 dark:text-red-200">Không thể tải dữ liệu dashboard</p>
         </div>
       </div>
     );
@@ -90,8 +90,8 @@ export default function AdminDashboard() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-        <p className="text-lg text-gray-600">Tổng quan hệ thống CareerMate</p>
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Admin Dashboard</h1>
+        <p className="text-lg text-gray-600 dark:text-gray-300">Tổng quan hệ thống CareerMate</p>
       </div>
 
       {/* Stats Grid */}
@@ -99,58 +99,58 @@ export default function AdminDashboard() {
         {statCards.map((card, index) => (
           <div
             key={index}
-            className={`bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer ${
+            className={`bg-white dark:bg-gray-900 rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer ${
               card.link ? 'hover:scale-105' : ''
             }`}
             onClick={() => card.link && navigate(card.link)}
           >
             <div className="flex items-center justify-between mb-4">
-              <div className={`p-3 rounded-lg bg-${card.color}-100`}>
-                <i className={`fas ${card.icon} text-${card.color}-600 text-2xl`}></i>
+              <div className={`p-3 rounded-lg bg-${card.color}-100 dark:bg-${card.color}-900/30`}>
+                <i className={`fas ${card.icon} text-${card.color}-600 dark:text-${card.color}-400 text-2xl`}></i>
               </div>
               {card.link && (
-                <i className="fas fa-arrow-right text-gray-400"></i>
+                <i className="fas fa-arrow-right text-gray-400 dark:text-gray-500"></i>
               )}
             </div>
-            <h3 className="text-lg font-semibold text-gray-700 mb-2">{card.title}</h3>
-            <p className="text-4xl font-bold text-gray-900 mb-2">{card.value.toLocaleString()}</p>
-            <p className="text-sm text-gray-500">{card.detail}</p>
+            <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">{card.title}</h3>
+            <p className="text-4xl font-bold text-gray-900 dark:text-white mb-2">{card.value.toLocaleString()}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{card.detail}</p>
           </div>
         ))}
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Thao tác nhanh</h2>
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg p-6">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Thao tác nhanh</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
             onClick={() => navigate('/admin/jobs?status=PENDING')}
-            className="flex items-center gap-3 p-4 border-2 border-yellow-200 rounded-lg hover:bg-yellow-50 transition"
+            className="flex items-center gap-3 p-4 border-2 border-yellow-200 dark:border-yellow-800 rounded-lg hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition"
           >
-            <i className="fas fa-clock text-yellow-600 text-xl"></i>
+            <i className="fas fa-clock text-yellow-600 dark:text-yellow-400 text-xl"></i>
             <div className="text-left">
-              <div className="font-semibold text-gray-900">Duyệt tin tuyển dụng</div>
-              <div className="text-sm text-gray-500">{stats.pendingJobs} tin chờ duyệt</div>
+              <div className="font-semibold text-gray-900 dark:text-white">Duyệt tin tuyển dụng</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">{stats.pendingJobs} tin chờ duyệt</div>
             </div>
           </button>
           <button
             onClick={() => navigate('/admin/articles?status=PENDING')}
-            className="flex items-center gap-3 p-4 border-2 border-blue-200 rounded-lg hover:bg-blue-50 transition"
+            className="flex items-center gap-3 p-4 border-2 border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition"
           >
-            <i className="fas fa-newspaper text-blue-600 text-xl"></i>
+            <i className="fas fa-newspaper text-blue-600 dark:text-blue-400 text-xl"></i>
             <div className="text-left">
-              <div className="font-semibold text-gray-900">Duyệt bài viết</div>
-              <div className="text-sm text-gray-500">{stats.pendingArticles} bài chờ duyệt</div>
+              <div className="font-semibold text-gray-900 dark:text-white">Duyệt bài viết</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">{stats.pendingArticles} bài chờ duyệt</div>
             </div>
           </button>
           <button
             onClick={() => navigate('/admin/users')}
-            className="flex items-center gap-3 p-4 border-2 border-purple-200 rounded-lg hover:bg-purple-50 transition"
+            className="flex items-center gap-3 p-4 border-2 border-purple-200 dark:border-purple-800 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition"
           >
-            <i className="fas fa-users-cog text-purple-600 text-xl"></i>
+            <i className="fas fa-users-cog text-purple-600 dark:text-purple-400 text-xl"></i>
             <div className="text-left">
-              <div className="font-semibold text-gray-900">Quản lý người dùng</div>
-              <div className="text-sm text-gray-500">{stats.totalUsers} người dùng</div>
+              <div className="font-semibold text-gray-900 dark:text-white">Quản lý người dùng</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">{stats.totalUsers} người dùng</div>
             </div>
           </button>
         </div>

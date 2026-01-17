@@ -192,8 +192,8 @@ export default function Profile() {
     return (
       <div className="max-w-5xl mx-auto px-4 py-8">
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
-          <p className="mt-4 text-gray-600 font-medium">Đang tải thông tin hồ sơ...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 dark:border-gray-700 border-t-blue-600 dark:border-t-blue-500"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Đang tải thông tin hồ sơ...</p>
         </div>
       </div>
     );
@@ -202,17 +202,14 @@ export default function Profile() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-4">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Hồ sơ nhà tuyển dụng</h1>
-        <p className="text-gray-600">Quản lý thông tin cá nhân và công ty của bạn</p>
-      </div>
+    
 
       {/* Message */}
       {message && (
         <div className={`mb-6 p-4 rounded-lg ${
           messageType === 'success' 
-            ? 'bg-green-50 border border-green-200 text-green-800' 
-            : 'bg-red-50 border border-red-200 text-red-800'
+            ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200' 
+            : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200'
         }`}>
           <div className="flex items-center gap-2">
             <i className={`fas ${messageType === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}`}></i>
@@ -225,7 +222,7 @@ export default function Profile() {
         {/* Left Column - Profile Info */}
         <div className="lg:col-span-2 space-y-6">
           {/* Profile Card */}
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden dark:border dark:border-gray-800">
             <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-6">
               <div className="flex items-center gap-4">
                 {/* Avatar */}
@@ -287,7 +284,7 @@ export default function Profile() {
                   <div className="flex justify-end mb-4">
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+                      className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition flex items-center gap-2"
                     >
                       <i className="fas fa-edit"></i>
                       Chỉnh sửa
@@ -296,24 +293,24 @@ export default function Profile() {
 
                   <div className="space-y-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Họ và tên</label>
-                      <p className="text-gray-900 mt-1">{profile.fullName || user?.fullName || 'Chưa cập nhật'}</p>
+                      <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Họ và tên</label>
+                      <p className="text-gray-900 dark:text-white mt-1">{profile.fullName || user?.fullName || 'Chưa cập nhật'}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Chức vụ</label>
-                      <p className="text-gray-900 mt-1">{profile.position || 'Chưa cập nhật'}</p>
+                      <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Chức vụ</label>
+                      <p className="text-gray-900 dark:text-white mt-1">{profile.position || 'Chưa cập nhật'}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Phòng ban</label>
-                      <p className="text-gray-900 mt-1">{profile.department || 'Chưa cập nhật'}</p>
+                      <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Phòng ban</label>
+                      <p className="text-gray-900 dark:text-white mt-1">{profile.department || 'Chưa cập nhật'}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Số điện thoại</label>
-                      <p className="text-gray-900 mt-1">{profile.phone || 'Chưa cập nhật'}</p>
+                      <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Số điện thoại</label>
+                      <p className="text-gray-900 dark:text-white mt-1">{profile.phone || 'Chưa cập nhật'}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Giới thiệu</label>
-                      <p className="text-gray-900 mt-1 whitespace-pre-line">{profile.bio || 'Chưa cập nhật'}</p>
+                      <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Giới thiệu</label>
+                      <p className="text-gray-900 dark:text-white mt-1 whitespace-pre-line">{profile.bio || 'Chưa cập nhật'}</p>
                     </div>
                   </div>
                 </>
@@ -321,7 +318,7 @@ export default function Profile() {
                 <>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Họ và tên <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -330,11 +327,11 @@ export default function Profile() {
                         value={profile.fullName}
                         onChange={handleInputChange}
                         placeholder="Nhập họ và tên"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Chức vụ <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -343,11 +340,11 @@ export default function Profile() {
                         value={profile.position}
                         onChange={handleInputChange}
                         placeholder="Ví dụ: Trưởng phòng Tuyển dụng"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Phòng ban
                       </label>
                       <input
@@ -356,11 +353,11 @@ export default function Profile() {
                         value={profile.department}
                         onChange={handleInputChange}
                         placeholder="Ví dụ: Phòng Nhân sự"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Số điện thoại
                       </label>
                       <input
@@ -369,11 +366,11 @@ export default function Profile() {
                         value={profile.phone}
                         onChange={handleInputChange}
                         placeholder="Ví dụ: 0123456789"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Giới thiệu
                       </label>
                       <textarea
@@ -382,7 +379,7 @@ export default function Profile() {
                         onChange={handleInputChange}
                         rows={5}
                         placeholder="Giới thiệu về bản thân..."
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
                       />
                     </div>
                   </div>
@@ -391,7 +388,7 @@ export default function Profile() {
                     <button
                       onClick={handleSave}
                       disabled={saving}
-                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="flex-1 px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       {saving ? (
                         <>
@@ -408,7 +405,7 @@ export default function Profile() {
                     <button
                       onClick={handleCancel}
                       disabled={saving}
-                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition disabled:opacity-50"
+                      className="px-4 py-2 bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition disabled:opacity-50"
                     >
                       Hủy
                     </button>
@@ -422,10 +419,10 @@ export default function Profile() {
         {/* Right Column - Company & Stats */}
         <div className="space-y-6">
           {/* Company Card */}
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <i className="fas fa-building text-blue-600"></i>
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden dark:border dark:border-gray-800">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-800">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <i className="fas fa-building text-blue-600 dark:text-blue-400"></i>
                 Thông tin công ty
               </h3>
             </div>
@@ -447,14 +444,14 @@ export default function Profile() {
                         <i className="fas fa-building"></i>
                       </div>
                     )}
-                    <h4 className="font-bold text-gray-900 mt-2">{company.name}</h4>
+                    <h4 className="font-bold text-gray-900 dark:text-white mt-2">{company.name}</h4>
                     {company.industry && (
-                      <p className="text-sm text-gray-600">{company.industry}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">{company.industry}</p>
                     )}
                   </div>
                   <button
                     onClick={() => navigate('/recruiter/company/view')}
-                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                    className="w-full px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition flex items-center justify-center gap-2"
                   >
                     <i className="fas fa-eye"></i>
                     Xem chi tiết
@@ -463,11 +460,11 @@ export default function Profile() {
               ) : (
                 <>
                   <div className="text-center py-4">
-                    <i className="fas fa-building text-gray-400 text-4xl mb-3"></i>
-                    <p className="text-gray-600 text-sm mb-4">Chưa có thông tin công ty</p>
+                    <i className="fas fa-building text-gray-400 dark:text-gray-500 text-4xl mb-3"></i>
+                    <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">Chưa có thông tin công ty</p>
                     <button
                       onClick={() => navigate('/recruiter/company/edit')}
-                      className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                      className="w-full px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition flex items-center justify-center gap-2"
                     >
                       <i className="fas fa-plus"></i>
                       Tạo thông tin công ty
@@ -480,55 +477,55 @@ export default function Profile() {
 
           {/* Stats Card */}
           {stats && (
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-              <div className="p-6 border-b border-gray-200">
-                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                  <i className="fas fa-chart-bar text-green-600"></i>
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden dark:border dark:border-gray-800">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-800">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <i className="fas fa-chart-bar text-green-600 dark:text-green-400"></i>
                   Thống kê
                 </h3>
               </div>
               <div className="p-6 space-y-4">
-                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-gray-800 rounded-lg">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white">
                       <i className="fas fa-briefcase"></i>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Việc làm đang hoạt động</p>
-                      <p className="text-lg font-bold text-gray-900">{stats.activeJobs || 0}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">Việc làm đang hoạt động</p>
+                      <p className="text-lg font-bold text-gray-900 dark:text-white">{stats.activeJobs || 0}</p>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-gray-800 rounded-lg">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-yellow-600 rounded-lg flex items-center justify-center text-white">
                       <i className="fas fa-file-alt"></i>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Ứng viên mới</p>
-                      <p className="text-lg font-bold text-gray-900">{stats.newApplications || 0}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">Ứng viên mới</p>
+                      <p className="text-lg font-bold text-gray-900 dark:text-white">{stats.newApplications || 0}</p>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-gray-800 rounded-lg">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center text-white">
                       <i className="fas fa-calendar-check"></i>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Phỏng vấn sắp tới</p>
-                      <p className="text-lg font-bold text-gray-900">{stats.upcomingInterviews || 0}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">Phỏng vấn sắp tới</p>
+                      <p className="text-lg font-bold text-gray-900 dark:text-white">{stats.upcomingInterviews || 0}</p>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-gray-800 rounded-lg">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center text-white">
                       <i className="fas fa-user-check"></i>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Tuyển dụng thành công</p>
-                      <p className="text-lg font-bold text-gray-900">{stats.successfulHires || 0}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">Tuyển dụng thành công</p>
+                      <p className="text-lg font-bold text-gray-900 dark:text-white">{stats.successfulHires || 0}</p>
                     </div>
                   </div>
                 </div>

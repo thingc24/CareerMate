@@ -76,7 +76,7 @@ export default function Packages() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
-          <p className="mt-4 text-gray-600 font-medium">Đang tải gói dịch vụ...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Đang tải gói dịch vụ...</p>
         </div>
       </div>
     );
@@ -86,15 +86,15 @@ export default function Packages() {
     <div className="max-w-7xl mx-auto px-4 py-4">
       {/* Current Subscription */}
       {mySubscription && (
-        <div className="card p-6 mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+        <div className="card p-6 mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-800 border-blue-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Gói đang hoạt động</h2>
-              <p className="text-gray-700">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Gói đang hoạt động</h2>
+              <p className="text-gray-700 dark:text-gray-300">
                 {mySubscription.packageEntity?.name || mySubscription.package?.name || 'Gói Premium'}
               </p>
               {mySubscription.endDate && (
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                   Hết hạn: {new Date(mySubscription.endDate).toLocaleDateString('vi-VN')}
                 </p>
               )}
@@ -109,16 +109,16 @@ export default function Packages() {
       {/* My Subscriptions List */}
       {mySubscriptions.length > 0 && (
         <div className="card p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Lịch sử đăng ký của tôi</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Lịch sử đăng ký của tôi</h2>
           <div className="space-y-3">
             {mySubscriptions.map((sub) => {
               const statusColors = {
-                PENDING: 'bg-yellow-100 text-yellow-800',
-                APPROVED: 'bg-green-100 text-green-800',
-                REJECTED: 'bg-red-100 text-red-800',
-                ACTIVE: 'bg-blue-100 text-blue-800',
-                EXPIRED: 'bg-gray-100 text-gray-800',
-                CANCELLED: 'bg-gray-100 text-gray-800'
+                PENDING: 'bg-yellow-100 dark:bg-gray-800 text-yellow-800 dark:text-yellow-300',
+                APPROVED: 'bg-green-100 dark:bg-gray-800 text-green-800 dark:text-green-300',
+                REJECTED: 'bg-red-100 dark:bg-gray-800 text-red-800 dark:text-red-300',
+                ACTIVE: 'bg-blue-100 dark:bg-gray-800 text-blue-800 dark:text-blue-300',
+                EXPIRED: 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300',
+                CANCELLED: 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300'
               };
               const statusTexts = {
                 PENDING: 'Đang chờ duyệt',
@@ -129,10 +129,10 @@ export default function Packages() {
                 CANCELLED: 'Đã hủy'
               };
               return (
-                <div key={sub.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div key={sub.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <div>
-                    <p className="font-medium text-gray-900">{sub.packageEntity?.name || 'N/A'}</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="font-medium text-gray-900 dark:text-white">{sub.packageEntity?.name || 'N/A'}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
                       {sub.startDate && `Từ ${new Date(sub.startDate).toLocaleDateString('vi-VN')}`}
                       {sub.endDate && ` đến ${new Date(sub.endDate).toLocaleDateString('vi-VN')}`}
                     </p>
@@ -150,8 +150,8 @@ export default function Packages() {
       {/* Packages Grid */}
       {packages.length === 0 ? (
         <div className="card p-12 text-center">
-          <i className="fas fa-box text-gray-400 text-6xl mb-4"></i>
-          <p className="text-gray-600 text-lg">Không có gói dịch vụ nào</p>
+          <i className="fas fa-box text-gray-400 dark:text-gray-500 text-6xl mb-4"></i>
+          <p className="text-gray-600 dark:text-gray-300 text-lg">Không có gói dịch vụ nào</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -173,30 +173,30 @@ export default function Packages() {
                     <span className="badge badge-info">Phổ biến</span>
                   </div>
                 )}
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">{pkg.name}</h3>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{pkg.name}</h3>
                 <div className="mb-4">
-                  <span className="text-4xl font-bold text-blue-600">
+                  <span className="text-4xl font-bold text-blue-600 dark:text-blue-400">
                     {formatCurrency(pkg.price)}
                   </span>
                   {pkg.price && pkg.price > 0 && (
-                    <span className="text-gray-600">
+                    <span className="text-gray-600 dark:text-gray-300">
                       /{pkg.durationDays ? Math.ceil(pkg.durationDays / 30) : 1} tháng
                     </span>
                   )}
                   {(!pkg.price || pkg.price === 0) && (
-                    <span className="text-sm text-gray-600 ml-2">
+                    <span className="text-sm text-gray-600 dark:text-gray-300 ml-2">
                       / {pkg.durationDays || 30} ngày
                     </span>
                   )}
                 </div>
                 {pkg.description && (
-                  <p className="text-gray-600 mb-6">{pkg.description}</p>
+                  <p className="text-gray-600 dark:text-gray-300 mb-6">{pkg.description}</p>
                 )}
                 <div className="space-y-3 mb-6">
                   {pkg.features && Array.isArray(pkg.features) && pkg.features.map((feature, i) => (
                     <div key={i} className="flex items-start gap-2">
-                      <i className="fas fa-check text-green-500 mt-1"></i>
-                      <span className="text-sm text-gray-700">{feature}</span>
+                      <i className="fas fa-check text-green-500 dark:text-green-400 mt-1"></i>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{feature}</span>
                     </div>
                   ))}
                 </div>

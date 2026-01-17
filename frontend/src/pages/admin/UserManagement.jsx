@@ -40,6 +40,19 @@ export default function UserManagement() {
     }
   };
 
+  const handleDelete = async (userId) => {
+    if (!confirm('Bạn có chắc chắn muốn XÓA VĨNH VIỄN người dùng này và toàn bộ thông tin liên quan? Hành động này không thể hoàn tác!')) return;
+    
+    try {
+      await api.deleteUser(userId);
+      alert('Đã xóa người dùng thành công!');
+      loadUsers();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      alert('Lỗi: ' + (error.response?.data?.error || 'Không thể xóa người dùng'));
+    }
+  };
+
   const getStatusBadge = (status) => {
     const badges = {
       ACTIVE: 'bg-green-100 text-green-800',
@@ -84,8 +97,8 @@ export default function UserManagement() {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
-          <p className="mt-4 text-gray-600 font-medium">Đang tải người dùng...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 dark:border-gray-700 border-t-blue-600 dark:border-t-blue-500"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Đang tải người dùng...</p>
         </div>
       </div>
     );
@@ -93,22 +106,17 @@ export default function UserManagement() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Quản lý người dùng</h1>
-        <p className="text-lg text-gray-600">Quản lý tất cả người dùng trong hệ thống</p>
-      </div>
-
       {/* Filter */}
-      <div className="card p-6 mb-6">
+      <div className="card p-6 mb-6 dark:bg-gray-900 dark:border-gray-800">
         <div className="flex items-center gap-4">
-          <label className="text-sm font-medium text-gray-700">Lọc theo vai trò:</label>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Lọc theo vai trò:</label>
           <select
             value={filterRole}
             onChange={(e) => {
               setFilterRole(e.target.value);
               setPage(0);
             }}
-            className="input-field"
+            className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
           >
             <option value="">Tất cả</option>
             <option value="STUDENT">Sinh viên</option>
@@ -116,7 +124,7 @@ export default function UserManagement() {
             <option value="ADMIN">Quản trị viên</option>
             <option value="MENTOR">Mentor</option>
           </select>
-          <div className="ml-auto text-sm text-gray-600">
+          <div className="ml-auto text-sm text-gray-600 dark:text-gray-300">
             Tổng: {totalElements} người dùng
           </div>
         </div>
@@ -124,36 +132,36 @@ export default function UserManagement() {
 
       {/* Users Table */}
       {users.length === 0 ? (
-        <div className="card p-12 text-center">
-          <i className="fas fa-users text-gray-400 text-6xl mb-4"></i>
-          <p className="text-gray-600 text-lg">Không có người dùng nào</p>
+        <div className="card p-12 text-center dark:bg-gray-900 dark:border-gray-800">
+          <i className="fas fa-users text-gray-400 dark:text-gray-500 text-6xl mb-4"></i>
+          <p className="text-gray-600 dark:text-gray-300 text-lg">Không có người dùng nào</p>
         </div>
       ) : (
-        <div className="card overflow-hidden">
+        <div className="card overflow-hidden dark:bg-gray-900 dark:border-gray-800">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Người dùng
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Vai trò
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Trạng thái
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Ngày tạo
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Thao tác
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
                 {users.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
+                  <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         {user.avatarUrl ? (
@@ -165,40 +173,49 @@ export default function UserManagement() {
                             className="w-10 h-10 rounded-full mr-3"
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
-                            <i className="fas fa-user text-gray-400"></i>
+                          <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3">
+                            <i className="fas fa-user text-gray-400 dark:text-gray-500"></i>
                           </div>
                         )}
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{user.fullName}</div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">{user.fullName}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">{user.email}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
                         {getRoleLabel(user.role)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(user.status)}`}>
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(user.status)} dark:bg-green-800 dark:text-green-100 dark:bg-gray-800 dark:text-gray-100 dark:bg-yellow-800 dark:text-yellow-100 dark:bg-red-800 dark:text-red-100`}>
                         {getStatusLabel(user.status)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {formatDate(user.createdAt)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <select
-                        value={user.status}
-                        onChange={(e) => handleStatusChange(user.id, e.target.value)}
-                        className="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="ACTIVE">Hoạt động</option>
-                        <option value="INACTIVE">Không hoạt động</option>
-                        <option value="SUSPENDED">Tạm khóa</option>
-                        <option value="DELETED">Xóa</option>
-                      </select>
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={user.status}
+                          onChange={(e) => handleStatusChange(user.id, e.target.value)}
+                          className="text-sm border border-gray-300 dark:border-gray-700 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+                        >
+                          <option value="ACTIVE">Hoạt động</option>
+                          <option value="INACTIVE">Không hoạt động</option>
+                          <option value="SUSPENDED">Tạm khóa</option>
+                          <option value="DELETED">Xóa</option>
+                        </select>
+                        <button
+                          onClick={() => handleDelete(user.id)}
+                          className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
+                          title="Xóa vĩnh viễn"
+                        >
+                          <i className="fas fa-trash"></i>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -208,22 +225,22 @@ export default function UserManagement() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-              <div className="text-sm text-gray-700">
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between">
+              <div className="text-sm text-gray-700 dark:text-gray-300">
                 Trang {page + 1} / {totalPages}
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => setPage(Math.max(0, page - 1))}
                   disabled={page === 0}
-                  className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-secondary dark:bg-gray-800 dark:text-white dark:border-gray-700 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Trước
                 </button>
                 <button
                   onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
                   disabled={page >= totalPages - 1}
-                  className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-secondary dark:bg-gray-800 dark:text-white dark:border-gray-700 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Sau
                 </button>

@@ -57,8 +57,8 @@ export default function StudentDashboard() {
         </div>
         <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse"></div>
       </div>
-      <p className="text-sm font-medium text-gray-600 mb-2">{label}</p>
-      <p className="text-4xl font-bold gradient-text">{value}</p>
+      <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">{label}</p>
+      <p className="text-4xl font-bold gradient-text dark:text-white">{value}</p>
     </div>
   );
 
@@ -71,7 +71,7 @@ export default function StudentDashboard() {
       <div className={`inline-flex h-16 w-16 rounded-2xl ${gradient} items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
         <i className={`${icon} text-white text-2xl`}></i>
       </div>
-      <p className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">{label}</p>
+      <p className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{label}</p>
     </Link>
   );
 
@@ -79,10 +79,10 @@ export default function StudentDashboard() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
           Chào mừng trở lại! 👋
         </h1>
-        <p className="text-lg text-gray-600">
+        <p className="text-lg text-gray-600 dark:text-gray-300">
           Quản lý sự nghiệp của bạn một cách thông minh
         </p>
       </div>
@@ -114,7 +114,7 @@ export default function StudentDashboard() {
 
       {/* Quick Actions */}
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Thao tác nhanh</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Thao tác nhanh</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <QuickActionCard
             to="/student/jobs"
@@ -144,8 +144,8 @@ export default function StudentDashboard() {
       <div className="card p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Việc làm gợi ý</h2>
-            <p className="text-gray-600 mt-1">Các cơ hội việc làm phù hợp với bạn</p>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Việc làm gợi ý</h2>
+            <p className="text-gray-600 dark:text-gray-300 mt-1">Các cơ hội việc làm phù hợp với bạn</p>
           </div>
           <Link 
             to="/student/jobs" 
@@ -159,15 +159,15 @@ export default function StudentDashboard() {
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
-            <p className="mt-4 text-gray-600 font-medium">Đang tải dữ liệu...</p>
+            <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Đang tải dữ liệu...</p>
           </div>
         ) : recentJobs.length === 0 ? (
           <div className="text-center py-12">
-            <div className="inline-flex h-20 w-20 rounded-full bg-gray-100 items-center justify-center mb-4">
-              <i className="fas fa-briefcase text-gray-400 text-3xl"></i>
+            <div className="inline-flex h-20 w-20 rounded-full bg-gray-100 dark:bg-gray-800 items-center justify-center mb-4">
+              <i className="fas fa-briefcase text-gray-400 dark:text-gray-500 text-3xl"></i>
             </div>
-            <p className="text-gray-600 font-medium">Chưa có việc làm nào</p>
-            <Link to="/student/jobs" className="text-blue-600 hover:text-blue-700 font-medium mt-2 inline-block">
+            <p className="text-gray-600 dark:text-gray-300 font-medium">Chưa có việc làm nào</p>
+            <Link to="/student/jobs" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium mt-2 inline-block">
               Khám phá việc làm ngay →
             </Link>
           </div>
@@ -182,10 +182,10 @@ export default function StudentDashboard() {
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
-                    <h3 className="font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+                    <h3 className="font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
                       {job.title}
                     </h3>
-                    <p className="text-sm text-gray-600 mb-3">{job.company?.name || 'Công ty'}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">{job.company?.name || 'Công ty'}</p>
                   </div>
                   <span className="badge badge-success ml-2 flex-shrink-0">
                     {job.status === 'ACTIVE' ? 'Đang tuyển' : 'Đã đóng'}
@@ -193,22 +193,22 @@ export default function StudentDashboard() {
                 </div>
                 
                 <div className="space-y-2 mb-4">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <i className="fas fa-map-marker-alt text-gray-400 mr-2 w-4"></i>
+                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                    <i className="fas fa-map-marker-alt text-gray-400 dark:text-gray-500 mr-2 w-4"></i>
                     <span className="truncate">{job.location}</span>
                   </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <i className="fas fa-dollar-sign text-gray-400 mr-2 w-4"></i>
+                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                    <i className="fas fa-dollar-sign text-gray-400 dark:text-gray-500 mr-2 w-4"></i>
                     <span>{formatCurrency(job.minSalary, job.currency)}</span>
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                  <span className="text-xs text-gray-500">
+                <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
                     <i className="far fa-clock mr-1"></i>
                     {new Date(job.createdAt).toLocaleDateString('vi-VN')}
                   </span>
-                  <span className="text-blue-600 text-sm font-medium group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                  <span className="text-blue-600 dark:text-blue-400 text-sm font-medium group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
                     Xem chi tiết
                     <i className="fas fa-arrow-right text-xs"></i>
                   </span>

@@ -288,8 +288,8 @@ export default function ProfileEdit() {
     return (
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
-          <p className="mt-4 text-gray-600 font-medium">Đang tải hồ sơ...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 dark:border-gray-700 border-t-blue-600 dark:border-t-blue-500"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Đang tải hồ sơ...</p>
         </div>
       </div>
     );
@@ -299,20 +299,20 @@ export default function ProfileEdit() {
   if (!profile || Object.keys(profile).length === 0) {
     return (
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <i className="fas fa-exclamation-circle text-red-600 text-4xl mb-4"></i>
-          <h2 className="text-xl font-bold text-red-900 mb-2">Không thể tải hồ sơ</h2>
-          <p className="text-red-700 mb-4">{message || 'Vui lòng đăng nhập lại hoặc thử lại sau.'}</p>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
+          <i className="fas fa-exclamation-circle text-red-600 dark:text-red-400 text-4xl mb-4"></i>
+          <h2 className="text-xl font-bold text-red-900 dark:text-red-100 mb-2">Không thể tải hồ sơ</h2>
+          <p className="text-red-700 dark:text-red-200 mb-4">{message || 'Vui lòng đăng nhập lại hoặc thử lại sau.'}</p>
           <div className="flex gap-4 justify-center">
             <button
               onClick={loadProfile}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              className="px-6 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition"
             >
               <i className="fas fa-redo mr-2"></i>Thử lại
             </button>
             <button
               onClick={() => window.location.href = '/login'}
-              className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition"
+              className="px-6 py-2 bg-gray-600 dark:bg-gray-700 text-white rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition"
             >
               Đăng nhập lại
             </button>
@@ -328,7 +328,7 @@ export default function ProfileEdit() {
       <div className="mb-6">
         <button
           onClick={() => navigate('/student/profile/view')}
-          className="mb-4 text-gray-600 hover:text-gray-900 flex items-center gap-2"
+          className="mb-4 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-blue-400 flex items-center gap-2"
         >
           <i className="fas fa-arrow-left"></i>
           <span>Quay lại</span>
@@ -340,8 +340,8 @@ export default function ProfileEdit() {
         <div
           className={`mb-6 p-4 rounded-xl border-2 animate-slide-up ${
             message.includes('Lỗi')
-              ? 'bg-red-50 border-red-200 text-red-700'
-              : 'bg-green-50 border-green-200 text-green-700'
+              ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-200'
+              : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-200'
           }`}
         >
           <div className="flex items-center gap-3">
@@ -354,12 +354,12 @@ export default function ProfileEdit() {
       <form onSubmit={handleSubmit}>
         <div className="space-y-6">
           {/* Avatar Upload */}
-          <div className="card p-6 animate-slide-up">
+          <div className="card p-6 animate-slide-up dark:bg-gray-900 dark:border-gray-800">
             <div className="flex items-center gap-3 mb-6">
               <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center">
                 <i className="fas fa-image text-white"></i>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Ảnh đại diện</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Ảnh đại diện</h2>
             </div>
             <div className="flex items-center gap-6">
               <div className="relative">
@@ -367,11 +367,11 @@ export default function ProfileEdit() {
                   <img
                     src={avatarPreview}
                     alt="Avatar preview"
-                    className="w-32 h-32 rounded-full border-4 border-gray-200 object-cover"
+                    className="w-32 h-32 rounded-full border-4 border-gray-200 dark:border-gray-700 object-cover"
                   />
                 ) : (
-                  <div className="w-32 h-32 rounded-full border-4 border-gray-200 bg-gray-100 flex items-center justify-center">
-                    <i className="fas fa-user text-gray-400 text-4xl"></i>
+                  <div className="w-32 h-32 rounded-full border-4 border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    <i className="fas fa-user text-gray-400 dark:text-gray-500 text-4xl"></i>
                   </div>
                 )}
                 {uploadingAvatar && (
@@ -392,12 +392,12 @@ export default function ProfileEdit() {
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingAvatar}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 flex items-center gap-2"
+                  className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition disabled:opacity-50 flex items-center gap-2"
                 >
                   <i className="fas fa-upload"></i>
                   <span>{uploadingAvatar ? 'Đang tải...' : 'Chọn ảnh'}</span>
                 </button>
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                   Chấp nhận: JPG, PNG, GIF (tối đa 5MB)
                 </p>
               </div>
@@ -405,17 +405,17 @@ export default function ProfileEdit() {
           </div>
 
           {/* Personal Information */}
-          <div className="card p-6 animate-slide-up">
+          <div className="card p-6 animate-slide-up dark:bg-gray-900 dark:border-gray-800">
             <div className="flex items-center gap-3 mb-6">
               <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
                 <i className="fas fa-user text-white"></i>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Thông tin cá nhân</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Thông tin cá nhân</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <i className="fas fa-calendar text-gray-400 mr-2"></i>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <i className="fas fa-calendar text-gray-400 dark:text-gray-500 mr-2"></i>
                   Ngày sinh
                 </label>
                 <input
@@ -423,19 +423,19 @@ export default function ProfileEdit() {
                   name="dateOfBirth"
                   value={profile.dateOfBirth}
                   onChange={handleChange}
-                  className="input-field"
+                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <i className="fas fa-venus-mars text-gray-400 mr-2"></i>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <i className="fas fa-venus-mars text-gray-400 dark:text-gray-500 mr-2"></i>
                   Giới tính
                 </label>
                 <select
                   name="gender"
                   value={profile.gender}
                   onChange={handleChange}
-                  className="input-field"
+                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                 >
                   <option value="">Chọn giới tính</option>
                   <option value="MALE">Nam</option>
@@ -444,8 +444,8 @@ export default function ProfileEdit() {
                 </select>
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <i className="fas fa-map-marker-alt text-gray-400 mr-2"></i>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <i className="fas fa-map-marker-alt text-gray-400 dark:text-gray-500 mr-2"></i>
                   Địa chỉ
                 </label>
                 <input
@@ -453,13 +453,13 @@ export default function ProfileEdit() {
                   name="address"
                   value={profile.address}
                   onChange={handleChange}
-                  className="input-field"
+                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   placeholder="Số nhà, đường..."
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <i className="fas fa-city text-gray-400 mr-2"></i>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <i className="fas fa-city text-gray-400 dark:text-gray-500 mr-2"></i>
                   Thành phố
                 </label>
                 <input
@@ -467,13 +467,13 @@ export default function ProfileEdit() {
                   name="city"
                   value={profile.city}
                   onChange={handleChange}
-                  className="input-field"
+                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   placeholder="Hà Nội, TP.HCM..."
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <i className="fas fa-flag text-gray-400 mr-2"></i>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <i className="fas fa-flag text-gray-400 dark:text-gray-500 mr-2"></i>
                   Quốc gia
                 </label>
                 <input
@@ -481,24 +481,24 @@ export default function ProfileEdit() {
                   name="country"
                   value={profile.country}
                   onChange={handleChange}
-                  className="input-field"
+                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                 />
               </div>
             </div>
           </div>
 
           {/* Education */}
-          <div className="card p-6 animate-slide-up" style={{ animationDelay: '100ms' }}>
+          <div className="card p-6 animate-slide-up dark:bg-gray-900 dark:border-gray-800" style={{ animationDelay: '100ms' }}>
             <div className="flex items-center gap-3 mb-6">
               <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
                 <i className="fas fa-graduation-cap text-white"></i>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Học vấn</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Học vấn</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <i className="fas fa-university text-gray-400 mr-2"></i>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <i className="fas fa-university text-gray-400 dark:text-gray-500 mr-2"></i>
                   Trường đại học
                 </label>
                 <input
@@ -506,13 +506,13 @@ export default function ProfileEdit() {
                   name="university"
                   value={profile.university}
                   onChange={handleChange}
-                  className="input-field"
+                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   placeholder="Tên trường đại học"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <i className="fas fa-book text-gray-400 mr-2"></i>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <i className="fas fa-book text-gray-400 dark:text-gray-500 mr-2"></i>
                   Chuyên ngành
                 </label>
                 <input
@@ -520,13 +520,13 @@ export default function ProfileEdit() {
                   name="major"
                   value={profile.major}
                   onChange={handleChange}
-                  className="input-field"
+                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   placeholder="Công nghệ thông tin, Kinh tế..."
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <i className="fas fa-calendar-check text-gray-400 mr-2"></i>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <i className="fas fa-calendar-check text-gray-400 dark:text-gray-500 mr-2"></i>
                   Năm tốt nghiệp
                 </label>
                 <input
@@ -534,15 +534,15 @@ export default function ProfileEdit() {
                   name="graduationYear"
                   value={profile.graduationYear}
                   onChange={handleChange}
-                  className="input-field"
+                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   placeholder="2024"
                   min="2000"
                   max="2100"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <i className="fas fa-star text-gray-400 mr-2"></i>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <i className="fas fa-star text-gray-400 dark:text-gray-500 mr-2"></i>
                   Điểm GPA
                 </label>
                 <input
@@ -553,7 +553,7 @@ export default function ProfileEdit() {
                   step="0.01"
                   min="0"
                   max="4"
-                  className="input-field"
+                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   placeholder="3.5"
                 />
               </div>
@@ -561,35 +561,35 @@ export default function ProfileEdit() {
           </div>
 
           {/* Bio */}
-          <div className="card p-6 animate-slide-up" style={{ animationDelay: '200ms' }}>
+          <div className="card p-6 animate-slide-up dark:bg-gray-900 dark:border-gray-800" style={{ animationDelay: '200ms' }}>
             <div className="flex items-center gap-3 mb-6">
               <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
                 <i className="fas fa-file-alt text-white"></i>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Giới thiệu</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Giới thiệu</h2>
             </div>
             <textarea
               name="bio"
               value={profile.bio}
               onChange={handleChange}
               rows="5"
-              className="input-field resize-none"
+              className="input-field resize-none dark:bg-gray-800 dark:text-white dark:border-gray-700"
               placeholder="Giới thiệu về bản thân, kinh nghiệm, mục tiêu nghề nghiệp..."
             />
           </div>
 
           {/* Social Links */}
-          <div className="card p-6 animate-slide-up" style={{ animationDelay: '300ms' }}>
+          <div className="card p-6 animate-slide-up dark:bg-gray-900 dark:border-gray-800" style={{ animationDelay: '300ms' }}>
             <div className="flex items-center gap-3 mb-6">
               <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
                 <i className="fas fa-share-alt text-white"></i>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Liên kết mạng xã hội</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Liên kết mạng xã hội</h2>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <i className="fab fa-linkedin text-blue-600 mr-2"></i>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <i className="fab fa-linkedin text-blue-600 dark:text-blue-400 mr-2"></i>
                   LinkedIn
                 </label>
                 <input
@@ -597,13 +597,13 @@ export default function ProfileEdit() {
                   name="linkedinUrl"
                   value={profile.linkedinUrl}
                   onChange={handleChange}
-                  className="input-field"
+                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   placeholder="https://linkedin.com/in/yourprofile"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <i className="fab fa-github text-gray-900 mr-2"></i>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <i className="fab fa-github text-gray-900 dark:text-gray-300 mr-2"></i>
                   GitHub
                 </label>
                 <input
@@ -611,13 +611,13 @@ export default function ProfileEdit() {
                   name="githubUrl"
                   value={profile.githubUrl}
                   onChange={handleChange}
-                  className="input-field"
+                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   placeholder="https://github.com/yourusername"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <i className="fas fa-globe text-blue-600 mr-2"></i>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <i className="fas fa-globe text-blue-600 dark:text-blue-400 mr-2"></i>
                   Portfolio
                 </label>
                 <input
@@ -625,7 +625,7 @@ export default function ProfileEdit() {
                   name="portfolioUrl"
                   value={profile.portfolioUrl}
                   onChange={handleChange}
-                  className="input-field"
+                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   placeholder="https://yourportfolio.com"
                 />
               </div>
@@ -633,18 +633,18 @@ export default function ProfileEdit() {
           </div>
 
           {/* Status */}
-          <div className="card p-6 animate-slide-up" style={{ animationDelay: '400ms' }}>
+          <div className="card p-6 animate-slide-up dark:bg-gray-900 dark:border-gray-800" style={{ animationDelay: '400ms' }}>
             <div className="flex items-center gap-3 mb-6">
               <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-yellow-500 to-orange-600 flex items-center justify-center">
                 <i className="fas fa-info-circle text-white"></i>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Tình trạng hiện tại</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Tình trạng hiện tại</h2>
             </div>
             <select
               name="currentStatus"
               value={profile.currentStatus}
               onChange={handleChange}
-              className="input-field"
+              className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
             >
               <option value="STUDENT">Sinh viên</option>
               <option value="GRADUATED">Đã tốt nghiệp</option>

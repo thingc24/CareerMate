@@ -189,8 +189,8 @@ export default function CompanyEdit() {
     return (
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
-          <p className="mt-4 text-gray-600 font-medium">Đang tải thông tin công ty...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 dark:border-gray-700 border-t-blue-600 dark:border-t-blue-500"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Đang tải thông tin công ty...</p>
         </div>
       </div>
     );
@@ -214,8 +214,8 @@ export default function CompanyEdit() {
         <div
           className={`mb-6 p-4 rounded-xl border-2 animate-slide-up ${
             message.includes('Lỗi')
-              ? 'bg-red-50 border-red-200 text-red-700'
-              : 'bg-green-50 border-green-200 text-green-700'
+              ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-200'
+              : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-200'
           }`}
         >
           <div className="flex items-center gap-3">
@@ -228,12 +228,12 @@ export default function CompanyEdit() {
       <form onSubmit={handleSubmit}>
         <div className="space-y-6">
           {/* Logo Upload */}
-          <div className="card p-6 animate-slide-up">
+          <div className="card p-6 animate-slide-up dark:bg-gray-900 dark:border-gray-800">
             <div className="flex items-center gap-3 mb-6">
               <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
                 <i className="fas fa-image text-white"></i>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Logo công ty</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Logo công ty</h2>
             </div>
             <div className="flex items-center gap-6">
               <div className="relative">
@@ -279,81 +279,81 @@ export default function CompanyEdit() {
           </div>
 
           {/* Basic Information */}
-          <div className="card p-6 animate-slide-up">
+          <div className="card p-6 animate-slide-up dark:bg-gray-900 dark:border-gray-800">
             <div className="flex items-center gap-3 mb-6">
               <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
                 <i className="fas fa-building text-white"></i>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Thông tin cơ bản</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Thông tin cơ bản</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <i className="fas fa-building text-gray-400 mr-2"></i>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <i className="fas fa-building text-gray-400 dark:text-gray-500 mr-2"></i>
                   Tên công ty *
                 </label>
                 <input
                   type="text"
                   name="name"
                   required
-                  className="input-field"
+                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   value={formData.name}
                   onChange={handleChange}
                   placeholder="Tên công ty"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <i className="fas fa-globe text-gray-400 mr-2"></i>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <i className="fas fa-globe text-gray-400 dark:text-gray-500 mr-2"></i>
                   Website
                 </label>
                 <input
                   type="url"
                   name="websiteUrl"
-                  className="input-field"
+                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   value={formData.websiteUrl}
                   onChange={handleChange}
                   placeholder="https://example.com"
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <i className="fas fa-map-marker-alt text-gray-400 mr-2"></i>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <i className="fas fa-map-marker-alt text-gray-400 dark:text-gray-500 mr-2"></i>
                   Địa chỉ *
                 </label>
                 <input
                   type="text"
                   name="address"
                   required
-                  className="input-field"
+                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   value={formData.address}
                   onChange={handleChange}
                   placeholder="Số nhà, đường..."
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <i className="fas fa-city text-gray-400 mr-2"></i>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <i className="fas fa-city text-gray-400 dark:text-gray-500 mr-2"></i>
                   Thành phố
                 </label>
                 <input
                   type="text"
                   name="city"
-                  className="input-field"
+                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   value={formData.city}
                   onChange={handleChange}
                   placeholder="Hà Nội, TP.HCM..."
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <i className="fas fa-flag text-gray-400 mr-2"></i>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <i className="fas fa-flag text-gray-400 dark:text-gray-500 mr-2"></i>
                   Quốc gia
                 </label>
                 <input
                   type="text"
                   name="country"
-                  className="input-field"
+                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   value={formData.country}
                   onChange={handleChange}
                 />
@@ -362,22 +362,22 @@ export default function CompanyEdit() {
           </div>
 
           {/* Company Details */}
-          <div className="card p-6 animate-slide-up" style={{ animationDelay: '100ms' }}>
+          <div className="card p-6 animate-slide-up dark:bg-gray-900 dark:border-gray-800" style={{ animationDelay: '100ms' }}>
             <div className="flex items-center gap-3 mb-6">
               <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
                 <i className="fas fa-info-circle text-white"></i>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Chi tiết công ty</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Chi tiết công ty</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <i className="fas fa-users text-gray-400 mr-2"></i>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <i className="fas fa-users text-gray-400 dark:text-gray-500 mr-2"></i>
                   Quy mô nhân sự
                 </label>
                 <select
                   name="companySize"
-                  className="input-field"
+                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   value={formData.companySize}
                   onChange={handleChange}
                 >
@@ -391,22 +391,22 @@ export default function CompanyEdit() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <i className="fas fa-industry text-gray-400 mr-2"></i>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <i className="fas fa-industry text-gray-400 dark:text-gray-500 mr-2"></i>
                   Lĩnh vực hoạt động
                 </label>
                 <input
                   type="text"
                   name="industry"
-                  className="input-field"
+                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   value={formData.industry}
                   onChange={handleChange}
                   placeholder="VD: Công nghệ thông tin"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <i className="fas fa-calendar text-gray-400 mr-2"></i>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <i className="fas fa-calendar text-gray-400 dark:text-gray-500 mr-2"></i>
                   Năm thành lập
                 </label>
                 <input
@@ -414,7 +414,7 @@ export default function CompanyEdit() {
                   name="foundedYear"
                   min="1900"
                   max="2024"
-                  className="input-field"
+                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   value={formData.foundedYear}
                   onChange={handleChange}
                   placeholder="2020"
@@ -422,15 +422,15 @@ export default function CompanyEdit() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                <i className="fas fa-file-alt text-gray-400 mr-2"></i>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                <i className="fas fa-file-alt text-gray-400 dark:text-gray-500 mr-2"></i>
                 Mô tả công ty *
               </label>
               <textarea
                 name="description"
                 rows="6"
                 required
-                className="input-field resize-none"
+                className="input-field resize-none dark:bg-gray-800 dark:text-white dark:border-gray-700"
                 value={formData.description}
                 onChange={handleChange}
                 placeholder="Giới thiệu về công ty, lĩnh vực hoạt động, văn hóa công ty..."

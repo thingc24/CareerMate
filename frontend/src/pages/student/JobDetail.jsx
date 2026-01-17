@@ -92,7 +92,7 @@ export default function JobDetail() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
-          <p className="mt-4 text-gray-600 font-medium">Đang tải thông tin việc làm...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Đang tải thông tin việc làm...</p>
         </div>
       </div>
     );
@@ -105,8 +105,8 @@ export default function JobDetail() {
           <div className="inline-flex h-24 w-24 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 items-center justify-center mb-6">
             <i className="fas fa-briefcase text-gray-400 text-4xl"></i>
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Không tìm thấy việc làm</h3>
-          <p className="text-gray-600 mb-6">Việc làm này có thể đã bị xóa hoặc không tồn tại</p>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Không tìm thấy việc làm</h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">Việc làm này có thể đã bị xóa hoặc không tồn tại</p>
           <button
             onClick={() => navigate('/student/jobs')}
             className="btn-primary"
@@ -134,11 +134,11 @@ export default function JobDetail() {
       <div className="card p-8 mb-6 animate-slide-up">
         <div className="flex items-start justify-between mb-6">
           <div className="flex-1">
-            <h1 className="text-4xl font-bold text-gray-900 mb-3">{job.title}</h1>
-            <p className="text-2xl text-gray-600 mb-4 font-medium">{job.company?.name || 'Công ty'}</p>
-            <div className="flex flex-wrap gap-4 text-base text-gray-600">
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">{job.title}</h1>
+            <p className="text-2xl text-gray-600 dark:text-gray-300 mb-4 font-medium">{job.company?.name || 'Công ty'}</p>
+            <div className="flex flex-wrap gap-4 text-base text-gray-600 dark:text-gray-300">
               <span className="flex items-center">
-                <i className="fas fa-map-marker-alt text-gray-400 mr-2"></i>
+                <i className="fas fa-map-marker-alt text-gray-400 dark:text-gray-500 mr-2"></i>
                 {job.location}
               </span>
               <span className="flex items-center">
@@ -165,7 +165,7 @@ export default function JobDetail() {
 
         {job.skills && job.skills.length > 0 && (
           <div className="mb-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Kỹ năng yêu cầu:</h3>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Kỹ năng yêu cầu:</h3>
             <div className="flex flex-wrap gap-2">
               {job.skills.map((skill, idx) => (
                 <span
@@ -189,10 +189,10 @@ export default function JobDetail() {
               <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
                 <i className="fas fa-file-alt text-white"></i>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Mô tả công việc</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Mô tả công việc</h2>
             </div>
             <div className="prose max-w-none">
-              <p className="text-gray-700 whitespace-pre-line leading-relaxed">{job.description}</p>
+              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line leading-relaxed">{job.description}</p>
             </div>
           </div>
 
@@ -203,10 +203,10 @@ export default function JobDetail() {
                 <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
                   <i className="fas fa-clipboard-check text-white"></i>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900">Yêu cầu ứng viên</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Yêu cầu ứng viên</h2>
               </div>
               <div className="prose max-w-none">
-                <p className="text-gray-700 whitespace-pre-line leading-relaxed">{job.requirements}</p>
+                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line leading-relaxed">{job.requirements}</p>
               </div>
             </div>
           )}
@@ -219,7 +219,7 @@ export default function JobDetail() {
               <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
                 <i className="fas fa-paper-plane text-white"></i>
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Ứng tuyển</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Ứng tuyển</h2>
             </div>
             
             {hasApplied ? (
@@ -227,8 +227,8 @@ export default function JobDetail() {
                 <div className="inline-flex h-16 w-16 rounded-full bg-green-100 items-center justify-center mb-4">
                   <i className="fas fa-check-circle text-green-600 text-2xl"></i>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">Đã ứng tuyển</h3>
-                <p className="text-sm text-gray-600 mb-4">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Đã ứng tuyển</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
                   Trạng thái: <span className="font-semibold">
                     {applicationStatus === 'PENDING' && 'Đang chờ'}
                     {applicationStatus === 'VIEWED' && 'Đã xem'}
@@ -253,7 +253,7 @@ export default function JobDetail() {
                 <div className="inline-flex h-16 w-16 rounded-full bg-gray-100 items-center justify-center mb-4">
                   <i className="fas fa-file-pdf text-gray-400 text-2xl"></i>
                 </div>
-                <p className="text-sm text-gray-600 mb-4">Bạn chưa có CV nào</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">Bạn chưa có CV nào</p>
                 <button
                   onClick={() => navigate('/student/cv')}
                   className="btn-primary w-full"
@@ -265,7 +265,7 @@ export default function JobDetail() {
             ) : (
               <>
                 <div className="mb-4">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     <i className="fas fa-file-pdf text-gray-400 mr-2"></i>
                     Chọn CV
                   </label>
@@ -283,7 +283,7 @@ export default function JobDetail() {
                 </div>
 
                 <div className="mb-6">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     <i className="fas fa-envelope text-gray-400 mr-2"></i>
                     Thư xin việc (tùy chọn)
                   </label>
@@ -319,17 +319,17 @@ export default function JobDetail() {
 
           {/* Job Info Card */}
           <div className="card p-6 animate-slide-up" style={{ animationDelay: '400ms' }}>
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Thông tin việc làm</h3>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Thông tin việc làm</h3>
             <div className="space-y-3 text-sm">
               {job.createdAt && (
-                <div className="flex items-center text-gray-600">
-                  <i className="far fa-calendar text-gray-400 mr-3 w-5"></i>
+                <div className="flex items-center text-gray-600 dark:text-gray-300">
+                  <i className="far fa-calendar text-gray-400 dark:text-gray-500 mr-3 w-5"></i>
                   <span>Đăng ngày: {new Date(job.createdAt).toLocaleDateString('vi-VN')}</span>
                 </div>
               )}
               {job.expiresAt && (
-                <div className="flex items-center text-gray-600">
-                  <i className="fas fa-clock text-gray-400 mr-3 w-5"></i>
+                <div className="flex items-center text-gray-600 dark:text-gray-300">
+                  <i className="fas fa-clock text-gray-400 dark:text-gray-500 mr-3 w-5"></i>
                   <span>Hết hạn: {new Date(job.expiresAt).toLocaleDateString('vi-VN')}</span>
                 </div>
               )}

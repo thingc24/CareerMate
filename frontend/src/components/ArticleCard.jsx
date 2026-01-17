@@ -31,31 +31,31 @@ function ReplyComment({ reply, onReply, replyingTo, setReplyingTo, replyContent,
           <img
             src={fullReplyAvatarUrl}
             alt={replyUserName}
-            className="w-8 h-8 rounded-full object-cover border-2 border-white shadow-md ring-1 ring-gray-200"
+            className="w-8 h-8 rounded-full object-cover border-2 border-white dark:border-gray-800 shadow-md ring-1 ring-gray-200 dark:ring-gray-800"
             onError={(e) => {
               e.target.style.display = 'none';
               e.target.nextSibling.style.display = 'flex';
             }}
           />
         ) : null}
-        <div className={`w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center text-white text-xs font-bold shadow-md ring-1 ring-gray-200 ${fullReplyAvatarUrl ? 'hidden' : ''}`}>
+        <div className={`w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center text-white text-xs font-bold shadow-md ring-1 ring-gray-200 dark:ring-gray-800 ${fullReplyAvatarUrl ? 'hidden' : ''}`}>
           {replyInitials}
         </div>
       </div>
       <div className="flex-1">
-        <div className="bg-gradient-to-br from-green-50 to-teal-50 rounded-lg p-3 border border-green-200">
-          <p className="font-bold text-xs text-gray-900 mb-1">
+        <div className="bg-gradient-to-br from-green-50 to-teal-50 dark:from-gray-800 dark:to-gray-800 rounded-lg p-3 border border-green-200 dark:border-gray-700">
+          <p className="font-bold text-xs text-gray-900 dark:text-white mb-1">
             {replyUserName}
           </p>
-          <p className="text-gray-700 text-xs leading-relaxed">{reply.content}</p>
+          <p className="text-gray-700 dark:text-gray-300 text-xs leading-relaxed">{reply.content}</p>
         </div>
-        <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+        <div className="flex items-center gap-3 mt-2 text-xs text-gray-500 dark:text-gray-400">
           <i className="fas fa-clock"></i>
           <span>{formatDate(reply.createdAt)}</span>
           {depth < maxDepth && (
             <button
               onClick={() => setReplyingTo(replyingTo === reply.id ? null : reply.id)}
-              className="hover:text-blue-600 hover:font-semibold transition-all flex items-center gap-1"
+              className="hover:text-blue-600 dark:hover:text-blue-400 hover:font-semibold transition-all flex items-center gap-1"
             >
               <i className="fas fa-reply text-xs"></i>
               Trả lời
@@ -72,7 +72,7 @@ function ReplyComment({ reply, onReply, replyingTo, setReplyingTo, replyContent,
               onChange={(e) => setReplyContent(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && onReply(reply.id)}
               placeholder="Viết phản hồi..."
-              className="flex-1 px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
+              className="flex-1 px-3 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-gray-900 dark:text-white"
             />
             <button
               onClick={() => onReply(reply.id)}
@@ -354,9 +354,9 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
   };
 
   return (
-    <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg mb-6 border-2 border-gray-100 hover:border-blue-200 hover:shadow-2xl hover:shadow-blue-500/20 hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+    <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-900 rounded-xl shadow-lg mb-6 border-2 border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-600 hover:shadow-2xl hover:shadow-blue-500/20 hover:-translate-y-1 transition-all duration-300 overflow-hidden">
       {/* Header with Avatar and Author Info */}
-      <div className="p-5 border-b border-gray-200 bg-white">
+      <div className="p-5 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
         <div className="flex items-center gap-3">
           <button
             onClick={handleAuthorClick}
@@ -366,14 +366,14 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
               <img
                 src={authorAvatar}
                 alt={authorName}
-                className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md ring-2 ring-gray-100"
+                className="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-gray-800 shadow-md ring-2 ring-gray-100 dark:ring-gray-800"
                 onError={(e) => {
                   e.target.style.display = 'none';
                   e.target.nextSibling.style.display = 'flex';
                 }}
               />
             ) : null}
-            <div className={`w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md ring-2 ring-gray-100 ${authorAvatar ? 'hidden' : ''}`}>
+            <div className={`w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md ring-2 ring-gray-100 dark:ring-gray-800 ${authorAvatar ? 'hidden' : ''}`}>
               {authorName?.charAt(0).toUpperCase() || 'U'}
             </div>
           </button>
@@ -382,15 +382,15 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
               onClick={handleAuthorClick}
               className="text-left hover:underline group"
             >
-              <h3 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{authorName}</h3>
+              <h3 className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{authorName}</h3>
             </button>
             <div className="flex items-center gap-2 mt-1">
-              <i className="fas fa-clock text-xs text-gray-400"></i>
-              <p className="text-xs text-gray-500">{formatDate(article.publishedAt || article.createdAt)}</p>
+              <i className="fas fa-clock text-xs text-gray-400 dark:text-gray-500"></i>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(article.publishedAt || article.createdAt)}</p>
               {article.category && (
                 <>
-                  <span className="text-xs text-gray-300">•</span>
-                  <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full font-medium">
+                  <span className="text-xs text-gray-300 dark:text-gray-600">•</span>
+                  <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-gray-800 text-blue-700 dark:text-blue-300 rounded-full font-medium">
                     {article.category.replace('_', ' ')}
                   </span>
                 </>
@@ -401,19 +401,19 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
       </div>
 
       {/* Content */}
-      <div className="p-5 bg-gradient-to-br from-white to-gray-50">
+      <div className="p-5 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-900">
         <h2 
-          className="text-xl font-bold text-gray-900 mb-3 cursor-pointer hover:text-blue-600 transition-colors line-clamp-2 group"
+          className="text-xl font-bold text-gray-900 dark:text-white mb-3 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors line-clamp-2 group"
           onClick={() => navigate(`/student/articles/${article.id}`)}
         >
           {article.title}
-          <i className="fas fa-external-link-alt ml-2 text-xs text-gray-400 group-hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+          <i className="fas fa-external-link-alt ml-2 text-xs text-gray-400 dark:text-gray-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
         </h2>
         {article.excerpt && (
-          <p className="text-gray-700 mb-4 line-clamp-3 leading-relaxed">{article.excerpt}</p>
+          <p className="text-gray-700 dark:text-gray-300 mb-4 line-clamp-3 leading-relaxed">{article.excerpt}</p>
         )}
         {article.thumbnailUrl && (
-          <div className="relative overflow-hidden rounded-xl mb-4 border-2 border-gray-100 group cursor-pointer" onClick={() => navigate(`/student/articles/${article.id}`)}>
+          <div className="relative overflow-hidden rounded-xl mb-4 border-2 border-gray-100 dark:border-gray-800 group cursor-pointer" onClick={() => navigate(`/student/articles/${article.id}`)}>
             <img
               src={article.thumbnailUrl.startsWith('http') 
                 ? article.thumbnailUrl 
@@ -437,11 +437,11 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
                 <span key={type} className="text-lg transform hover:scale-125 transition-transform">{getReactionEmoji(type)}</span>
               ))}
           </div>
-          <span className="font-semibold text-gray-700">{getTotalReactions()}</span>
+          <span className="font-semibold text-gray-700 dark:text-gray-300">{getTotalReactions()}</span>
           {comments.length > 0 && (
             <>
-              <span className="text-gray-300">•</span>
-              <span className="text-gray-600">
+              <span className="text-gray-300 dark:text-gray-600">•</span>
+              <span className="text-gray-600 dark:text-gray-300">
                 <i className="fas fa-comment mr-1"></i>
                 {comments.length}
               </span>
@@ -451,14 +451,14 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
       )}
 
       {/* Action Buttons */}
-      <div className="px-5 py-3 border-t border-gray-200 bg-white">
+      <div className="px-5 py-3 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
         <div className="flex items-center justify-around gap-2">
           <button
             onClick={() => handleReaction('LIKE')}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-200 flex-1 justify-center ${
               myReaction?.reactionType === 'LIKE' 
-                ? 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 shadow-md transform scale-105' 
-                : 'text-gray-600 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-sm'
+                ? 'bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-gray-800 dark:to-gray-800 text-blue-700 dark:text-blue-300 shadow-md transform scale-105' 
+                : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 dark:hover:from-gray-800 dark:hover:to-gray-800 hover:shadow-sm'
             }`}
           >
             <span className="text-xl">{getReactionEmoji('LIKE')}</span>
@@ -466,8 +466,8 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
           </button>
           <button
             onClick={() => setShowComments(!showComments)}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-200 flex-1 justify-center text-gray-600 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-sm ${
-              showComments ? 'bg-gradient-to-r from-gray-100 to-gray-200' : ''
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-200 flex-1 justify-center text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 dark:hover:from-gray-800 dark:hover:to-gray-800 hover:shadow-sm ${
+              showComments ? 'bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-800' : ''
             }`}
             onMouseEnter={showComments ? null : loadComments}
           >
@@ -484,7 +484,7 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
 
       {/* Reaction Picker (on hover) */}
       <div className="px-4 pb-2 hidden group-hover:block">
-        <div className="flex items-center gap-1 bg-white rounded-full shadow-lg p-1">
+        <div className="flex items-center gap-1 bg-white dark:bg-gray-800 rounded-full shadow-lg p-1">
           {['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD', 'ANGRY'].map((type) => (
             <button
               key={type}
@@ -500,7 +500,7 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
 
       {/* Comments Section */}
       {showComments && (
-        <div className="px-5 py-4 border-t border-gray-200 bg-gradient-to-br from-gray-50 to-white">
+        <div className="px-5 py-4 border-t border-gray-200 dark:border-gray-800 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-900">
           {/* Comment Input */}
           <div className="mb-4">
             <div className="flex gap-3">
@@ -510,7 +510,7 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
                 onChange={(e) => setNewComment(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleComment()}
                 placeholder="Viết bình luận..."
-                className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all"
+                className="flex-1 px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-900 dark:text-white transition-all"
               />
               <button
                 onClick={handleComment}
@@ -542,37 +542,37 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
               }
               
               return (
-              <div key={comment.id} className="bg-white rounded-xl p-4 border-2 border-gray-100 hover:border-blue-200 transition-all shadow-sm">
+              <div key={comment.id} className="bg-white dark:bg-gray-900 rounded-xl p-4 border-2 border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-600 transition-all shadow-sm">
                 <div className="flex gap-3">
                   <div className="flex-shrink-0">
                     {fullCommentAvatarUrl ? (
                       <img
                         src={fullCommentAvatarUrl}
                         alt={commentUserName}
-                        className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md ring-2 ring-gray-100"
+                        className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-gray-800 shadow-md ring-2 ring-gray-100 dark:ring-gray-800"
                         onError={(e) => {
                           e.target.style.display = 'none';
                           e.target.nextSibling.style.display = 'flex';
                         }}
                       />
                     ) : null}
-                    <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md ring-2 ring-gray-100 ${fullCommentAvatarUrl ? 'hidden' : ''}`}>
+                    <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md ring-2 ring-gray-100 dark:ring-gray-800 ${fullCommentAvatarUrl ? 'hidden' : ''}`}>
                       {commentInitials}
                     </div>
                   </div>
                   <div className="flex-1">
-                    <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-3 border border-gray-200">
-                      <p className="font-bold text-sm text-gray-900 mb-1">
+                    <div className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 rounded-xl p-3 border border-gray-200 dark:border-gray-700">
+                      <p className="font-bold text-sm text-gray-900 dark:text-white mb-1">
                         {commentUserName}
                       </p>
-                      <p className="text-gray-700 text-sm leading-relaxed">{comment.content}</p>
+                      <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">{comment.content}</p>
                     </div>
-                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-500 dark:text-gray-400">
                       <i className="fas fa-clock"></i>
                       <span>{formatDate(comment.createdAt)}</span>
                       <button
                         onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-                        className="hover:text-blue-600 hover:font-semibold transition-all flex items-center gap-1"
+                        className="hover:text-blue-600 dark:hover:text-blue-400 hover:font-semibold transition-all flex items-center gap-1"
                       >
                         <i className="fas fa-reply text-xs"></i>
                         Trả lời
@@ -588,7 +588,7 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
                           onChange={(e) => setReplyContent(e.target.value)}
                           onKeyPress={(e) => e.key === 'Enter' && handleReply(comment.id)}
                           placeholder="Viết phản hồi..."
-                          className="flex-1 px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
+                          className="flex-1 px-3 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-gray-900 dark:text-white"
                         />
                         <button
                           onClick={() => handleReply(comment.id)}
@@ -601,7 +601,7 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
 
                     {/* Replies - Support unlimited nested levels */}
                     {comment.replies && comment.replies.length > 0 && (
-                      <div className="mt-3 ml-4 space-y-3 border-l-4 border-blue-300 pl-4">
+                      <div className="mt-3 ml-4 space-y-3 border-l-4 border-blue-300 dark:border-blue-600 pl-4">
                         {comment.replies.map((reply) => (
                           <ReplyComment 
                             key={reply.id} 

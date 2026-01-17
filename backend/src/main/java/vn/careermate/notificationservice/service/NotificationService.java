@@ -246,6 +246,84 @@ public class NotificationService {
         );
     }
 
+    @Transactional
+    public Notification notifyJobHidden(UUID userId, UUID jobId, String jobTitle, String reason) {
+        return createNotification(
+            userId,
+            "Tin tuyển dụng đã bị ẩn",
+            String.format("Tin tuyển dụng '%s' của bạn đã bị admin ẩn. Lý do: %s", jobTitle, reason),
+            Notification.NotificationType.JOB_HIDDEN,
+            "/recruiter/jobs",
+            "JOB",
+            jobId
+        );
+    }
+
+    @Transactional
+    public Notification notifyJobUnhidden(UUID userId, UUID jobId, String jobTitle) {
+        return createNotification(
+            userId,
+            "Tin tuyển dụng đã được hiện lại",
+            String.format("Tin tuyển dụng '%s' của bạn đã được admin hiện lại.", jobTitle),
+            Notification.NotificationType.JOB_UNHIDDEN,
+            "/recruiter/jobs",
+            "JOB",
+            jobId
+        );
+    }
+
+    @Transactional
+    public Notification notifyJobDeleted(UUID userId, UUID jobId, String jobTitle, String reason) {
+        return createNotification(
+            userId,
+            "Tin tuyển dụng đã bị xóa",
+            String.format("Tin tuyển dụng '%s' của bạn đã bị admin xóa vĩnh viễn. Lý do: %s", jobTitle, reason),
+            Notification.NotificationType.JOB_DELETED,
+            "/recruiter/jobs",
+            "JOB",
+            jobId
+        );
+    }
+
+    @Transactional
+    public Notification notifyArticleHidden(UUID userId, UUID articleId, String articleTitle, String reason) {
+        return createNotification(
+            userId,
+            "Bài viết đã bị ẩn",
+            String.format("Bài viết '%s' của bạn đã bị admin ẩn. Lý do: %s", articleTitle, reason),
+            Notification.NotificationType.ARTICLE_HIDDEN,
+            "/recruiter/articles",
+            "ARTICLE",
+            articleId
+        );
+    }
+
+    @Transactional
+    public Notification notifyArticleUnhidden(UUID userId, UUID articleId, String articleTitle) {
+        return createNotification(
+            userId,
+            "Bài viết đã được hiện lại",
+            String.format("Bài viết '%s' của bạn đã được admin hiện lại.", articleTitle),
+            Notification.NotificationType.ARTICLE_UNHIDDEN,
+            "/recruiter/articles",
+            "ARTICLE",
+            articleId
+        );
+    }
+
+    @Transactional
+    public Notification notifyArticleDeleted(UUID userId, UUID articleId, String articleTitle, String reason) {
+        return createNotification(
+            userId,
+            "Bài viết đã bị xóa",
+            String.format("Bài viết '%s' của bạn đã bị admin xóa vĩnh viễn. Lý do: %s", articleTitle, reason),
+            Notification.NotificationType.ARTICLE_DELETED,
+            "/recruiter/articles",
+            "ARTICLE",
+            articleId
+        );
+    }
+
     public void notifyAdminsAboutPendingJob(UUID jobId, String jobTitle, String recruiterName) {
         try {
             // Lấy tất cả users có role ADMIN

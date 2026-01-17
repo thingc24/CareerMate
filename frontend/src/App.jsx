@@ -65,6 +65,7 @@ import Notifications from './pages/Notifications';
 
 // Context
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { DarkModeProvider } from './contexts/DarkModeContext';
 
 // Protected Route Component
 function ProtectedRoute({ children, allowedRoles = [] }) {
@@ -230,11 +231,13 @@ function AppRoutes() {
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <AppRoutes />
-      </Router>
-    </AuthProvider>
+    <DarkModeProvider>
+      <AuthProvider>
+        <Router>
+          <AppRoutes />
+        </Router>
+      </AuthProvider>
+    </DarkModeProvider>
   );
 }
 

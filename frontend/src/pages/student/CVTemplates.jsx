@@ -41,8 +41,8 @@ export default function CVTemplates() {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
-          <p className="mt-4 text-gray-600 font-medium">Đang tải mẫu CV...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 dark:border-gray-700 border-t-blue-600 dark:border-t-blue-500"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Đang tải mẫu CV...</p>
         </div>
       </div>
     );
@@ -51,13 +51,13 @@ export default function CVTemplates() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-4">
       {/* Filters */}
-      <div className="card p-6 mb-6">
+      <div className="card p-6 mb-6 dark:bg-gray-900 dark:border-gray-800">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="md:w-64">
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="input-field"
+              className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
               disabled={showFreeOnly}
             >
               {categories.map(cat => (
@@ -72,26 +72,26 @@ export default function CVTemplates() {
               onChange={(e) => setShowFreeOnly(e.target.checked)}
               className="w-5 h-5 text-blue-600 rounded"
             />
-            <span className="text-gray-700">Chỉ hiển thị mẫu miễn phí</span>
+            <span className="text-gray-700 dark:text-gray-300">Chỉ hiển thị mẫu miễn phí</span>
           </label>
         </div>
       </div>
 
       {/* Templates Grid */}
       {templates.length === 0 ? (
-        <div className="card p-12 text-center">
-          <i className="fas fa-file-alt text-gray-400 text-6xl mb-4"></i>
-          <p className="text-gray-600 text-lg">Không tìm thấy mẫu CV nào</p>
+        <div className="card p-12 text-center dark:bg-gray-900 dark:border-gray-800">
+          <i className="fas fa-file-alt text-gray-400 dark:text-gray-500 text-6xl mb-4"></i>
+          <p className="text-gray-600 dark:text-gray-300 text-lg">Không tìm thấy mẫu CV nào</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {templates.map((template) => (
             <div
               key={template.id}
-              className="card p-6 hover:shadow-lg transition-all duration-300 group"
+              className="card p-6 hover:shadow-lg transition-all duration-300 group dark:bg-gray-900 dark:border-gray-800"
             >
               {template.previewImageUrl && (
-                <div className="mb-4 overflow-hidden rounded-lg bg-gray-100">
+                <div className="mb-4 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
                   <img
                     src={template.previewImageUrl.startsWith('http') 
                       ? template.previewImageUrl 
@@ -111,11 +111,11 @@ export default function CVTemplates() {
                   <span className="badge badge-success text-xs">Miễn phí</span>
                 )}
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                 {template.name}
               </h3>
               {template.description && (
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">
                   {template.description}
                 </p>
               )}

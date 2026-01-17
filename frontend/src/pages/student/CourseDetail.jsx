@@ -158,8 +158,8 @@ export default function CourseDetail() {
     return (
       <div className="max-w-4xl mx-auto px-4 py-4">
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
-          <p className="mt-4 text-gray-600 font-medium">Đang tải khóa học...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 dark:border-gray-700 border-t-blue-600 dark:border-t-blue-500"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Đang tải khóa học...</p>
         </div>
       </div>
     );
@@ -168,10 +168,10 @@ export default function CourseDetail() {
   if (!course) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-4">
-        <div className="card p-12 text-center">
-          <i className="fas fa-exclamation-circle text-red-500 text-6xl mb-4"></i>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Không tìm thấy khóa học</h2>
-          <button onClick={() => navigate('/student/courses')} className="btn-primary mt-4">
+        <div className="card p-12 text-center dark:bg-gray-900 dark:border-gray-800">
+          <i className="fas fa-exclamation-circle text-red-500 dark:text-red-400 text-6xl mb-4"></i>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Không tìm thấy khóa học</h2>
+          <button onClick={() => navigate('/student/courses')} className="btn-primary mt-4 dark:bg-blue-700 dark:hover:bg-blue-800">
             Quay lại danh sách
           </button>
         </div>
@@ -184,14 +184,14 @@ export default function CourseDetail() {
       {/* Back Button */}
       <button
         onClick={() => navigate('/student/courses')}
-        className="mb-6 text-gray-600 hover:text-gray-900 flex items-center gap-2"
+        className="mb-6 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-blue-400 flex items-center gap-2"
       >
         <i className="fas fa-arrow-left"></i>
         <span>Quay lại</span>
       </button>
 
       {/* Course Header */}
-      <div className="card p-8 mb-6">
+      <div className="card p-8 mb-6 dark:bg-gray-900 dark:border-gray-800">
         {course.thumbnailUrl && (
           <div className="mb-6 rounded-lg overflow-hidden">
             <img
@@ -213,11 +213,11 @@ export default function CourseDetail() {
             </span>
           )}
         </div>
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">{course.title}</h1>
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">{course.title}</h1>
         {course.description && (
-          <p className="text-gray-700 leading-relaxed mb-4">{course.description}</p>
+          <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">{course.description}</p>
         )}
-        <div className="flex items-center gap-6 text-sm text-gray-600">
+        <div className="flex items-center gap-6 text-sm text-gray-600 dark:text-gray-300">
           {course.durationHours && (
             <span>
               <i className="fas fa-clock mr-1"></i>
@@ -229,10 +229,10 @@ export default function CourseDetail() {
 
       {/* Course Content */}
       {course.content && (
-        <div className="card p-8 mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Nội dung khóa học</h2>
+        <div className="card p-8 mb-6 dark:bg-gray-900 dark:border-gray-800">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Nội dung khóa học</h2>
           <div 
-            className="prose max-w-none"
+            className="prose max-w-none dark:prose-invert"
             dangerouslySetInnerHTML={{ __html: course.content }}
           />
         </div>
@@ -240,31 +240,31 @@ export default function CourseDetail() {
 
       {/* Course Modules & Lessons */}
       {modules.length > 0 && (
-        <div className="card p-6 mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Nội dung khóa học</h2>
+        <div className="card p-6 mb-6 dark:bg-gray-900 dark:border-gray-800">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Nội dung khóa học</h2>
           <div className="space-y-6">
             {modules.map((module, moduleIndex) => (
-              <div key={module.id} className="border-l-4 border-blue-500 pl-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+              <div key={module.id} className="border-l-4 border-blue-500 dark:border-blue-600 pl-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
                   Module {moduleIndex + 1}: {module.title}
                 </h3>
                 {module.description && (
-                  <p className="text-gray-600 mb-3">{module.description}</p>
+                  <p className="text-gray-600 dark:text-gray-300 mb-3">{module.description}</p>
                 )}
                 {module.lessons && module.lessons.length > 0 ? (
                   <div className="space-y-2">
                     {module.lessons.map((lesson, lessonIndex) => (
                       <div
                         key={lesson.id}
-                        className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                        className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
                       >
-                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-semibold">
                           {lessonIndex + 1}
                         </div>
                         <div className="flex-1">
-                          <p className="font-medium text-gray-900">{lesson.title}</p>
+                          <p className="font-medium text-gray-900 dark:text-white">{lesson.title}</p>
                           {lesson.durationMinutes && (
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
                               <i className="fas fa-clock mr-1"></i>
                               {lesson.durationMinutes} phút
                             </p>
@@ -272,20 +272,20 @@ export default function CourseDetail() {
                         </div>
                         <div className="flex items-center gap-2">
                           {lesson.type === 'VIDEO' && (
-                            <span className="badge badge-info text-xs">
+                            <span className="badge badge-info text-xs dark:bg-blue-800 dark:text-blue-200">
                               <i className="fas fa-video mr-1"></i>
                               Video
                             </span>
                           )}
                           {lesson.isPreview && (
-                            <span className="badge badge-success text-xs">Xem trước</span>
+                            <span className="badge badge-success text-xs dark:bg-green-800 dark:text-green-200">Xem trước</span>
                           )}
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-sm">Chưa có bài học</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">Chưa có bài học</p>
                 )}
               </div>
             ))}
@@ -294,25 +294,25 @@ export default function CourseDetail() {
       )}
 
       {/* Enrollment */}
-      <div className="card p-6">
+      <div className="card p-6 dark:bg-gray-900 dark:border-gray-800">
         {enrollment ? (
           <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Bạn đã đăng ký khóa học này</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Bạn đã đăng ký khóa học này</h2>
             <div className="space-y-4">
               <div>
-                <p className="mb-2">
+                <p className="mb-2 dark:text-gray-300">
                   <span className="font-semibold">Trạng thái: </span>
-                  <span className="badge badge-success">Đã đăng ký</span>
+                  <span className="badge badge-success dark:bg-green-800 dark:text-green-200">Đã đăng ký</span>
                 </p>
                 {enrollment.progressPercentage && (
                   <div>
-                    <div className="flex justify-between text-sm mb-1">
+                    <div className="flex justify-between text-sm mb-1 dark:text-gray-300">
                       <span>Tiến độ</span>
                       <span>{enrollment.progressPercentage}%</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                       <div
-                        className="bg-blue-600 h-2 rounded-full transition-all"
+                        className="bg-blue-600 dark:bg-blue-500 h-2 rounded-full transition-all"
                         style={{ width: `${enrollment.progressPercentage}%` }}
                       ></div>
                     </div>
@@ -322,7 +322,7 @@ export default function CourseDetail() {
               {modules.length > 0 && modules[0].lessons?.length > 0 && (
                 <button
                   onClick={() => navigate(`/student/courses/${id}/learn/${enrollment.id}/${modules[0].lessons[0].id}`)}
-                  className="btn-primary w-full"
+                  className="btn-primary w-full dark:bg-blue-700 dark:hover:bg-blue-800"
                 >
                   <i className="fas fa-play mr-2"></i>
                   Bắt đầu học
@@ -332,16 +332,16 @@ export default function CourseDetail() {
           </div>
         ) : (
           <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
               {!course.isPremium ? 'Bắt đầu học ngay' : 'Đăng ký khóa học'}
             </h2>
             {!course.isPremium ? (
-              <button onClick={handleEnroll} className="btn-primary w-full">
+              <button onClick={handleEnroll} className="btn-primary w-full dark:bg-blue-700 dark:hover:bg-blue-800">
                 <i className="fas fa-play mr-2"></i>
                 Học ngay
               </button>
             ) : (
-              <button onClick={handleEnroll} className="btn-primary w-full">
+              <button onClick={handleEnroll} className="btn-primary w-full dark:bg-blue-700 dark:hover:bg-blue-800">
                 <i className="fas fa-crown mr-2"></i>
                 Đăng ký (Yêu cầu Premium)
               </button>

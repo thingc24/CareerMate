@@ -11,6 +11,19 @@ export default function Courses() {
   const [activeTab, setActiveTab] = useState('all'); // 'all' or 'my'
 
   useEffect(() => {
+    // Load enrollments on mount
+    const initEnrollments = async () => {
+      try {
+        const data = await api.getMyEnrollments();
+        setMyEnrollments(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Error loading enrollments:', error);
+      }
+    };
+    initEnrollments();
+  }, []);
+
+  useEffect(() => {
     if (activeTab === 'all') {
       loadCourses();
     } else {
@@ -36,6 +49,14 @@ export default function Courses() {
         data = data.filter(course => !course.isPremium);
         console.log('Filtered free courses:', data);
       }
+      
+      // Filter out enrolled courses from 'all' tab
+      if (activeTab === 'all' && Array.isArray(data) && myEnrollments.length > 0) {
+        const enrolledCourseIds = myEnrollments.map(e => e.course?.id).filter(Boolean);
+        data = data.filter(course => !enrolledCourseIds.includes(course.id));
+        console.log('Filtered out enrolled courses:', enrolledCourseIds);
+      }
+      
       setCourses(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error loading courses:', error);
@@ -48,13 +69,10 @@ export default function Courses() {
 
   const loadMyEnrollments = async () => {
     try {
-      setLoading(true);
       const data = await api.getMyEnrollments();
       setMyEnrollments(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error loading enrollments:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -62,7 +80,10 @@ export default function Courses() {
     try {
       await api.enrollCourse(courseId);
       alert('Đã đăng ký khóa học thành công!');
-      loadMyEnrollments();
+      // Reload enrollments and courses to update the UI
+      await loadMyEnrollments();
+      // Remove enrolled course from 'all' tab immediately
+      setCourses(prev => prev.filter(c => c.id !== courseId));
     } catch (error) {
       alert('Lỗi: ' + (error.response?.data?.error || 'Không thể đăng ký khóa học'));
     }
@@ -80,8 +101,8 @@ export default function Courses() {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
-          <p className="mt-4 text-gray-600 font-medium">Đang tải khóa học...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 dark:border-gray-700 border-t-blue-600 dark:border-t-blue-500"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Đang tải khóa học...</p>
         </div>
       </div>
     );
@@ -92,13 +113,13 @@ export default function Courses() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-4">
       {/* Tabs */}
-      <div className="mb-6 flex gap-4 border-b">
+      <div className="mb-6 flex gap-4 border-b dark:border-gray-800">
         <button
           onClick={() => setActiveTab('all')}
           className={`px-4 py-2 font-semibold ${
             activeTab === 'all'
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-gray-600 hover:text-gray-900'
+              ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+              : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
           }`}
         >
           Tất cả khóa học
@@ -107,8 +128,8 @@ export default function Courses() {
           onClick={() => setActiveTab('my')}
           className={`px-4 py-2 font-semibold ${
             activeTab === 'my'
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-gray-600 hover:text-gray-900'
+              ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+              : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
           }`}
         >
           Khóa học của tôi ({myEnrollments.length})
@@ -117,13 +138,13 @@ export default function Courses() {
 
       {/* Filters - Only show for 'all' tab */}
       {activeTab === 'all' && (
-        <div className="card p-6 mb-6">
+        <div className="card p-6 mb-6 dark:bg-gray-900 dark:border-gray-800">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="md:w-64">
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="input-field"
+                className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
                 disabled={showFreeOnly}
               >
                 {categories.map(cat => (
@@ -138,7 +159,7 @@ export default function Courses() {
                 onChange={(e) => setShowFreeOnly(e.target.checked)}
                 className="w-5 h-5 text-blue-600 rounded"
               />
-              <span className="text-gray-700">Chỉ hiển thị khóa học miễn phí</span>
+              <span className="text-gray-700 dark:text-gray-300">Chỉ hiển thị khóa học miễn phí</span>
             </label>
           </div>
         </div>
@@ -146,9 +167,9 @@ export default function Courses() {
 
       {/* Courses Grid */}
       {displayCourses.length === 0 ? (
-        <div className="card p-12 text-center">
-          <i className="fas fa-graduation-cap text-gray-400 text-6xl mb-4"></i>
-          <p className="text-gray-600 text-lg">
+        <div className="card p-12 text-center dark:bg-gray-900 dark:border-gray-800">
+          <i className="fas fa-graduation-cap text-gray-400 dark:text-gray-500 text-6xl mb-4"></i>
+          <p className="text-gray-600 dark:text-gray-300 text-lg">
             {activeTab === 'all' ? 'Không tìm thấy khóa học nào' : 'Bạn chưa đăng ký khóa học nào'}
           </p>
         </div>
@@ -157,7 +178,7 @@ export default function Courses() {
           {displayCourses.map((course) => (
             <div
               key={course.id}
-              className="card p-6 hover:shadow-lg transition-all duration-300"
+              className="card p-6 hover:shadow-lg transition-all duration-300 dark:bg-gray-900 dark:border-gray-800"
             >
               {course.thumbnailUrl && (
                 <div className="mb-4 overflow-hidden rounded-lg">
@@ -182,13 +203,13 @@ export default function Courses() {
                   </span>
                 )}
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">{course.title}</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{course.title}</h3>
               {course.description && (
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">
                   {course.description}
                 </p>
               )}
-              <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+              <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
                 {course.durationHours && (
                   <span>
                     <i className="fas fa-clock mr-1"></i>

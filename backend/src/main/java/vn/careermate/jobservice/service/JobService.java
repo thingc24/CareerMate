@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.careermate.jobservice.model.Job;
@@ -12,6 +14,8 @@ import vn.careermate.jobservice.repository.JobRepository;
 import vn.careermate.jobservice.repository.JobSkillRepository;
 import vn.careermate.contentservice.model.Company;
 import vn.careermate.userservice.model.RecruiterProfile;
+import vn.careermate.userservice.model.User;
+import vn.careermate.userservice.repository.UserRepository;
 import vn.careermate.userservice.service.RecruiterProfileService;
 import vn.careermate.notificationservice.service.NotificationService;
 
@@ -27,6 +31,7 @@ public class JobService {
     private final JobSkillRepository jobSkillRepository;
     private final RecruiterProfileService recruiterProfileService;
     private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     @Transactional
     public Job createJob(Job job, List<String> requiredSkills, List<String> optionalSkills) {
@@ -196,6 +201,39 @@ public class JobService {
         try {
             Job job = jobRepository.findById(jobId)
                     .orElseThrow(() -> new RuntimeException("Job not found"));
+            
+            // Check if job is hidden - only allow admin or job owner to see hidden jobs
+            if (job.getHidden() != null && job.getHidden()) {
+                try {
+                    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                    if (auth != null && auth.getAuthorities() != null) {
+                        boolean isAdmin = auth.getAuthorities().stream()
+                                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                        if (isAdmin) {
+                            // Admin can see hidden jobs
+                        } else if (job.getRecruiter() != null && job.getRecruiter().getUser() != null) {
+                            // Check if current user is the job owner
+                            String email = auth.getName();
+                            User currentUser = userRepository.findByEmail(email).orElse(null);
+                            if (currentUser != null && job.getRecruiter().getUser().getId().equals(currentUser.getId())) {
+                                // Job owner can see their hidden job
+                            } else {
+                                throw new RuntimeException("Job not found or has been hidden");
+                            }
+                        } else {
+                            throw new RuntimeException("Job not found or has been hidden");
+                        }
+                    } else {
+                        throw new RuntimeException("Job not found or has been hidden");
+                    }
+                } catch (Exception e) {
+                    if (e instanceof RuntimeException) {
+                        throw e;
+                    }
+                    throw new RuntimeException("Job not found or has been hidden");
+                }
+            }
+            
             // Detach lazy-loaded relations
             // KHÔNG set null cho collections có cascade="all-delete-orphan" (skills, applications)
             // @JsonIgnore sẽ đảm bảo chúng không được serialize

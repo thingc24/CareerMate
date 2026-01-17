@@ -76,7 +76,13 @@ public class Notification {
         NEW_MESSAGE,          // Tin nhắn mới
         SUBSCRIPTION_REQUEST, // Sinh viên đăng ký gói dịch vụ (thông báo cho admin)
         SUBSCRIPTION_APPROVED, // Admin duyệt đăng ký gói dịch vụ (thông báo cho sinh viên)
-        SUBSCRIPTION_REJECTED  // Admin từ chối đăng ký gói dịch vụ (thông báo cho sinh viên)
+        SUBSCRIPTION_REJECTED,  // Admin từ chối đăng ký gói dịch vụ (thông báo cho sinh viên)
+        JOB_HIDDEN,           // Admin ẩn tin tuyển dụng
+        JOB_UNHIDDEN,         // Admin hiện lại tin tuyển dụng
+        JOB_DELETED,          // Admin xóa tin tuyển dụng
+        ARTICLE_HIDDEN,       // Admin ẩn bài viết
+        ARTICLE_UNHIDDEN,     // Admin hiện lại bài viết
+        ARTICLE_DELETED       // Admin xóa bài viết
     }
 
     public enum NotificationStatus {

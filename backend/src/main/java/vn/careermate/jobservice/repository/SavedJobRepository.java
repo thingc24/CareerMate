@@ -29,4 +29,7 @@ public interface SavedJobRepository extends JpaRepository<SavedJob, UUID> {
     
     @Query("SELECT sj FROM SavedJob sj WHERE sj.student.id = :studentId AND sj.job.id = :jobId")
     Optional<SavedJob> findSavedJob(@Param("studentId") UUID studentId, @Param("jobId") UUID jobId);
+    
+    @Query("SELECT sj FROM SavedJob sj WHERE sj.job.id = :jobId")
+    List<SavedJob> findByJobId(@Param("jobId") UUID jobId);
 }

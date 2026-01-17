@@ -32,7 +32,7 @@ export default function NotificationBell() {
   return (
     <button
       onClick={handleClick}
-      className="relative p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors"
+      className="relative p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
       title="Thông báo"
     >
       <i className="fas fa-bell text-xl"></i>

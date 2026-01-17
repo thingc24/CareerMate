@@ -74,8 +74,8 @@ export default function Applications() {
           <i className={`${icon} text-white text-xl`}></i>
         </div>
       </div>
-      <p className="text-sm font-medium text-gray-600 mb-2">{label}</p>
-      <p className="text-3xl font-bold gradient-text">{value}</p>
+      <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">{label}</p>
+      <p className="text-3xl font-bold gradient-text dark:text-white">{value}</p>
     </div>
   );
 
@@ -129,8 +129,8 @@ export default function Applications() {
           <div className="inline-flex h-24 w-24 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 items-center justify-center mb-6">
             <i className="fas fa-briefcase text-blue-500 text-4xl"></i>
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Chưa có đơn ứng tuyển nào</h3>
-          <p className="text-gray-600 mb-6">Bắt đầu tìm việc và ứng tuyển ngay hôm nay!</p>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Chưa có đơn ứng tuyển nào</h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">Bắt đầu tìm việc và ứng tuyển ngay hôm nay!</p>
           <Link to="/student/jobs" className="btn-primary inline-flex items-center">
             <i className="fas fa-search mr-2"></i>
             Tìm việc làm
@@ -150,40 +150,40 @@ export default function Applications() {
                     <div className="flex-1">
                       <Link
                         to={`/student/jobs/${application.job?.id || application.jobId}`}
-                        className="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors mb-2 block"
+                        className="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors mb-2 block"
                       >
                         {application.job?.title || 'Việc làm'}
                       </Link>
-                      <p className="text-gray-600 font-medium mb-2">
+                      <p className="text-gray-600 dark:text-gray-300 font-medium mb-2">
                         {application.job?.company?.name || 'Công ty'}
                       </p>
                     </div>
                     {getStatusBadge(application.status)}
                   </div>
                   
-                  <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+                  <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-300 mb-4">
                     <span className="flex items-center">
-                      <i className="fas fa-calendar text-gray-400 mr-2"></i>
+                      <i className="fas fa-calendar text-gray-400 dark:text-gray-500 mr-2"></i>
                       Ứng tuyển: {formatDate(application.appliedAt)}
                     </span>
                     {application.job?.location && (
                       <span className="flex items-center">
-                        <i className="fas fa-map-marker-alt text-gray-400 mr-2"></i>
+                        <i className="fas fa-map-marker-alt text-gray-400 dark:text-gray-500 mr-2"></i>
                         {application.job.location}
                       </span>
                     )}
                     {application.cv && (
                       <span className="flex items-center">
-                        <i className="fas fa-file-pdf text-gray-400 mr-2"></i>
+                        <i className="fas fa-file-pdf text-gray-400 dark:text-gray-500 mr-2"></i>
                         CV đã sử dụng
                       </span>
                     )}
                   </div>
 
                   {application.coverLetter && (
-                    <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                      <p className="text-sm font-medium text-gray-700 mb-2">Thư xin việc:</p>
-                      <p className="text-sm text-gray-600 line-clamp-2">{application.coverLetter}</p>
+                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-4">
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Thư xin việc:</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">{application.coverLetter}</p>
                     </div>
                   )}
 
@@ -195,10 +195,10 @@ export default function Applications() {
                         ? 'bg-red-50 border border-red-200'
                         : 'bg-gray-50 border border-gray-200'
                     }`}>
-                      <p className="text-sm font-medium text-gray-700 mb-1">
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         {application.status === 'ACCEPTED' ? 'Phản hồi từ nhà tuyển dụng:' : 'Ghi chú:'}
                       </p>
-                      <p className="text-sm text-gray-600">{application.note}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">{application.note}</p>
                     </div>
                   )}
                 </div>
@@ -224,7 +224,7 @@ export default function Applications() {
           <button
             onClick={() => setPage(Math.max(0, page - 1))}
             disabled={page === 0}
-            className="px-4 py-2 border-2 border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-blue-500 hover:text-blue-600 transition-colors font-medium"
+            className="px-4 py-2 bg-white dark:bg-gray-900 dark:text-white border-2 border-gray-200 dark:border-gray-800 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-blue-500 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium"
           >
             <i className="fas fa-chevron-left mr-2"></i>
             Trước
@@ -250,7 +250,7 @@ export default function Applications() {
                   className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                     page === pageNum
                       ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
-                      : 'border-2 border-gray-200 hover:border-blue-500 hover:text-blue-600'
+                      : 'bg-white dark:bg-gray-900 dark:text-white border-2 border-gray-200 dark:border-gray-800 hover:border-blue-500 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400'
                   }`}
                 >
                   {pageNum + 1}
@@ -262,7 +262,7 @@ export default function Applications() {
           <button
             onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
             disabled={page >= totalPages - 1}
-            className="px-4 py-2 border-2 border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-blue-500 hover:text-blue-600 transition-colors font-medium"
+            className="px-4 py-2 bg-white dark:bg-gray-900 dark:text-white border-2 border-gray-200 dark:border-gray-800 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-blue-500 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium"
           >
             Sau
             <i className="fas fa-chevron-right ml-2"></i>

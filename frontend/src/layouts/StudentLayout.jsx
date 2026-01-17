@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import ChatWidget from '../components/ChatWidget';
 import NotificationBell from '../components/NotificationBell';
+import DarkModeToggle from '../components/DarkModeToggle';
 import api from '../services/api';
 
 export default function StudentLayout({ children }) {
@@ -77,20 +78,20 @@ export default function StudentLayout({ children }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900">
+    <div className="min-h-screen bg-slate-100 dark:bg-black text-slate-900 dark:text-white" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       <div className="flex h-screen">
         {/* Sidebar */}
-        <aside className="hidden md:flex w-64 flex-col bg-white/90 backdrop-blur border-r border-slate-200 shadow-sm">
-          <div className="h-16 flex items-center px-6 border-b border-slate-100">
+        <aside className="hidden md:flex w-64 flex-col bg-white/90 dark:bg-black/90 backdrop-blur border-r border-slate-200 dark:border-gray-800 shadow-sm">
+          <div className="h-16 flex items-center px-6 border-b border-slate-100 dark:border-gray-800">
             <Link to="/student/dashboard" className="flex items-center gap-2">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white font-semibold shadow-sm">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 dark:bg-blue-500 text-white font-semibold shadow-sm">
                 CM
               </span>
               <div className="flex flex-col">
-                <span className="text-sm font-semibold tracking-tight text-slate-900">
+                <span className="text-sm font-semibold tracking-tight text-slate-900 dark:text-white">
                   CareerMate
                 </span>
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-slate-500 dark:text-gray-400">
                   Student Portal
                 </span>
               </div>
@@ -102,8 +103,8 @@ export default function StudentLayout({ children }) {
               to="/student/dashboard"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                 isActive('/student/dashboard')
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-900'
               }`}
             >
               <i className="fas fa-home text-sm" />
@@ -113,8 +114,8 @@ export default function StudentLayout({ children }) {
               to="/student/jobs"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                 isActive('/student/jobs')
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-900'
               }`}
             >
               <i className="fas fa-briefcase text-sm" />
@@ -124,8 +125,8 @@ export default function StudentLayout({ children }) {
               to="/student/applications"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                 isActive('/student/applications')
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-900'
               }`}
             >
               <i className="fas fa-file-signature text-sm" />
@@ -135,8 +136,8 @@ export default function StudentLayout({ children }) {
               to="/student/cv"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                 isActive('/student/cv') || location.pathname.startsWith('/student/cv/')
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-900'
               }`}
             >
               <i className="fas fa-file-alt text-sm" />
@@ -146,8 +147,8 @@ export default function StudentLayout({ children }) {
               to="/student/cv-templates"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                 isActive('/student/cv-templates') || location.pathname.startsWith('/student/cv-templates/')
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-900'
               }`}
             >
               <i className="fas fa-file-invoice text-sm" />
@@ -157,8 +158,8 @@ export default function StudentLayout({ children }) {
               to="/student/roadmap"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                 isActive('/student/roadmap')
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-900'
               }`}
             >
               <i className="fas fa-route text-sm" />
@@ -168,8 +169,8 @@ export default function StudentLayout({ children }) {
               to="/student/articles"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                 isActive('/student/articles')
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-900'
               }`}
             >
               <i className="fas fa-newspaper text-sm" />
@@ -179,8 +180,8 @@ export default function StudentLayout({ children }) {
               to="/student/messages"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                 isActive('/student/messages')
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-900'
               }`}
             >
               <i className="fas fa-comments text-sm" />
@@ -190,8 +191,8 @@ export default function StudentLayout({ children }) {
               to="/student/companies"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                 isActive('/student/companies')
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-900'
               }`}
             >
               <i className="fas fa-building text-sm" />
@@ -201,8 +202,8 @@ export default function StudentLayout({ children }) {
               to="/student/courses"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                 isActive('/student/courses')
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-900'
               }`}
             >
               <i className="fas fa-graduation-cap text-sm" />
@@ -212,8 +213,8 @@ export default function StudentLayout({ children }) {
               to="/student/challenges"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                 isActive('/student/challenges')
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-900'
               }`}
             >
               <i className="fas fa-trophy text-sm" />
@@ -223,8 +224,8 @@ export default function StudentLayout({ children }) {
               to="/student/packages"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                 isActive('/student/packages')
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-900'
               }`}
             >
               <i className="fas fa-crown text-sm" />
@@ -234,8 +235,8 @@ export default function StudentLayout({ children }) {
               to="/student/profile"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                 isActive('/student/profile')
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-900'
               }`}
             >
               <i className="fas fa-user text-sm" />
@@ -243,17 +244,17 @@ export default function StudentLayout({ children }) {
             </Link>
           </nav>
 
-          <div className="border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
+          <div className="border-t border-slate-100 dark:border-gray-800 px-4 py-3 text-xs text-slate-500 dark:text-gray-400">
             <div className="flex items-center justify-between gap-2">
               <div className="flex flex-col">
-                <span className="font-medium text-slate-700 truncate max-w-[10rem]">
+                <span className="font-medium text-slate-700 dark:text-gray-200 truncate max-w-[10rem]">
                   {user?.fullName || user?.email}
                 </span>
-                <span className="text-slate-400">Sinh viên</span>
+                <span className="text-slate-400 dark:text-gray-400">Sinh viên</span>
               </div>
               <button
                 onClick={handleLogout}
-                className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                className="inline-flex items-center gap-1 rounded-full border border-slate-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-slate-600 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-gray-900"
               >
                 <i className="fas fa-sign-out-alt" />
                 <span>Đăng xuất</span>
@@ -265,10 +266,10 @@ export default function StudentLayout({ children }) {
         {/* Main area */}
         <div className="flex-1 flex flex-col">
           {/* Top bar with avatar */}
-          <header className="h-16 px-4 md:px-6 flex items-center justify-between bg-white border-b border-slate-200 shadow-sm">
+          <header className="h-16 px-4 md:px-6 flex items-center justify-between bg-white dark:bg-black border-b border-slate-200 dark:border-gray-800 shadow-sm">
             <button
               onClick={() => navigate('/student/profile/view')}
-              className="flex items-center gap-3 hover:bg-slate-50 rounded-lg px-3 py-2 transition-colors"
+              className="flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg px-3 py-2 transition-colors"
             >
               {getAvatarUrl() ? (
                 <img
@@ -282,23 +283,24 @@ export default function StudentLayout({ children }) {
                 </div>
               )}
               <div className="hidden md:flex flex-col items-start">
-                <span className="text-sm font-semibold text-slate-900">
+                <span className="text-sm font-semibold text-slate-900 dark:text-white">
                   {user?.fullName || user?.email || 'Sinh viên'}
                 </span>
-                <span className="text-xs text-slate-500">Xem hồ sơ</span>
+                <span className="text-xs text-slate-500 dark:text-gray-400">Xem hồ sơ</span>
               </div>
             </button>
             <div className="md:hidden">
-              <Link to="/student/dashboard" className="text-lg font-semibold text-slate-900">
+              <Link to="/student/dashboard" className="text-lg font-semibold text-slate-900 dark:text-white">
                 CareerMate
               </Link>
             </div>
             <div className="flex items-center gap-3">
+              <DarkModeToggle />
               <NotificationBell />
             </div>
           </header>
 
-          <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
+          <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8 bg-slate-100 dark:bg-black">
             <div className="max-w-6xl mx-auto space-y-6">{children}</div>
           </main>
         </div>

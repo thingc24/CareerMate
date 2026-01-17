@@ -60,18 +60,18 @@ export default function CreateArticle() {
       <div className="mb-6">
         <button
           onClick={() => navigate('/admin/articles')}
-          className="text-gray-600 hover:text-gray-900 flex items-center gap-2 mb-4"
+          className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-indigo-400 flex items-center gap-2 mb-4"
         >
           <i className="fas fa-arrow-left"></i>
           <span>Quay lại</span>
         </button>
-        <h1 className="text-3xl font-bold text-gray-900">Đăng bài viết</h1>
-        <p className="text-gray-600 mt-2">Bài viết của bạn sẽ được xuất bản ngay lập tức.</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Đăng bài viết</h1>
+        <p className="text-gray-600 dark:text-gray-300 mt-2">Bài viết của bạn sẽ được xuất bản ngay lập tức.</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="card p-8 space-y-6">
+      <form onSubmit={handleSubmit} className="card p-8 space-y-6 dark:bg-gray-900 dark:border-gray-800">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Tiêu đề bài viết <span className="text-red-500">*</span>
           </label>
           <input
@@ -79,33 +79,33 @@ export default function CreateArticle() {
             required
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="input-field"
+            className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
             placeholder="Nhập tiêu đề bài viết"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Mô tả ngắn
           </label>
           <textarea
             value={formData.excerpt}
             onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-            className="input-field"
+            className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
             rows="3"
             placeholder="Mô tả ngắn về bài viết (sẽ hiển thị trong danh sách)"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Nội dung bài viết <span className="text-red-500">*</span>
           </label>
           <textarea
             required
             value={formData.content}
             onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-            className="input-field"
+            className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
             rows="15"
             placeholder="Nhập nội dung bài viết (có thể dùng HTML)"
           />
@@ -113,13 +113,13 @@ export default function CreateArticle() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Danh mục
             </label>
             <select
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="input-field"
+              className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
             >
               <option value="">Chọn danh mục</option>
               {categories.map(cat => (
@@ -129,21 +129,21 @@ export default function CreateArticle() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               URL hình ảnh đại diện
             </label>
             <input
               type="url"
               value={formData.thumbnailUrl}
               onChange={(e) => setFormData({ ...formData, thumbnailUrl: e.target.value })}
-              className="input-field"
+              className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
               placeholder="https://example.com/image.jpg"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Tags
           </label>
           <div className="flex gap-2 mb-2">
@@ -152,13 +152,13 @@ export default function CreateArticle() {
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
-              className="input-field flex-1"
+              className="input-field flex-1 dark:bg-gray-800 dark:text-white dark:border-gray-700"
               placeholder="Nhập tag và nhấn Enter"
             />
             <button
               type="button"
               onClick={handleAddTag}
-              className="btn-secondary"
+              className="btn-secondary dark:bg-gray-800 dark:text-white dark:border-gray-700 dark:hover:bg-gray-700"
             >
               Thêm
             </button>
@@ -168,13 +168,13 @@ export default function CreateArticle() {
               {formData.tags.map((tag, index) => (
                 <span
                   key={index}
-                  className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                  className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 rounded-full text-sm"
                 >
                   {tag}
                   <button
                     type="button"
                     onClick={() => handleRemoveTag(tag)}
-                    className="text-blue-600 hover:text-blue-800"
+                    className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                   >
                     <i className="fas fa-times text-xs"></i>
                   </button>
@@ -188,14 +188,14 @@ export default function CreateArticle() {
           <button
             type="submit"
             disabled={loading}
-            className="btn-primary flex-1"
+            className="btn-primary flex-1 dark:bg-blue-700 dark:hover:bg-blue-800"
           >
             {loading ? 'Đang đăng...' : 'Đăng bài viết'}
           </button>
           <button
             type="button"
             onClick={() => navigate('/admin/articles')}
-            className="btn-secondary"
+            className="btn-secondary dark:bg-gray-800 dark:text-white dark:border-gray-700 dark:hover:bg-gray-700"
           >
             Hủy
           </button>

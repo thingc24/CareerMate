@@ -253,16 +253,16 @@ export default function Messages() {
     <div className="max-w-7xl mx-auto px-4 py-4 h-[calc(100vh-120px)] flex flex-col">
       <div className="card p-0 overflow-hidden flex-1 flex shadow-lg">
         {/* Conversations List - Left Side */}
-        <div className="w-1/3 border-r border-gray-200 flex flex-col bg-white">
+        <div className="w-1/3 border-r border-gray-200 dark:border-gray-800 flex flex-col bg-white dark:bg-gray-900">
           {/* Header */}
-          <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-teal-50">
-            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <i className="fas fa-comments text-emerald-600"></i>
+          <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-gray-800 dark:to-gray-800">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <i className="fas fa-comments text-emerald-600 dark:text-emerald-400"></i>
               Tin nhắn
             </h2>
             {unreadCount > 0 && (
-              <p className="text-sm text-gray-600 mt-1">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-gray-800 text-emerald-800 dark:text-emerald-300">
                   {unreadCount} tin nhắn chưa đọc
                 </span>
               </p>
@@ -278,12 +278,12 @@ export default function Messages() {
               </div>
             ) : conversations.length === 0 ? (
               <div className="p-8 text-center">
-                <i className="fas fa-comments text-gray-400 text-5xl mb-3"></i>
-                <p className="text-gray-600 text-sm font-medium">Chưa có cuộc trò chuyện nào</p>
-                <p className="text-gray-500 text-xs mt-1">Bắt đầu trò chuyện với sinh viên ngay!</p>
+                <i className="fas fa-comments text-gray-400 dark:text-gray-500 text-5xl mb-3"></i>
+                <p className="text-gray-600 dark:text-gray-300 text-sm font-medium">Chưa có cuộc trò chuyện nào</p>
+                <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">Bắt đầu trò chuyện với sinh viên ngay!</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-gray-100 dark:divide-gray-800">
                 {conversations.map((conversation) => {
                   const otherUser = getOtherUser(conversation);
                   if (!otherUser) return null;
@@ -295,8 +295,8 @@ export default function Messages() {
                     <button
                       key={conversation.id}
                       onClick={() => handleConversationClick(conversation)}
-                      className={`w-full p-4 hover:bg-gray-50 transition-all text-left relative ${
-                        isSelected ? 'bg-emerald-50 border-l-4 border-emerald-600' : ''
+                      className={`w-full p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all text-left relative ${
+                        isSelected ? 'bg-emerald-50 dark:bg-gray-800 border-l-4 border-emerald-600 dark:border-emerald-400' : ''
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -305,7 +305,7 @@ export default function Messages() {
                             <img
                               src={avatarUrl}
                               alt={otherUser.fullName}
-                              className="w-14 h-14 rounded-full object-cover shadow-md border-2 border-white"
+                              className="w-14 h-14 rounded-full object-cover shadow-md border-2 border-white dark:border-gray-800"
                               onError={(e) => {
                                 e.target.style.display = 'none';
                                 if (e.target.nextSibling) {
@@ -325,16 +325,16 @@ export default function Messages() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2 mb-1">
-                            <p className="font-semibold text-gray-900 truncate text-base">
+                            <p className="font-semibold text-gray-900 dark:text-white truncate text-base">
                               {otherUser.fullName || 'Người dùng'}
                             </p>
                             {conversation.lastMessageAt && (
-                              <span className="text-xs text-gray-500 whitespace-nowrap">
+                              <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
                                 {formatDate(conversation.lastMessageAt)}
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-gray-600 truncate">
+                          <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
                             {lastMessages[conversation.id] || 'Chưa có tin nhắn'}
                           </p>
                         </div>
@@ -348,19 +348,19 @@ export default function Messages() {
         </div>
 
         {/* Messages - Right Side */}
-        <div className="flex-1 flex flex-col bg-gray-50">
+        <div className="flex-1 flex flex-col bg-gray-50 dark:bg-black">
           {!selectedConversation ? (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
-                <i className="fas fa-comments text-gray-300 text-7xl mb-4"></i>
-                <p className="text-gray-500 text-lg font-medium">Chọn cuộc trò chuyện để bắt đầu</p>
-                <p className="text-gray-400 text-sm mt-2">Nhắn tin với sinh viên ngay!</p>
+                <i className="fas fa-comments text-gray-300 dark:text-gray-600 text-7xl mb-4"></i>
+                <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">Chọn cuộc trò chuyện để bắt đầu</p>
+                <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">Nhắn tin với sinh viên ngay!</p>
               </div>
             </div>
           ) : (
             <>
               {/* Messages Header */}
-              <div className="border-b border-gray-200 p-4 bg-white shadow-sm">
+              <div className="border-b border-gray-200 dark:border-gray-800 p-4 bg-white dark:bg-gray-900 shadow-sm">
                 {(() => {
                   const otherUser = getOtherUser(selectedConversation);
                   if (!otherUser) return null;
@@ -372,7 +372,7 @@ export default function Messages() {
                           <img
                             src={avatarUrl}
                             alt={otherUser.fullName}
-                            className="w-12 h-12 rounded-full object-cover shadow-md border-2 border-white"
+                            className="w-12 h-12 rounded-full object-cover shadow-md border-2 border-white dark:border-gray-800"
                             onError={(e) => {
                               e.target.style.display = 'none';
                               if (e.target.nextSibling) {
@@ -385,10 +385,10 @@ export default function Messages() {
                           {otherUser.fullName?.charAt(0).toUpperCase() || 'U'}
                         </div>
                         <div className="flex-1">
-                          <p className="font-semibold text-gray-900 text-lg">
+                          <p className="font-semibold text-gray-900 dark:text-white text-lg">
                             {otherUser.fullName || 'Người dùng'}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
                             {otherUser.role === 'STUDENT' ? 'Sinh viên' : 'Nhà tuyển dụng'}
                           </p>
                         </div>
@@ -396,22 +396,22 @@ export default function Messages() {
                       <div className="relative" ref={menuRef}>
                         <button
                           onClick={() => setShowMenu(!showMenu)}
-                          className="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition"
+                          className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition"
                         >
                           <i className="fas fa-ellipsis-v"></i>
                         </button>
                         {showMenu && (
-                          <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                          <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 z-10">
                             <button
                               onClick={handleViewProfile}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                              className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
                             >
                               <i className="fas fa-user"></i>
                               <span>Xem thông tin cá nhân</span>
                             </button>
                             <button
                               onClick={handleDeleteMessages}
-                              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                              className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
                             >
                               <i className="fas fa-trash"></i>
                               <span>Xóa toàn bộ tin nhắn</span>
@@ -428,9 +428,9 @@ export default function Messages() {
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {messages.length === 0 ? (
                   <div className="text-center py-12">
-                    <i className="fas fa-comment-dots text-gray-300 text-4xl mb-3"></i>
-                    <p className="text-gray-500 text-sm">Chưa có tin nhắn nào</p>
-                    <p className="text-gray-400 text-xs mt-1">Bắt đầu cuộc trò chuyện ngay!</p>
+                    <i className="fas fa-comment-dots text-gray-300 dark:text-gray-600 text-4xl mb-3"></i>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">Chưa có tin nhắn nào</p>
+                    <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Bắt đầu cuộc trò chuyện ngay!</p>
                   </div>
                 ) : (
                   messages.map((msg) => {
@@ -441,7 +441,7 @@ export default function Messages() {
                         className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'} items-end gap-2`}
                       >
                         {!isMyMessage && (
-                          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white text-xs flex-shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-700 flex items-center justify-center text-white text-xs flex-shrink-0">
                             {msg.sender?.fullName?.charAt(0).toUpperCase() || 'U'}
                           </div>
                         )}
@@ -449,11 +449,11 @@ export default function Messages() {
                           className={`max-w-[70%] rounded-2xl px-4 py-2.5 shadow-sm ${
                             isMyMessage
                               ? 'bg-emerald-600 text-white rounded-br-md'
-                              : 'bg-white text-gray-900 border border-gray-200 rounded-bl-md'
+                              : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-bl-md'
                           }`}
                         >
                           <div className="whitespace-pre-wrap text-sm leading-relaxed">{msg.content}</div>
-                          <div className={`text-xs mt-1.5 ${isMyMessage ? 'text-emerald-100' : 'text-gray-500'}`}>
+                          <div className={`text-xs mt-1.5 ${isMyMessage ? 'text-emerald-100' : 'text-gray-500 dark:text-gray-400'}`}>
                             {formatTime(msg.createdAt)}
                           </div>
                         </div>
@@ -468,16 +468,16 @@ export default function Messages() {
                 )}
                 {loading && (
                   <div className="flex justify-start items-end gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white text-xs flex-shrink-0"></div>
-                    <div className="bg-white rounded-2xl px-4 py-2.5 border border-gray-200 rounded-bl-md">
+                    <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-700 flex items-center justify-center text-white text-xs flex-shrink-0"></div>
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-bl-md">
                       <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"></div>
                         <div
-                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                          className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"
                           style={{ animationDelay: '0.1s' }}
                         ></div>
                         <div
-                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                          className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"
                           style={{ animationDelay: '0.2s' }}
                         ></div>
                       </div>
@@ -488,14 +488,14 @@ export default function Messages() {
               </div>
 
               {/* Input */}
-              <form onSubmit={handleSend} className="p-4 border-t border-gray-200 bg-white">
+              <form onSubmit={handleSend} className="p-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="Nhập tin nhắn..."
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-gray-800 dark:text-white"
                     disabled={loading}
                   />
                   <button

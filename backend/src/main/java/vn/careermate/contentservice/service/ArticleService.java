@@ -41,6 +41,7 @@ public class ArticleService {
             List<Article> allArticles = articleRepository.findAll().stream()
                 .filter(a -> a.getStatus() == Article.ArticleStatus.PUBLISHED)
                 .filter(a -> a.getPublishedAt() != null)
+                .filter(a -> a.getHidden() == null || !a.getHidden()) // Filter out hidden articles
                 .filter(a -> {
                     // Filter by keyword - search in title, content, excerpt, and author name
                     if (keyword != null && !keyword.trim().isEmpty()) {
@@ -138,6 +139,38 @@ public class ArticleService {
     public Article getArticleById(UUID articleId) {
         Article article = articleRepository.findById(articleId)
                 .orElseThrow(() -> new RuntimeException("Article not found"));
+        
+        // Check if article is hidden - only allow admin or article author to see hidden articles
+        if (article.getHidden() != null && article.getHidden()) {
+            try {
+                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                if (auth != null && auth.getAuthorities() != null) {
+                    boolean isAdmin = auth.getAuthorities().stream()
+                            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                    if (isAdmin) {
+                        // Admin can see hidden articles
+                    } else if (article.getAuthor() != null) {
+                        // Check if current user is the article author
+                        String email = auth.getName();
+                        User currentUser = userRepository.findByEmail(email).orElse(null);
+                        if (currentUser != null && article.getAuthor().getId().equals(currentUser.getId())) {
+                            // Article author can see their hidden article
+                        } else {
+                            throw new RuntimeException("Article not found or has been hidden");
+                        }
+                    } else {
+                        throw new RuntimeException("Article not found or has been hidden");
+                    }
+                } else {
+                    throw new RuntimeException("Article not found or has been hidden");
+                }
+            } catch (Exception e) {
+                if (e instanceof RuntimeException) {
+                    throw e;
+                }
+                throw new RuntimeException("Article not found or has been hidden");
+            }
+        }
         
         // Load author eagerly to avoid lazy loading issues
         if (article.getAuthor() != null) {

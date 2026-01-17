@@ -48,27 +48,18 @@ export default function JobList() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-4">
-      {/* Header Section */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">
-          Tìm Việc Làm
-        </h1>
-        <p className="text-lg text-gray-600">
-          Khám phá cơ hội nghề nghiệp phù hợp với bạn
-        </p>
-      </div>
-
+      
       {/* Enhanced Search and Filters */}
-      <div className="card p-6 mb-8 shadow-lg bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+      <div className="card p-6 mb-8 shadow-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-800 border-blue-200 dark:border-gray-700">
         <form onSubmit={handleSearch} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
             <div className="md:col-span-5">
               <div className="relative">
-                <i className="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <i className="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500"></i>
                 <input
                   type="text"
                   placeholder="Tìm kiếm việc làm, công ty, kỹ năng..."
-                  className="input-field pl-12 pr-4 py-3 bg-white border-2 border-blue-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                  className="input-field pl-12 pr-4 py-3 bg-white dark:bg-gray-900 dark:text-white border-2 border-blue-200 dark:border-gray-700 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -76,9 +67,9 @@ export default function JobList() {
             </div>
             <div className="md:col-span-4">
               <div className="relative">
-                <i className="fas fa-map-marker-alt absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <i className="fas fa-map-marker-alt absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500"></i>
                 <select
-                  className="input-field pl-12 pr-10 appearance-none w-full py-3 bg-white border-2 border-blue-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                  className="input-field pl-12 pr-10 appearance-none w-full py-3 bg-white dark:bg-gray-900 dark:text-white border-2 border-blue-200 dark:border-gray-700 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                 >
@@ -89,7 +80,7 @@ export default function JobList() {
                   <option value="Cần Thơ">Cần Thơ</option>
                   <option value="Hải Phòng">Hải Phòng</option>
                 </select>
-                <i className="fas fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                <i className="fas fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none"></i>
               </div>
             </div>
             <div className="md:col-span-3">
@@ -105,8 +96,8 @@ export default function JobList() {
       {/* Results Count */}
       {!loading && jobs.length > 0 && (
         <div className="mb-4">
-          <p className="text-gray-600">
-            Tìm thấy <span className="font-semibold text-gray-900">{jobs.length}</span> việc làm
+          <p className="text-gray-600 dark:text-gray-400">
+            Tìm thấy <span className="font-semibold text-gray-900 dark:text-white">{jobs.length}</span> việc làm
           </p>
         </div>
       )}
@@ -123,12 +114,12 @@ export default function JobList() {
           ))}
         </div>
       ) : jobs.length === 0 ? (
-        <div className="card p-16 text-center shadow-lg">
-          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 mb-6">
-            <i className="fas fa-briefcase text-blue-500 text-5xl"></i>
+        <div className="card p-16 text-center shadow-lg dark:bg-gray-900 dark:border-gray-800">
+          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-gray-800 dark:to-gray-800 mb-6">
+            <i className="fas fa-briefcase text-blue-500 dark:text-blue-400 text-5xl"></i>
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">Không tìm thấy việc làm nào</h3>
-          <p className="text-gray-600 mb-6">Thử thay đổi từ khóa hoặc bộ lọc tìm kiếm</p>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Không tìm thấy việc làm nào</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">Thử thay đổi từ khóa hoặc bộ lọc tìm kiếm</p>
           <button
             onClick={() => {
               setSearchTerm('');
@@ -154,10 +145,10 @@ export default function JobList() {
                 <div className="flex-1">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                         {job.title}
                       </h3>
-                      <p className="text-gray-600 font-medium mb-3">
+                      <p className="text-gray-600 dark:text-gray-400 font-medium mb-3">
                         {job.company?.name || 'Công ty'}
                       </p>
                     </div>
@@ -166,24 +157,24 @@ export default function JobList() {
                     </span>
                   </div>
                   
-                  <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+                  <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
                     <span className="flex items-center">
-                      <i className="fas fa-map-marker-alt text-gray-400 mr-2"></i>
+                      <i className="fas fa-map-marker-alt text-gray-400 dark:text-gray-500 mr-2"></i>
                       {job.location}
                     </span>
                     <span className="flex items-center">
-                      <i className="fas fa-dollar-sign text-gray-400 mr-2"></i>
+                      <i className="fas fa-dollar-sign text-gray-400 dark:text-gray-500 mr-2"></i>
                       {formatCurrency(job.minSalary, job.currency)}
                       {job.maxSalary && ` - ${formatCurrency(job.maxSalary, job.currency)}`}
                     </span>
                     <span className="flex items-center">
-                      <i className="far fa-clock text-gray-400 mr-2"></i>
+                      <i className="far fa-clock text-gray-400 dark:text-gray-500 mr-2"></i>
                       {formatDate(job.createdAt)}
                     </span>
                   </div>
                   
                   {job.description && (
-                    <p className="text-gray-600 text-sm line-clamp-2 mb-4">
+                    <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2 mb-4">
                       {job.description.substring(0, 150)}...
                     </p>
                   )}
@@ -235,7 +226,7 @@ export default function JobList() {
           <button
             onClick={() => setPage(Math.max(0, page - 1))}
             disabled={page === 0}
-            className="px-4 py-2 border-2 border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-blue-500 hover:text-blue-600 transition-colors font-medium"
+            className="px-4 py-2 bg-white dark:bg-gray-900 dark:text-white border-2 border-gray-200 dark:border-gray-800 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-blue-500 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium"
           >
             <i className="fas fa-chevron-left mr-2"></i>
             Trước
@@ -261,7 +252,7 @@ export default function JobList() {
                   className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                     page === pageNum
                       ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
-                      : 'border-2 border-gray-200 hover:border-blue-500 hover:text-blue-600'
+                      : 'bg-white dark:bg-gray-900 dark:text-white border-2 border-gray-200 dark:border-gray-800 hover:border-blue-500 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400'
                   }`}
                 >
                   {pageNum + 1}
@@ -273,7 +264,7 @@ export default function JobList() {
           <button
             onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
             disabled={page >= totalPages - 1}
-            className="px-4 py-2 border-2 border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-blue-500 hover:text-blue-600 transition-colors font-medium"
+            className="px-4 py-2 bg-white dark:bg-gray-900 dark:text-white border-2 border-gray-200 dark:border-gray-800 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-blue-500 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium"
           >
             Sau
             <i className="fas fa-chevron-right ml-2"></i>
