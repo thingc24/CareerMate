@@ -107,6 +107,6 @@ public class Article {
     private LocalDateTime hiddenAt;
 
     public enum ArticleStatus {
-        DRAFT, PENDING, PUBLISHED, REJECTED
+        DRAFT, PENDING, PUBLISHED, REJECTED, HIDDEN
     }
 }

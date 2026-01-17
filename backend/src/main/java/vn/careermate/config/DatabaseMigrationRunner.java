@@ -203,6 +203,67 @@ public class DatabaseMigrationRunner implements CommandLineRunner {
                 log.warn("Could not create index for articles (may already exist): {}", e.getMessage());
             }
             
+            // Migration cho audit_logs table
+            log.info("Migrating adminservice.audit_logs table...");
+            
+            // Create schema if not exists
+            try {
+                statement.execute("CREATE SCHEMA IF NOT EXISTS adminservice");
+                log.info("✓ Created adminservice schema");
+            } catch (Exception e) {
+                log.warn("Could not create adminservice schema (may already exist): {}", e.getMessage());
+            }
+            
+            // Create audit_logs table
+            try {
+                statement.execute("""
+                    CREATE TABLE IF NOT EXISTS adminservice.audit_logs (
+                        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                        admin_id UUID NOT NULL,
+                        admin_email VARCHAR(255),
+                        action_type VARCHAR(20) NOT NULL CHECK (action_type IN ('CREATE', 'UPDATE', 'DELETE', 'APPROVE', 'REJECT', 'HIDE', 'UNHIDE')),
+                        entity_type VARCHAR(50) NOT NULL CHECK (entity_type IN ('USER', 'JOB', 'ARTICLE', 'PACKAGE', 'SUBSCRIPTION', 'CV_TEMPLATE')),
+                        entity_id UUID NOT NULL,
+                        entity_name VARCHAR(255),
+                        description TEXT,
+                        ip_address VARCHAR(45),
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                    """);
+                log.info("✓ Created adminservice.audit_logs table");
+            } catch (Exception e) {
+                log.warn("Could not create audit_logs table (may already exist): {}", e.getMessage());
+            }
+            
+            // Create indexes for audit_logs
+            try {
+                statement.execute("CREATE INDEX IF NOT EXISTS idx_audit_logs_admin ON adminservice.audit_logs(admin_id)");
+                log.info("✓ Created index 'idx_audit_logs_admin'");
+            } catch (Exception e) {
+                log.warn("Could not create index for audit_logs (may already exist): {}", e.getMessage());
+            }
+            
+            try {
+                statement.execute("CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON adminservice.audit_logs(entity_type, entity_id)");
+                log.info("✓ Created index 'idx_audit_logs_entity'");
+            } catch (Exception e) {
+                log.warn("Could not create index for audit_logs (may already exist): {}", e.getMessage());
+            }
+            
+            try {
+                statement.execute("CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON adminservice.audit_logs(created_at DESC)");
+                log.info("✓ Created index 'idx_audit_logs_created'");
+            } catch (Exception e) {
+                log.warn("Could not create index for audit_logs (may already exist): {}", e.getMessage());
+            }
+            
+            try {
+                statement.execute("CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON adminservice.audit_logs(action_type)");
+                log.info("✓ Created index 'idx_audit_logs_action'");
+            } catch (Exception e) {
+                log.warn("Could not create index for audit_logs (may already exist): {}", e.getMessage());
+            }
+            
             log.info("✅ Database migration completed successfully!");
             
         } catch (Exception e) {

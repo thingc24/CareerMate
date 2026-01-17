@@ -132,6 +132,7 @@ export default function ArticleManagement() {
       PENDING: 'badge-warning',
       PUBLISHED: 'badge-success',
       REJECTED: 'badge-danger',
+      HIDDEN: 'badge-dark',
       DRAFT: 'badge-secondary'
     };
     return badges[status] || 'badge-secondary';
@@ -142,6 +143,7 @@ export default function ArticleManagement() {
       PENDING: 'Chờ duyệt',
       PUBLISHED: 'Đã xuất bản',
       REJECTED: 'Đã từ chối',
+      HIDDEN: 'Đã ẩn',
       DRAFT: 'Bản nháp'
     };
     return labels[status] || status;
@@ -188,6 +190,7 @@ export default function ArticleManagement() {
             <option value="PENDING">Chờ duyệt</option>
             <option value="PUBLISHED">Đã xuất bản</option>
             <option value="REJECTED">Đã từ chối</option>
+            <option value="HIDDEN">Đã ẩn</option>
             <option value="DRAFT">Bản nháp</option>
             <option value="">Tất cả</option>
           </select>

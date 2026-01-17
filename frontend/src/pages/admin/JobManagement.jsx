@@ -122,7 +122,8 @@ export default function JobManagement() {
       PENDING: 'bg-yellow-100 text-yellow-800',
       ACTIVE: 'bg-green-100 text-green-800',
       CLOSED: 'bg-blue-100 text-blue-800',
-      REJECTED: 'bg-red-100 text-red-800'
+      REJECTED: 'bg-red-100 text-red-800',
+      HIDDEN: 'bg-gray-800 text-gray-100'
     };
     return badges[status] || 'bg-gray-100 text-gray-800';
   };
@@ -133,7 +134,8 @@ export default function JobManagement() {
       PENDING: 'Chờ duyệt',
       ACTIVE: 'Đang hoạt động',
       CLOSED: 'Đã đóng',
-      REJECTED: 'Đã từ chối'
+      REJECTED: 'Đã từ chối',
+      HIDDEN: 'Đã ẩn'
     };
     return labels[status] || status;
   };
@@ -180,6 +182,7 @@ export default function JobManagement() {
             <option value="ACTIVE">Đang hoạt động</option>
             <option value="CLOSED">Đã đóng</option>
             <option value="REJECTED">Đã từ chối</option>
+            <option value="HIDDEN">Đã ẩn</option>
             <option value="DRAFT">Bản nháp</option>
           </select>
           <div className="ml-auto text-sm text-gray-600 dark:text-gray-300">

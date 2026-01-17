@@ -133,6 +133,6 @@ public class Job {
     }
 
     public enum JobStatus {
-        DRAFT, PENDING, ACTIVE, CLOSED, REJECTED
+        DRAFT, PENDING, ACTIVE, CLOSED, REJECTED, HIDDEN
     }
 }

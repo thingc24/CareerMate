@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS contentservice.articles (
     likes_count INTEGER DEFAULT 0,
     reactions_count INTEGER DEFAULT 0,
     comments_count INTEGER DEFAULT 0,
-    status VARCHAR(20) DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'PENDING', 'PUBLISHED', 'REJECTED')),
+    status VARCHAR(20) DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'PENDING', 'PUBLISHED', 'REJECTED', 'HIDDEN')),
     published_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

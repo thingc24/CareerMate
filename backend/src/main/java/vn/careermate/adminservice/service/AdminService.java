@@ -1,5 +1,7 @@
 package vn.careermate.adminservice.service;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -39,6 +41,9 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class AdminService {
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     private final UserRepository userRepository;
     private final JobRepository jobRepository;
@@ -253,24 +258,55 @@ public class AdminService {
      */
     @Transactional
     public Job hideJob(UUID jobId, UUID adminId, String adminEmail, String reason, String ipAddress) {
-        Job job = jobRepository.findById(jobId)
-                .orElseThrow(() -> new RuntimeException("Job not found"));
-
-        String jobTitle = job.getTitle(); // Store before modifying
+        System.out.println("=== Starting hideJob for jobId: " + jobId + " ===");
+        Job job = null;
+        String jobTitle = null;
         
         try {
+            job = jobRepository.findById(jobId)
+                    .orElseThrow(() -> new RuntimeException("Job not found"));
+            jobTitle = job.getTitle(); // Store before modifying
+            System.out.println("Found job: " + jobTitle);
+        } catch (Exception e) {
+            System.err.println("Error loading job: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Job not found: " + jobId, e);
+        }
+        
+        // Ensure company is loaded before modifying
+        if (job.getCompany() != null) {
+            try {
+                job.getCompany().getId();
+                job.getCompany().getName();
+            } catch (Exception e) {
+                System.err.println("Warning: Error loading company: " + e.getMessage());
+            }
+        }
+        
+        try {
+            System.out.println("Setting hidden fields...");
+            // Store original status before hiding
+            Job.JobStatus originalStatus = job.getStatus();
+            // Only change status to HIDDEN if it's not already HIDDEN
+            if (originalStatus != Job.JobStatus.HIDDEN) {
+                job.setStatus(Job.JobStatus.HIDDEN);
+            }
             job.setHidden(true);
             job.setHiddenReason(reason);
             job.setHiddenAt(LocalDateTime.now());
             job = jobRepository.save(job);
             jobRepository.flush(); // Force flush to database
-            
-            // Reload job to ensure all fields are properly loaded
-            job = jobRepository.findById(jobId)
-                    .orElseThrow(() -> new RuntimeException("Job not found after save"));
+            System.out.println("Job hidden successfully! Status changed to HIDDEN");
         } catch (Exception e) {
-            System.err.println("Error setting hidden fields on job: " + e.getMessage());
+            System.err.println("=== ERROR SETTING HIDDEN FIELDS ===");
+            System.err.println("Error message: " + e.getMessage());
+            System.err.println("Error class: " + e.getClass().getName());
             e.printStackTrace();
+            if (e.getCause() != null) {
+                System.err.println("Caused by: " + e.getCause().getClass().getName() + " - " + e.getCause().getMessage());
+                e.getCause().printStackTrace();
+            }
+            System.err.println("===================================");
             throw new RuntimeException("Failed to hide job. Please ensure database migration has been run. Error: " + e.getMessage(), e);
         }
 
@@ -330,15 +366,42 @@ public class AdminService {
             e.printStackTrace();
         }
 
-        // Ensure company is properly loaded before detaching
-        if (job.getCompany() != null) {
-            job.getCompany().getId();
-            job.getCompany().getName();
+        // Ensure all necessary fields are loaded before serialization
+        try {
+            // Load company fields
+            if (job.getCompany() != null) {
+                job.getCompany().getId();
+                job.getCompany().getName();
+                job.getCompany().getDescription();
+                job.getCompany().getLogoUrl();
+                job.getCompany().getWebsiteUrl();
+                job.getCompany().getIndustry();
+            }
+            
+            // Ensure all job fields are accessible
+            job.getId();
+            job.getTitle();
+            job.getDescription();
+            job.getStatus();
+            job.getHidden();
+            job.getHiddenReason();
+            job.getHiddenAt();
+            
+            // Detach lazy-loaded relations to avoid serialization issues
+            job.setRecruiter(null);
+            
+            // Detach from persistence context to avoid lazy loading issues during serialization
+            entityManager.detach(job);
+            if (job.getCompany() != null) {
+                entityManager.detach(job.getCompany());
+            }
+        } catch (Exception e) {
+            System.err.println("Warning: Error preparing job for serialization: " + e.getMessage());
+            e.printStackTrace();
+            // Continue anyway - try to return the job
         }
         
-        // Detach lazy-loaded relations to avoid serialization issues
-        job.setRecruiter(null);
-        
+        System.out.println("=== hideJob completed successfully ===");
         return job;
     }
 
@@ -350,15 +413,21 @@ public class AdminService {
         Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new RuntimeException("Job not found"));
 
+        // Ensure company is loaded before modifying
+        if (job.getCompany() != null) {
+            job.getCompany().getId();
+            job.getCompany().getName();
+        }
+        
+        // Restore status to ACTIVE when unhiding (if it was HIDDEN)
+        if (job.getStatus() == Job.JobStatus.HIDDEN) {
+            job.setStatus(Job.JobStatus.ACTIVE);
+        }
         job.setHidden(false);
         job.setHiddenReason(null);
         job.setHiddenAt(null);
         job = jobRepository.save(job);
         jobRepository.flush(); // Force flush to database
-        
-        // Reload job to ensure all fields are properly loaded
-        job = jobRepository.findById(jobId)
-                .orElseThrow(() -> new RuntimeException("Job not found after save"));
 
         // Send notification to recruiter
         try {
@@ -418,65 +487,135 @@ public class AdminService {
      */
     @Transactional
     public void deleteJob(UUID jobId, UUID adminId, String adminEmail, String reason, String ipAddress) {
-        Job job = jobRepository.findById(jobId)
-                .orElseThrow(() -> new RuntimeException("Job not found"));
-
-        String jobTitle = job.getTitle();
-
-        // Send notification to recruiter before deleting
+        Job job = null;
+        String jobTitle = null;
+        UUID recruiterUserId = null;
+        
         try {
-            RecruiterProfile recruiter = job.getRecruiter();
-            if (recruiter != null) {
-                UUID recruiterId = recruiter.getId();
-                UUID recruiterUserId = null;
-                
-                // Try to get user ID
-                try {
-                    if (recruiter.getUser() != null) {
-                        recruiterUserId = recruiter.getUser().getId();
+            job = jobRepository.findById(jobId)
+                    .orElseThrow(() -> new RuntimeException("Job not found"));
+            jobTitle = job.getTitle();
+
+            // Get recruiter user ID before deleting (store it for notification)
+            try {
+                RecruiterProfile recruiter = job.getRecruiter();
+                if (recruiter != null) {
+                    UUID recruiterId = recruiter.getId();
+                    
+                    // Try to get user ID
+                    try {
+                        if (recruiter.getUser() != null) {
+                            recruiterUserId = recruiter.getUser().getId();
+                        }
+                    } catch (Exception e) {
+                        // Lazy loading failed, try to query separately
+                        Optional<RecruiterProfile> loadedRecruiter = recruiterProfileRepository.findById(recruiterId);
+                        if (loadedRecruiter.isPresent() && loadedRecruiter.get().getUser() != null) {
+                            recruiterUserId = loadedRecruiter.get().getUser().getId();
+                        }
                     }
-                } catch (Exception e) {
-                    // Lazy loading failed
                 }
-                
-                // If user not loaded, query separately
-                if (recruiterUserId == null) {
-                    Optional<RecruiterProfile> loadedRecruiter = recruiterProfileRepository.findById(recruiterId);
-                    if (loadedRecruiter.isPresent() && loadedRecruiter.get().getUser() != null) {
-                        recruiterUserId = loadedRecruiter.get().getUser().getId();
-                    }
-                }
-                
-                if (recruiterUserId != null) {
-                    notificationService.notifyJobDeleted(recruiterUserId, jobId, jobTitle, reason);
-                }
+            } catch (Exception e) {
+                System.err.println("Warning: Could not get recruiter user ID: " + e.getMessage());
+                // Continue with deletion even if we can't get user ID
             }
         } catch (Exception e) {
-            System.err.println("Error sending notification for job deletion: " + e.getMessage());
+            System.err.println("Error loading job: " + e.getMessage());
             e.printStackTrace();
+            throw new RuntimeException("Job not found: " + jobId, e);
         }
 
-        // Delete related data
-        // 1. Delete applications
-        List<Application> applications = applicationRepository.findByJobId(jobId);
-        applicationRepository.deleteAll(applications);
+        // Send notification to recruiter before deleting (if we have user ID)
+        if (recruiterUserId != null) {
+            try {
+                notificationService.notifyJobDeleted(recruiterUserId, jobId, jobTitle, reason);
+            } catch (Exception e) {
+                System.err.println("Warning: Error sending notification for job deletion: " + e.getMessage());
+                e.printStackTrace();
+                // Continue with deletion even if notification fails
+            }
+        }
 
-        // 2. Delete saved jobs
-        List<SavedJob> savedJobs = savedJobRepository.findByJobId(jobId);
-        savedJobRepository.deleteAll(savedJobs);
+        // Delete related data in correct order
+        // Note: Job has cascade=CascadeType.ALL for skills and applications, so they will be deleted automatically
+        // But SavedJob doesn't have cascade, so we need to delete it manually
+        // Also need to delete records from other tables that reference jobs but don't have ON DELETE CASCADE
+        
+        // 1. Delete saved jobs first (no cascade, must delete manually)
+        try {
+            List<SavedJob> savedJobs = savedJobRepository.findByJobId(jobId);
+            if (savedJobs != null && !savedJobs.isEmpty()) {
+                savedJobRepository.deleteAll(savedJobs);
+                savedJobRepository.flush();
+            }
+        } catch (Exception e) {
+            System.err.println("Warning: Error deleting saved jobs: " + e.getMessage());
+            e.printStackTrace();
+            // Continue even if this fails
+        }
 
-        // 3. Delete job skills
-        List<JobSkill> jobSkills = jobSkillRepository.findByJobId(jobId);
-        jobSkillRepository.deleteAll(jobSkills);
+        // 2. Delete records from other tables that reference jobs (using native SQL)
+        // These tables don't have ON DELETE CASCADE in their foreign keys (confdeltype = 'a' = NO ACTION)
+        try {
+            int deleted = entityManager.createNativeQuery("DELETE FROM aiservice.job_recommendations WHERE job_id = :jobId")
+                    .setParameter("jobId", jobId)
+                    .executeUpdate();
+            System.out.println("Deleted " + deleted + " job_recommendations for job " + jobId);
+            entityManager.flush();
+        } catch (Exception e) {
+            System.err.println("Warning: Error deleting job_recommendations: " + e.getMessage());
+            e.printStackTrace();
+            // Continue even if this fails
+        }
+        
+        try {
+            int deleted = entityManager.createNativeQuery("DELETE FROM aiservice.mock_interviews WHERE job_id = :jobId")
+                    .setParameter("jobId", jobId)
+                    .executeUpdate();
+            System.out.println("Deleted " + deleted + " mock_interviews for job " + jobId);
+            entityManager.flush();
+        } catch (Exception e) {
+            System.err.println("Warning: Error deleting mock_interviews: " + e.getMessage());
+            e.printStackTrace();
+            // Continue even if this fails
+        }
 
-        // 4. Delete job
-        jobRepository.delete(job);
-        jobRepository.flush();
+        // 3. Delete job (this will cascade delete skills and applications automatically)
+        // Don't set collections to null - let Hibernate handle cascade delete
+        if (job != null) {
+            try {
+                System.out.println("Attempting to delete job entity...");
+                // Just delete - Hibernate will handle cascade delete for skills and applications
+                jobRepository.delete(job);
+                System.out.println("Job entity marked for deletion, flushing...");
+                jobRepository.flush();
+                System.out.println("Job deleted successfully!");
+            } catch (Exception e) {
+                System.err.println("=== ERROR DELETING JOB ===");
+                System.err.println("Error message: " + e.getMessage());
+                System.err.println("Error class: " + e.getClass().getName());
+                e.printStackTrace();
+                // Log full stack trace for debugging
+                if (e.getCause() != null) {
+                    System.err.println("Caused by: " + e.getCause().getClass().getName() + " - " + e.getCause().getMessage());
+                    e.getCause().printStackTrace();
+                }
+                System.err.println("========================");
+                throw new RuntimeException("Failed to delete job: " + e.getMessage(), e);
+            }
+        } else {
+            throw new RuntimeException("Job is null, cannot delete");
+        }
 
         // Create audit log
-        createAuditLog(adminId, adminEmail, AuditLog.ActionType.DELETE,
-                AuditLog.EntityType.JOB, jobId, jobTitle,
-                "Admin deleted job: " + jobTitle + ". Reason: " + reason, ipAddress);
+        try {
+            createAuditLog(adminId, adminEmail, AuditLog.ActionType.DELETE,
+                    AuditLog.EntityType.JOB, jobId, jobTitle,
+                    "Admin deleted job: " + jobTitle + ". Reason: " + reason, ipAddress);
+        } catch (Exception e) {
+            System.err.println("Error creating audit log: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -484,19 +623,55 @@ public class AdminService {
      */
     @Transactional
     public Article hideArticle(UUID articleId, UUID adminId, String adminEmail, String reason, String ipAddress) {
-        Article article = articleRepository.findById(articleId)
-                .orElseThrow(() -> new RuntimeException("Article not found"));
+        System.out.println("=== Starting hideArticle for articleId: " + articleId + " ===");
+        Article article = null;
+        String articleTitle = null;
+        
+        try {
+            article = articleRepository.findById(articleId)
+                    .orElseThrow(() -> new RuntimeException("Article not found"));
+            articleTitle = article.getTitle();
+            System.out.println("Found article: " + articleTitle);
+        } catch (Exception e) {
+            System.err.println("Error loading article: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Article not found: " + articleId, e);
+        }
+
+        // Ensure author is loaded before modifying
+        if (article.getAuthor() != null) {
+            try {
+                article.getAuthor().getId();
+                article.getAuthor().getFullName();
+            } catch (Exception e) {
+                System.err.println("Warning: Error loading author: " + e.getMessage());
+            }
+        }
 
         try {
+            System.out.println("Setting hidden fields...");
+            // Store original status before hiding
+            Article.ArticleStatus originalStatus = article.getStatus();
+            // Only change status to HIDDEN if it's not already HIDDEN
+            if (originalStatus != Article.ArticleStatus.HIDDEN) {
+                article.setStatus(Article.ArticleStatus.HIDDEN);
+            }
             article.setHidden(true);
             article.setHiddenReason(reason);
             article.setHiddenAt(LocalDateTime.now());
             article = articleRepository.save(article);
             articleRepository.flush(); // Force flush to database
+            System.out.println("Article hidden successfully! Status changed to HIDDEN");
         } catch (Exception e) {
-            System.err.println("Error setting hidden fields on article: " + e.getMessage());
+            System.err.println("=== ERROR SETTING HIDDEN FIELDS ===");
+            System.err.println("Error message: " + e.getMessage());
+            System.err.println("Error class: " + e.getClass().getName());
             e.printStackTrace();
-            // If hidden column doesn't exist, try to update without it
+            if (e.getCause() != null) {
+                System.err.println("Caused by: " + e.getCause().getClass().getName() + " - " + e.getCause().getMessage());
+                e.getCause().printStackTrace();
+            }
+            System.err.println("===================================");
             throw new RuntimeException("Failed to hide article. Please ensure database migration has been run. Error: " + e.getMessage(), e);
         }
 
@@ -505,17 +680,56 @@ public class AdminService {
             if (article.getAuthor() != null) {
                 UUID authorUserId = article.getAuthor().getId();
                 notificationService.notifyArticleHidden(authorUserId, articleId, article.getTitle(), reason);
+                System.out.println("Notification sent to author: " + authorUserId);
             }
         } catch (Exception e) {
-            System.err.println("Error sending notification for article hide: " + e.getMessage());
+            System.err.println("Warning: Error sending notification for article hide: " + e.getMessage());
             e.printStackTrace();
+            // Continue even if notification fails
         }
 
         // Create audit log
-        createAuditLog(adminId, adminEmail, AuditLog.ActionType.HIDE,
-                AuditLog.EntityType.ARTICLE, articleId, article.getTitle(),
-                "Admin hid article: " + article.getTitle() + ". Reason: " + reason, ipAddress);
+        try {
+            createAuditLog(adminId, adminEmail, AuditLog.ActionType.HIDE,
+                    AuditLog.EntityType.ARTICLE, articleId, articleTitle,
+                    "Admin hid article: " + articleTitle + ". Reason: " + reason, ipAddress);
+        } catch (Exception e) {
+            System.err.println("Error creating audit log: " + e.getMessage());
+            e.printStackTrace();
+            // Continue even if audit log fails
+        }
 
+        // Ensure all necessary fields are loaded before serialization
+        try {
+            // Load author fields
+            if (article.getAuthor() != null) {
+                article.getAuthor().getId();
+                article.getAuthor().getFullName();
+                article.getAuthor().getEmail();
+                article.getAuthor().getRole();
+            }
+            
+            // Ensure all article fields are accessible
+            article.getId();
+            article.getTitle();
+            article.getContent();
+            article.getStatus();
+            article.getHidden();
+            article.getHiddenReason();
+            article.getHiddenAt();
+            
+            // Detach from persistence context to avoid lazy loading issues during serialization
+            entityManager.detach(article);
+            if (article.getAuthor() != null) {
+                entityManager.detach(article.getAuthor());
+            }
+        } catch (Exception e) {
+            System.err.println("Warning: Error preparing article for serialization: " + e.getMessage());
+            e.printStackTrace();
+            // Continue anyway - try to return the article
+        }
+        
+        System.out.println("=== hideArticle completed successfully ===");
         return article;
     }
 
@@ -527,6 +741,10 @@ public class AdminService {
         Article article = articleRepository.findById(articleId)
                 .orElseThrow(() -> new RuntimeException("Article not found"));
 
+        // Restore status to PUBLISHED when unhiding (if it was HIDDEN)
+        if (article.getStatus() == Article.ArticleStatus.HIDDEN) {
+            article.setStatus(Article.ArticleStatus.PUBLISHED);
+        }
         article.setHidden(false);
         article.setHiddenReason(null);
         article.setHiddenAt(null);

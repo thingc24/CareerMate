@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS jobservice.jobs (
     min_salary DECIMAL(18,2),
     max_salary DECIMAL(18,2),
     currency VARCHAR(10) DEFAULT 'VND',
-    status VARCHAR(20) DEFAULT 'PENDING' CHECK (status IN ('DRAFT', 'PENDING', 'ACTIVE', 'CLOSED', 'REJECTED')),
+    status VARCHAR(20) DEFAULT 'PENDING' CHECK (status IN ('DRAFT', 'PENDING', 'ACTIVE', 'CLOSED', 'REJECTED', 'HIDDEN')),
     views_count INTEGER DEFAULT 0,
     applications_count INTEGER DEFAULT 0,
     expires_at TIMESTAMP,
