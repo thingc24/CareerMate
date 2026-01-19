@@ -188,6 +188,9 @@ CREATE TABLE IF NOT EXISTS learningservice.challenges (
     badge_id UUID, -- Reference to badges
     start_date TIMESTAMP,
     end_date TIMESTAMP,
+    passing_score INTEGER DEFAULT 70,
+    instructions TEXT,
+    expected_keywords TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -202,6 +205,10 @@ CREATE TABLE IF NOT EXISTS learningservice.challenge_participations (
     status VARCHAR(50) DEFAULT 'IN_PROGRESS' CHECK (status IN ('IN_PROGRESS', 'COMPLETED', 'FAILED')),
     completed_at TIMESTAMP,
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    answer TEXT,
+    attachment_url VARCHAR(500),
+    submitted_at TIMESTAMP,
+    score INTEGER,
     UNIQUE(student_id, challenge_id)
 );
 

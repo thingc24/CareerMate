@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
 
 export default function Challenges() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [challenges, setChallenges] = useState([]);
   const [myChallenges, setMyChallenges] = useState([]);
   const [myBadges, setMyBadges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [activeTab, setActiveTab] = useState('all'); // 'all', 'my', 'badges'
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'all'); // 'all', 'my', 'badges'
 
   useEffect(() => {
     if (activeTab === 'all') {
@@ -19,6 +20,11 @@ export default function Challenges() {
       loadMyBadges();
     }
   }, [selectedCategory, activeTab]);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setSearchParams({ tab });
+  };
 
   const loadChallenges = async () => {
     try {
@@ -80,7 +86,7 @@ export default function Challenges() {
       {/* Tabs */}
       <div className="mb-6 flex gap-4 border-b dark:border-gray-800">
         <button
-          onClick={() => setActiveTab('all')}
+          onClick={() => handleTabChange('all')}
           className={`px-4 py-2 font-semibold ${
             activeTab === 'all'
               ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
@@ -90,7 +96,7 @@ export default function Challenges() {
           Tất cả thử thách
         </button>
         <button
-          onClick={() => setActiveTab('my')}
+          onClick={() => handleTabChange('my')}
           className={`px-4 py-2 font-semibold ${
             activeTab === 'my'
               ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
@@ -100,7 +106,7 @@ export default function Challenges() {
           Thử thách của tôi
         </button>
         <button
-          onClick={() => setActiveTab('badges')}
+          onClick={() => handleTabChange('badges')}
           className={`px-4 py-2 font-semibold ${
             activeTab === 'badges'
               ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'

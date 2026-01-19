@@ -46,6 +46,18 @@ public class ChallengeParticipation {
     @Column(name = "joined_at", updatable = false)
     private LocalDateTime joinedAt;
 
+    @Column(name = "answer", columnDefinition = "TEXT")
+    private String answer;
+
+    @Column(name = "attachment_url")
+    private String attachmentUrl;
+
+    @Column(name = "submitted_at")
+    private LocalDateTime submittedAt;
+
+    @Column(name = "score")
+    private Integer score; // Score out of 100
+
     public enum ParticipationStatus {
         IN_PROGRESS, COMPLETED, FAILED
     }

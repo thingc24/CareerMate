@@ -12,11 +12,18 @@ export default function ChallengeDetail() {
     answer: '',
     attachmentUrl: ''
   });
+  const [showBadgeModal, setShowBadgeModal] = useState(false);
+  const [earnedBadge, setEarnedBadge] = useState(null);
 
   useEffect(() => {
     loadChallenge();
     loadParticipation();
   }, [id]);
+
+  useEffect(() => {
+    console.log('showBadgeModal changed:', showBadgeModal);
+    console.log('earnedBadge changed:', earnedBadge);
+  }, [showBadgeModal, earnedBadge]);
 
   const loadChallenge = async () => {
     try {
@@ -26,7 +33,7 @@ export default function ChallengeDetail() {
     } catch (error) {
       console.error('Error loading challenge:', error);
       if (error.response?.status === 404) {
-        alert('Thử thách không tồn tại hoặc đã bị xóa.');
+        alert('Thử thách không tồn tại hoặc đã bị xóa. Bạn sẽ được chuyển về trang danh sách thử thách.');
         navigate('/student/challenges');
       } else {
         alert('Lỗi khi tải thử thách: ' + (error.response?.data?.error || error.message));
@@ -43,18 +50,66 @@ export default function ChallengeDetail() {
       setParticipation(myPart);
     } catch (error) {
       console.error('Error loading participation:', error);
+      // Don't show alert for participation errors, just log it
+      // Participation might not exist yet or challenge might have been deleted
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('=== HANDLE SUBMIT STARTED ===');
+    console.log('Challenge ID:', id);
+    console.log('Submission:', submission);
+    console.log('Current challenge:', challenge);
+    
     try {
-      await api.participateChallenge(id, submission);
-      alert('Đã gửi bài làm thành công!');
+      console.log('Calling API participateChallenge...');
+      const result = await api.participateChallenge(id, submission);
+      console.log('=== API RESPONSE ===');
+      console.log('Full result:', JSON.stringify(result, null, 2));
+      console.log('Result status:', result.status);
+      console.log('Result score:', result.score);
+      console.log('Result challenge:', result.challenge);
+      console.log('Result challenge badge:', result.challenge?.badge);
+      
+      if (result.status === 'COMPLETED') {
+        console.log('Status is COMPLETED, checking for badge...');
+        // Get badge info from result.challenge.badge or challenge state
+        const badge = result.challenge?.badge || challenge?.badge;
+        console.log('Badge found:', badge);
+        console.log('Badge name:', badge?.name);
+        
+        if (badge) {
+          console.log('Setting badge and showing modal...');
+          setEarnedBadge(badge);
+          setShowBadgeModal(true);
+          console.log('Modal should be visible now');
+        } else {
+          console.log('No badge found, showing alert instead');
+          alert(`Chúc mừng! Bạn đã hoàn thành thử thách với điểm số ${result.score}/100!`);
+        }
+      } else if (result.status === 'FAILED') {
+        console.log('Status is FAILED');
+        const passingScore = result.challenge?.passingScore || 70;
+        alert(`Bài làm của bạn đã được chấm điểm: ${result.score}/100.\n\nĐiểm số chưa đạt yêu cầu (cần ${passingScore}/100) để hoàn thành thử thách.\n\nVui lòng nộp lại với bài làm đầy đủ hơn để đạt điểm cao hơn!`);
+      } else {
+        console.log('Status is:', result.status);
+        alert('Đã gửi bài làm thành công!');
+      }
       loadParticipation();
+      loadChallenge(); // Reload to get updated info
     } catch (error) {
+      console.error('=== SUBMIT ERROR ===');
+      console.error('Error object:', error);
+      console.error('Error response:', error.response);
+      console.error('Error message:', error.message);
       alert('Lỗi: ' + (error.response?.data?.error || 'Không thể gửi bài làm'));
     }
+  };
+
+  const handleViewBadges = () => {
+    setShowBadgeModal(false);
+    navigate('/student/challenges?tab=badges');
   };
 
   if (loading) {
@@ -183,18 +238,90 @@ export default function ChallengeDetail() {
               {participation.status === 'COMPLETED' && (
                 <span className="badge badge-success">Đã hoàn thành</span>
               )}
-              {participation.status === 'PENDING' && (
-                <span className="badge badge-warning">Đang chờ đánh giá</span>
+              {participation.status === 'FAILED' && (
+                <span className="badge badge-danger">Chưa đạt</span>
               )}
               {participation.status === 'IN_PROGRESS' && (
                 <span className="badge badge-info">Đang làm</span>
               )}
             </p>
+            {participation.score !== null && participation.score !== undefined && (
+              <p>
+                <span className="font-semibold">Điểm số: </span>
+                <span className={`font-bold ${participation.score >= 70 ? 'text-green-600' : 'text-red-600'}`}>
+                  {participation.score}/100
+                </span>
+              </p>
+            )}
             {participation.submittedAt && (
               <p className="text-sm text-gray-600">
                 Nộp lúc: {new Date(participation.submittedAt).toLocaleString('vi-VN')}
               </p>
             )}
+            {participation.answer && (
+              <div className="mt-4">
+                <p className="font-semibold mb-2">Bài làm của bạn:</p>
+                <div className="bg-gray-50 p-4 rounded border">
+                  <p className="whitespace-pre-wrap">{participation.answer}</p>
+                </div>
+              </div>
+            )}
+            {participation.attachmentUrl && (
+              <p className="text-sm">
+                <span className="font-semibold">Link đính kèm: </span>
+                <a href={participation.attachmentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                  {participation.attachmentUrl}
+                </a>
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Badge Earned Modal */}
+      {showBadgeModal && earnedBadge && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-8 max-w-md w-full mx-4 text-center">
+            <div className="mb-6">
+              <div className="text-6xl mb-4">🎉</div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                Chúc mừng!
+              </h2>
+              <p className="text-gray-600 dark:text-gray-300 mb-4">
+                Bạn đã hoàn thành thử thách và nhận được huy hiệu!
+              </p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg p-6 mb-6">
+              {earnedBadge.iconUrl && (
+                <img
+                  src={earnedBadge.iconUrl.startsWith('http') 
+                    ? earnedBadge.iconUrl 
+                    : `http://localhost:8080/api${earnedBadge.iconUrl}`}
+                  alt={earnedBadge.name}
+                  className="w-32 h-32 mx-auto mb-4"
+                />
+              )}
+              <h3 className="text-2xl font-bold text-white mb-2">{earnedBadge.name}</h3>
+              {earnedBadge.description && (
+                <p className="text-white text-sm opacity-90">{earnedBadge.description}</p>
+              )}
+            </div>
+
+            <div className="flex gap-4">
+              <button
+                onClick={() => setShowBadgeModal(false)}
+                className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+              >
+                Đóng
+              </button>
+              <button
+                onClick={handleViewBadges}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              >
+                Xem huy hiệu của tôi
+              </button>
+            </div>
           </div>
         </div>
       )}

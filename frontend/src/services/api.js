@@ -799,6 +799,11 @@ class CareerMateAPI {
     return response.data;
   }
 
+  async participateChallenge(challengeId, submission) {
+    const response = await this.client.post(`/challenges/${challengeId}/submit`, submission);
+    return response.data;
+  }
+
   async completeChallenge(participationId) {
     const response = await this.client.post(`/challenges/participations/${participationId}/complete`);
     return response.data;

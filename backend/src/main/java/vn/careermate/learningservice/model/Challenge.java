@@ -44,6 +44,16 @@ public class Challenge {
     @Column(name = "end_date")
     private LocalDateTime endDate;
 
+    @Column(name = "passing_score")
+    @Builder.Default
+    private Integer passingScore = 70; // Default 70% to pass
+
+    @Column(name = "instructions", columnDefinition = "TEXT")
+    private String instructions; // Instructions for the challenge
+
+    @Column(name = "expected_keywords", columnDefinition = "TEXT")
+    private String expectedKeywords; // Comma-separated keywords for auto-grading
+
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

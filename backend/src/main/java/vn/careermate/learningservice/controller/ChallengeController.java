@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import vn.careermate.learningservice.dto.ChallengeSubmissionRequest;
 import vn.careermate.learningservice.model.Badge;
 import vn.careermate.learningservice.model.Challenge;
 import vn.careermate.learningservice.model.ChallengeParticipation;
@@ -37,6 +38,8 @@ public class ChallengeController {
                 return ResponseEntity.notFound().build();
             }
             return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
         }
     }
 
@@ -44,6 +47,15 @@ public class ChallengeController {
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<ChallengeParticipation> joinChallenge(@PathVariable UUID challengeId) {
         return ResponseEntity.ok(challengeService.joinChallenge(challengeId));
+    }
+
+    @PostMapping("/{challengeId}/submit")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<ChallengeParticipation> submitChallenge(
+            @PathVariable UUID challengeId,
+            @RequestBody ChallengeSubmissionRequest request) {
+        return ResponseEntity.ok(challengeService.submitChallenge(
+                challengeId, request.getAnswer(), request.getAttachmentUrl()));
     }
 
     @PostMapping("/participations/{participationId}/complete")

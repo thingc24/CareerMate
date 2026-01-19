@@ -470,15 +470,42 @@ public class AdminService {
             e.printStackTrace();
         }
 
-        // Ensure company is properly loaded before detaching
-        if (job.getCompany() != null) {
-            job.getCompany().getId();
-            job.getCompany().getName();
+        // Ensure all necessary fields are loaded before serialization
+        try {
+            // Load company fields
+            if (job.getCompany() != null) {
+                job.getCompany().getId();
+                job.getCompany().getName();
+                job.getCompany().getDescription();
+                job.getCompany().getLogoUrl();
+                job.getCompany().getWebsiteUrl();
+                job.getCompany().getIndustry();
+            }
+            
+            // Ensure all job fields are accessible
+            job.getId();
+            job.getTitle();
+            job.getDescription();
+            job.getStatus();
+            job.getHidden();
+            job.getHiddenReason();
+            job.getHiddenAt();
+            
+            // Detach lazy-loaded relations to avoid serialization issues
+            job.setRecruiter(null);
+            
+            // Detach from persistence context to avoid lazy loading issues during serialization
+            entityManager.detach(job);
+            if (job.getCompany() != null) {
+                entityManager.detach(job.getCompany());
+            }
+        } catch (Exception e) {
+            System.err.println("Warning: Error preparing job for serialization: " + e.getMessage());
+            e.printStackTrace();
+            // Continue anyway - try to return the job
         }
         
-        // Detach lazy-loaded relations to avoid serialization issues
-        job.setRecruiter(null);
-        
+        System.out.println("=== unhideJob completed successfully ===");
         return job;
     }
 
@@ -763,10 +790,47 @@ public class AdminService {
         }
 
         // Create audit log
-        createAuditLog(adminId, adminEmail, AuditLog.ActionType.UNHIDE,
-                AuditLog.EntityType.ARTICLE, articleId, article.getTitle(),
-                "Admin unhid article: " + article.getTitle(), ipAddress);
+        try {
+            createAuditLog(adminId, adminEmail, AuditLog.ActionType.UNHIDE,
+                    AuditLog.EntityType.ARTICLE, articleId, article.getTitle(),
+                    "Admin unhid article: " + article.getTitle(), ipAddress);
+        } catch (Exception e) {
+            System.err.println("Error creating audit log: " + e.getMessage());
+            e.printStackTrace();
+            // Continue even if audit log fails
+        }
 
+        // Ensure all necessary fields are loaded before serialization
+        try {
+            // Load author fields
+            if (article.getAuthor() != null) {
+                article.getAuthor().getId();
+                article.getAuthor().getFullName();
+                article.getAuthor().getEmail();
+                article.getAuthor().getRole();
+            }
+            
+            // Ensure all article fields are accessible
+            article.getId();
+            article.getTitle();
+            article.getContent();
+            article.getStatus();
+            article.getHidden();
+            article.getHiddenReason();
+            article.getHiddenAt();
+            
+            // Detach from persistence context to avoid lazy loading issues during serialization
+            entityManager.detach(article);
+            if (article.getAuthor() != null) {
+                entityManager.detach(article.getAuthor());
+            }
+        } catch (Exception e) {
+            System.err.println("Warning: Error preparing article for serialization: " + e.getMessage());
+            e.printStackTrace();
+            // Continue anyway - try to return the article
+        }
+        
+        System.out.println("=== unhideArticle completed successfully ===");
         return article;
     }
 

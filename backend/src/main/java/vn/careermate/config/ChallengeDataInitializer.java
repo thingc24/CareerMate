@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.careermate.learningservice.model.Badge;
 import vn.careermate.learningservice.model.Challenge;
 import vn.careermate.learningservice.repository.BadgeRepository;
+import vn.careermate.learningservice.repository.ChallengeParticipationRepository;
 import vn.careermate.learningservice.repository.ChallengeRepository;
 
 import java.time.LocalDateTime;
@@ -21,6 +22,7 @@ public class ChallengeDataInitializer implements CommandLineRunner {
 
     private final ChallengeRepository challengeRepository;
     private final BadgeRepository badgeRepository;
+    private final ChallengeParticipationRepository participationRepository;
 
     @Override
     @Transactional
@@ -31,9 +33,14 @@ public class ChallengeDataInitializer implements CommandLineRunner {
             log.info("Current challenge count: {}, badge count: {}", challengeCount, badgeCount);
             
             // Clear existing data if any
+            // Must delete in order to avoid foreign key constraint violations
             if (challengeCount > 0 || badgeCount > 0) {
                 log.info("Deleting existing challenges and badges to recreate...");
+                log.info("Step 1: Deleting challenge participations...");
+                participationRepository.deleteAll();
+                log.info("Step 2: Deleting challenges...");
                 challengeRepository.deleteAll();
+                log.info("Step 3: Deleting badges...");
                 badgeRepository.deleteAll();
                 log.info("Existing challenges and badges deleted");
             }
