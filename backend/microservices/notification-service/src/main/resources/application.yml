@@ -6,10 +6,16 @@ spring:
     name: notification-service
   
   datasource:
-    url: jdbc:postgresql://localhost:5432/careermate_db
+    url: jdbc:postgresql://localhost:5432/notification_service_db
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:Aa1234}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
   
   jpa:
     hibernate:
@@ -20,6 +26,15 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         default_schema: notificationservice
     open-in-view: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
 
 eureka:
   client:
