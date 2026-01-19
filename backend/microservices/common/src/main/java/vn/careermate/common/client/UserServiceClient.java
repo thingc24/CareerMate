@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import vn.careermate.common.dto.UserDTO;
 import vn.careermate.common.dto.RecruiterProfileDTO;
+import vn.careermate.common.dto.StudentProfileDTO;
 
 import java.util.UUID;
 
@@ -25,4 +26,14 @@ public interface UserServiceClient {
     
     @GetMapping("/recruiters/profile/{recruiterId}")
     RecruiterProfileDTO getRecruiterProfileById(@PathVariable UUID recruiterId);
+    
+    // Student Profile endpoints
+    @GetMapping("/students/profile/current")
+    StudentProfileDTO getCurrentStudentProfile();
+    
+    @GetMapping("/students/profile/{studentId}")
+    StudentProfileDTO getStudentProfileById(@PathVariable UUID studentId);
+    
+    @GetMapping("/students/profile/user/{userId}")
+    StudentProfileDTO getStudentProfileByUserId(@PathVariable UUID userId);
 }

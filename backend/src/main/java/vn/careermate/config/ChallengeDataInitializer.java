@@ -11,6 +11,7 @@ import vn.careermate.learningservice.model.Challenge;
 import vn.careermate.learningservice.repository.BadgeRepository;
 import vn.careermate.learningservice.repository.ChallengeParticipationRepository;
 import vn.careermate.learningservice.repository.ChallengeRepository;
+import vn.careermate.learningservice.repository.StudentBadgeRepository;
 
 import java.time.LocalDateTime;
 
@@ -23,6 +24,7 @@ public class ChallengeDataInitializer implements CommandLineRunner {
     private final ChallengeRepository challengeRepository;
     private final BadgeRepository badgeRepository;
     private final ChallengeParticipationRepository participationRepository;
+    private final StudentBadgeRepository studentBadgeRepository;
 
     @Override
     @Transactional
@@ -40,7 +42,9 @@ public class ChallengeDataInitializer implements CommandLineRunner {
                 participationRepository.deleteAll();
                 log.info("Step 2: Deleting challenges...");
                 challengeRepository.deleteAll();
-                log.info("Step 3: Deleting badges...");
+                log.info("Step 3: Deleting student badges (must be deleted before badges)...");
+                studentBadgeRepository.deleteAll();
+                log.info("Step 4: Deleting badges...");
                 badgeRepository.deleteAll();
                 log.info("Existing challenges and badges deleted");
             }

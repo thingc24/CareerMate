@@ -1,4 +1,4 @@
-package vn.careermate.common.dto;
+package vn.careermate.contentservice.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,11 +14,17 @@ import java.util.UUID;
 public class CompanyDTO {
     private UUID id;
     private String name;
+    private String website;
+    private String address;
+    private String city;
+    private String country;
     private String description;
-    private String websiteUrl;
-    private String logoUrl;
+    private String size;
     private String industry;
-    private String companySize;
     private Integer foundedYear;
-    private String headquarters;
+    private String contactEmail;
+    private String contactPhone;
+    private String logoUrl;
+    private String facebook;
+    private String linkedin;
 }
