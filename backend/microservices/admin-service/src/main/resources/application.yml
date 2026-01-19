@@ -6,7 +6,7 @@ spring:
     name: admin-service
   
   datasource:
-    url: jdbc:postgresql://localhost:5432/careermate_db
+    url: jdbc:postgresql://localhost:5432/admin_service_db
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:Aa1234}
     driver-class-name: org.postgresql.Driver
@@ -38,3 +38,9 @@ logging:
     vn.careermate.adminservice: DEBUG
   file:
     name: logs/admin-service.log
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

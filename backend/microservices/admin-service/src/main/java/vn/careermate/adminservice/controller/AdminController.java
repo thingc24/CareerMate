@@ -1,6 +1,7 @@
 package vn.careermate.adminservice.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -11,21 +12,20 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import vn.careermate.adminservice.dto.AdminAnalytics;
 import vn.careermate.adminservice.dto.AdminDashboardStats;
+import vn.careermate.adminservice.model.AuditLog;
 import vn.careermate.adminservice.service.AdminService;
-import vn.careermate.learningservice.model.CVTemplate;
-import vn.careermate.jobservice.model.Job;
-import vn.careermate.learningservice.model.Package;
-import vn.careermate.learningservice.model.Subscription;
-import vn.careermate.userservice.model.User;
-import vn.careermate.userservice.repository.UserRepository;
-import vn.careermate.learningservice.service.CVTemplateService;
-import vn.careermate.learningservice.service.PackageService;
-import vn.careermate.contentservice.model.Article;
+import vn.careermate.common.client.UserServiceClient;
+import vn.careermate.common.client.LearningServiceClient;
+import vn.careermate.common.dto.UserDTO;
+import vn.careermate.common.dto.JobDTO;
+import vn.careermate.common.dto.ArticleDTO;
+import vn.careermate.common.dto.CVTemplateDTO;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/admin")
 @RequiredArgsConstructor
@@ -34,9 +34,8 @@ import java.util.UUID;
 public class AdminController {
 
     private final AdminService adminService;
-    private final UserRepository userRepository;
-    private final CVTemplateService cvTemplateService;
-    private final PackageService packageService;
+    private final UserServiceClient userServiceClient;
+    private final LearningServiceClient learningServiceClient;
 
     @GetMapping("/dashboard/stats")
     public ResponseEntity<AdminDashboardStats> getDashboardStats() {
@@ -44,7 +43,7 @@ public class AdminController {
     }
 
     @GetMapping("/users")
-    public ResponseEntity<Page<User>> getAllUsers(
+    public ResponseEntity<Page<UserDTO>> getAllUsers(
             @RequestParam(required = false) String role,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
@@ -52,8 +51,7 @@ public class AdminController {
         Pageable pageable = PageRequest.of(page, size);
         if (role != null && !role.isEmpty()) {
             try {
-                User.UserRole userRole = User.UserRole.valueOf(role.toUpperCase());
-                return ResponseEntity.ok(adminService.getUsersByRole(userRole, pageable));
+                return ResponseEntity.ok(adminService.getUsersByRole(role.toUpperCase(), pageable));
             } catch (IllegalArgumentException e) {
                 return ResponseEntity.ok(adminService.getAllUsers(pageable));
             }
@@ -62,15 +60,15 @@ public class AdminController {
     }
 
     @PutMapping("/users/{userId}/status")
-    public ResponseEntity<User> updateUserStatus(
+    public ResponseEntity<UserDTO> updateUserStatus(
             @PathVariable UUID userId,
-            @RequestParam User.UserStatus status
+            @RequestParam String status
     ) {
         return ResponseEntity.ok(adminService.updateUserStatus(userId, status));
     }
 
     @GetMapping("/jobs")
-    public ResponseEntity<Page<Job>> getAllJobs(
+    public ResponseEntity<Page<JobDTO>> getAllJobs(
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
@@ -78,8 +76,7 @@ public class AdminController {
         Pageable pageable = PageRequest.of(page, size);
         if (status != null && !status.isEmpty()) {
             try {
-                Job.JobStatus jobStatus = Job.JobStatus.valueOf(status.toUpperCase());
-                return ResponseEntity.ok(adminService.getJobsByStatus(jobStatus, pageable));
+                return ResponseEntity.ok(adminService.getJobsByStatus(status.toUpperCase(), pageable));
             } catch (IllegalArgumentException e) {
                 return ResponseEntity.ok(adminService.getAllJobs(pageable));
             }
@@ -88,7 +85,7 @@ public class AdminController {
     }
 
     @GetMapping("/jobs/pending")
-    public ResponseEntity<Page<Job>> getPendingJobs(
+    public ResponseEntity<Page<JobDTO>> getPendingJobs(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
@@ -97,61 +94,67 @@ public class AdminController {
     }
 
     @PostMapping("/jobs/{jobId}/approve")
-    public ResponseEntity<Job> approveJob(@PathVariable UUID jobId) {
+    public ResponseEntity<JobDTO> approveJob(@PathVariable UUID jobId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
-        UUID adminId = userRepository.findByEmail(email)
-                .map(User::getId)
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        UserDTO admin = userServiceClient.getUserByEmail(email);
+        if (admin == null) {
+            throw new RuntimeException("Admin not found");
+        }
         
-        return ResponseEntity.ok(adminService.approveJob(jobId, adminId));
+        return ResponseEntity.ok(adminService.approveJob(jobId, admin.getId()));
     }
 
     @PostMapping("/jobs/{jobId}/reject")
-    public ResponseEntity<Job> rejectJob(@PathVariable UUID jobId) {
+    public ResponseEntity<JobDTO> rejectJob(@PathVariable UUID jobId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
-        UUID adminId = userRepository.findByEmail(email)
-                .map(User::getId)
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        UserDTO admin = userServiceClient.getUserByEmail(email);
+        if (admin == null) {
+            throw new RuntimeException("Admin not found");
+        }
         
-        return ResponseEntity.ok(adminService.rejectJob(jobId, adminId));
+        return ResponseEntity.ok(adminService.rejectJob(jobId, admin.getId()));
     }
 
     // CV Templates Management
     @GetMapping("/cv-templates")
-    public ResponseEntity<List<CVTemplate>> getAllCVTemplates() {
-        return ResponseEntity.ok(cvTemplateService.getAllTemplates(null));
+    public ResponseEntity<List<CVTemplateDTO>> getAllCVTemplates() {
+        return ResponseEntity.ok(learningServiceClient.getAllCVTemplates());
     }
 
     @PostMapping("/cv-templates")
-    public ResponseEntity<CVTemplate> createCVTemplate(@RequestBody CVTemplate template) {
-        return ResponseEntity.ok(cvTemplateService.createTemplate(template));
+    public ResponseEntity<CVTemplateDTO> createCVTemplate(@RequestBody CVTemplateDTO template) {
+        // TODO: Add createCVTemplate endpoint to LearningServiceClient
+        throw new RuntimeException("Create CV template endpoint not yet implemented");
     }
 
     @PutMapping("/cv-templates/{templateId}")
-    public ResponseEntity<CVTemplate> updateCVTemplate(
+    public ResponseEntity<CVTemplateDTO> updateCVTemplate(
             @PathVariable UUID templateId,
-            @RequestBody CVTemplate template
+            @RequestBody CVTemplateDTO template
     ) {
-        return ResponseEntity.ok(cvTemplateService.updateTemplate(templateId, template));
+        // TODO: Add updateCVTemplate endpoint to LearningServiceClient
+        throw new RuntimeException("Update CV template endpoint not yet implemented");
     }
 
     @DeleteMapping("/cv-templates/{templateId}")
     public ResponseEntity<Void> deleteCVTemplate(@PathVariable UUID templateId) {
-        cvTemplateService.deleteTemplate(templateId);
-        return ResponseEntity.ok().build();
+        // TODO: Add deleteCVTemplate endpoint to LearningServiceClient
+        throw new RuntimeException("Delete CV template endpoint not yet implemented");
     }
 
     // Packages Management
     @GetMapping("/packages")
     public ResponseEntity<List<Package>> getAllPackages() {
-        return ResponseEntity.ok(packageService.getAllPackages());
+        // TODO: Add getAllPackages endpoint to LearningServiceClient
+        throw new RuntimeException("Get all packages endpoint not yet implemented");
     }
 
     @PostMapping("/packages")
     public ResponseEntity<Package> createPackage(@RequestBody Package packageEntity) {
-        return ResponseEntity.ok(packageService.createPackage(packageEntity));
+        // TODO: Add createPackage endpoint to LearningServiceClient
+        throw new RuntimeException("Create package endpoint not yet implemented");
     }
 
     @PutMapping("/packages/{packageId}")
@@ -159,18 +162,20 @@ public class AdminController {
             @PathVariable UUID packageId,
             @RequestBody Package packageEntity
     ) {
-        return ResponseEntity.ok(packageService.updatePackage(packageId, packageEntity));
+        // TODO: Add updatePackage endpoint to LearningServiceClient
+        throw new RuntimeException("Update package endpoint not yet implemented");
     }
 
     @DeleteMapping("/packages/{packageId}")
     public ResponseEntity<Void> deletePackage(@PathVariable UUID packageId) {
-        packageService.deletePackage(packageId);
-        return ResponseEntity.ok().build();
+        // TODO: Add deletePackage endpoint to LearningServiceClient
+        throw new RuntimeException("Delete package endpoint not yet implemented");
     }
 
     @GetMapping("/subscriptions")
     public ResponseEntity<List<Subscription>> getAllSubscriptions() {
-        return ResponseEntity.ok(packageService.getAllSubscriptions());
+        // TODO: Add getAllSubscriptions endpoint to LearningServiceClient
+        throw new RuntimeException("Get all subscriptions endpoint not yet implemented");
     }
 
     // Analytics
@@ -181,16 +186,17 @@ public class AdminController {
 
     // Hide Job
     @PostMapping("/jobs/{jobId}/hide")
-    public ResponseEntity<Job> hideJob(
+    public ResponseEntity<JobDTO> hideJob(
             @PathVariable UUID jobId,
             @RequestBody Map<String, String> request,
             @RequestHeader(value = "X-Forwarded-For", required = false) String ipAddress
     ) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
-        UUID adminId = userRepository.findByEmail(email)
-                .map(User::getId)
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        UserDTO admin = userServiceClient.getUserByEmail(email);
+        if (admin == null) {
+            throw new RuntimeException("Admin not found");
+        }
         
         String reason = request.get("reason");
         if (reason == null || reason.trim().isEmpty()) {
@@ -198,28 +204,28 @@ public class AdminController {
         }
         
         try {
-            Job job = adminService.hideJob(jobId, adminId, email, reason, ipAddress != null ? ipAddress : "unknown");
+            JobDTO job = adminService.hideJob(jobId, admin.getId(), email, reason, ipAddress != null ? ipAddress : "unknown");
             return ResponseEntity.ok(job);
         } catch (Exception e) {
-            System.err.println("Error in hideJob controller: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Error in hideJob controller: {}", e.getMessage(), e);
             throw e;
         }
     }
 
     // Unhide Job
     @PostMapping("/jobs/{jobId}/unhide")
-    public ResponseEntity<Job> unhideJob(
+    public ResponseEntity<JobDTO> unhideJob(
             @PathVariable UUID jobId,
             @RequestHeader(value = "X-Forwarded-For", required = false) String ipAddress
     ) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
-        UUID adminId = userRepository.findByEmail(email)
-                .map(User::getId)
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        UserDTO admin = userServiceClient.getUserByEmail(email);
+        if (admin == null) {
+            throw new RuntimeException("Admin not found");
+        }
         
-        return ResponseEntity.ok(adminService.unhideJob(jobId, adminId, email, ipAddress != null ? ipAddress : "unknown"));
+        return ResponseEntity.ok(adminService.unhideJob(jobId, admin.getId(), email, ipAddress != null ? ipAddress : "unknown"));
     }
 
     // Delete Job (hard delete)
@@ -231,9 +237,10 @@ public class AdminController {
     ) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
-        UUID adminId = userRepository.findByEmail(email)
-                .map(User::getId)
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        UserDTO admin = userServiceClient.getUserByEmail(email);
+        if (admin == null) {
+            throw new RuntimeException("Admin not found");
+        }
         
         String reason = request.get("reason");
         if (reason == null || reason.trim().isEmpty()) {
@@ -241,49 +248,50 @@ public class AdminController {
         }
         
         try {
-            adminService.deleteJob(jobId, adminId, email, reason, ipAddress != null ? ipAddress : "unknown");
+            adminService.deleteJob(jobId, admin.getId(), email, reason, ipAddress != null ? ipAddress : "unknown");
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            System.err.println("Error in deleteJob controller: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Error in deleteJob controller: {}", e.getMessage(), e);
             throw e;
         }
     }
 
     // Hide Article
     @PostMapping("/articles/{articleId}/hide")
-    public ResponseEntity<Article> hideArticle(
+    public ResponseEntity<ArticleDTO> hideArticle(
             @PathVariable UUID articleId,
             @RequestBody Map<String, String> request,
             @RequestHeader(value = "X-Forwarded-For", required = false) String ipAddress
     ) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
-        UUID adminId = userRepository.findByEmail(email)
-                .map(User::getId)
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        UserDTO admin = userServiceClient.getUserByEmail(email);
+        if (admin == null) {
+            throw new RuntimeException("Admin not found");
+        }
         
         String reason = request.get("reason");
         if (reason == null || reason.trim().isEmpty()) {
             throw new RuntimeException("Reason is required");
         }
         
-        return ResponseEntity.ok(adminService.hideArticle(articleId, adminId, email, reason, ipAddress != null ? ipAddress : "unknown"));
+        return ResponseEntity.ok(adminService.hideArticle(articleId, admin.getId(), email, reason, ipAddress != null ? ipAddress : "unknown"));
     }
 
     // Unhide Article
     @PostMapping("/articles/{articleId}/unhide")
-    public ResponseEntity<Article> unhideArticle(
+    public ResponseEntity<ArticleDTO> unhideArticle(
             @PathVariable UUID articleId,
             @RequestHeader(value = "X-Forwarded-For", required = false) String ipAddress
     ) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
-        UUID adminId = userRepository.findByEmail(email)
-                .map(User::getId)
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        UserDTO admin = userServiceClient.getUserByEmail(email);
+        if (admin == null) {
+            throw new RuntimeException("Admin not found");
+        }
         
-        return ResponseEntity.ok(adminService.unhideArticle(articleId, adminId, email, ipAddress != null ? ipAddress : "unknown"));
+        return ResponseEntity.ok(adminService.unhideArticle(articleId, admin.getId(), email, ipAddress != null ? ipAddress : "unknown"));
     }
 
     // Delete Article (hard delete)
@@ -295,16 +303,17 @@ public class AdminController {
     ) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
-        UUID adminId = userRepository.findByEmail(email)
-                .map(User::getId)
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        UserDTO admin = userServiceClient.getUserByEmail(email);
+        if (admin == null) {
+            throw new RuntimeException("Admin not found");
+        }
         
         String reason = request.get("reason");
         if (reason == null || reason.trim().isEmpty()) {
             throw new RuntimeException("Reason is required");
         }
         
-        adminService.deleteArticle(articleId, adminId, email, reason, ipAddress != null ? ipAddress : "unknown");
+        adminService.deleteArticle(articleId, admin.getId(), email, reason, ipAddress != null ? ipAddress : "unknown");
         return ResponseEntity.ok().build();
     }
 
@@ -316,17 +325,18 @@ public class AdminController {
     ) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
-        UUID adminId = userRepository.findByEmail(email)
-                .map(User::getId)
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        UserDTO admin = userServiceClient.getUserByEmail(email);
+        if (admin == null) {
+            throw new RuntimeException("Admin not found");
+        }
         
-        adminService.deleteUser(userId, adminId, email, ipAddress != null ? ipAddress : "unknown");
+        adminService.deleteUser(userId, admin.getId(), email, ipAddress != null ? ipAddress : "unknown");
         return ResponseEntity.ok().build();
     }
 
     // Get Audit Logs
     @GetMapping("/audit-logs")
-    public ResponseEntity<Page<vn.careermate.adminservice.model.AuditLog>> getAuditLogs(
+    public ResponseEntity<Page<AuditLog>> getAuditLogs(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
