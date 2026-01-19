@@ -1,0 +1,47 @@
+server:
+  port: 8087
+
+spring:
+  application:
+    name: ai-service
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/careermate_db
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:Aa1234}
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: aiservice
+    open-in-view: false
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+
+jwt:
+  secret: ${JWT_SECRET:5Ug/98ITtqMrJqakx4zPmlUTDmqhqqsC2MNEfE4NZ4w=}
+  expiration: 86400000
+
+ai:
+  openrouter:
+    api-key: ${OPENROUTER_API_KEY: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}
+    model: ${OPENROUTER_MODEL:meta-llama/llama-3.2-3b-instruct:free}
+    base-url: https://openrouter.ai/api/v1
+    timeout: 30000
+
+logging:
+  level:
+    root: INFO
+    vn.careermate.aiservice: DEBUG
+  file:
+    name: logs/ai-service.log
