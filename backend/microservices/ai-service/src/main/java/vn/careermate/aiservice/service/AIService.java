@@ -113,32 +113,24 @@ public class AIService {
 
     /**
      * Analyze CV asynchronously (for background processing)
+     * Note: CV content should be passed directly, not as entity
      */
     @Async
-    public void analyzeCVAsync(vn.careermate.userservice.model.CV cv) {
+    public void analyzeCVAsync(UUID cvId, String cvContent) {
         try {
-            // Extract CV content
-            String cvContent = extractCVContent(cv);
-            if (cvContent.isEmpty()) {
-                log.warn("CV content is empty for CV: {}", cv.getId());
+            if (cvContent == null || cvContent.trim().isEmpty()) {
+                log.warn("CV content is empty for CV: {}", cvId);
                 return;
             }
 
             // Analyze
             analyzeCV(cvContent);
             
-            // Update CV with analysis results
-            // This would be done in a service that has access to CVRepository
-            log.info("CV analysis completed for CV: {}", cv.getId());
+            // Note: CV update would be done via UserServiceClient if needed
+            log.info("CV analysis completed for CV: {}", cvId);
         } catch (Exception e) {
             log.error("Error in async CV analysis", e);
         }
-    }
-
-    private String extractCVContent(vn.careermate.userservice.model.CV cv) {
-        // This would extract content from file
-        // For now, return empty string
-        return "";
     }
 
     /**

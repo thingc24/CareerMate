@@ -19,18 +19,27 @@ import java.util.UUID;
 public class MockInterviewController {
 
     private final MockInterviewService mockInterviewService;
-    private final JobRepository jobRepository;
+    private final JobServiceClient jobServiceClient;
 
     @PostMapping("/start/{jobId}")
     public ResponseEntity<Map<String, Object>> startInterview(
             @PathVariable UUID jobId,
             @RequestBody(required = false) Map<String, String> studentProfile
     ) {
-        Job job = jobRepository.findById(jobId)
-                .orElseThrow(() -> new RuntimeException("Job not found"));
+        // Get job via Feign Client
+        JobDTO job;
+        try {
+            job = jobServiceClient.getJobById(jobId);
+            if (job == null) {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            log.error("Error fetching job: {}", e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
 
         String profile = studentProfile != null ? studentProfile.get("profile") : "";
-        Map<String, Object> interview = mockInterviewService.startMockInterview(job, profile);
+        Map<String, Object> interview = mockInterviewService.startMockInterview(jobId, profile);
         return ResponseEntity.ok(interview);
     }
 

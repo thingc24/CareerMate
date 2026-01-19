@@ -2,7 +2,7 @@ package vn.careermate.aiservice.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import vn.careermate.userservice.model.StudentProfile;
+// import vn.careermate.userservice.model.StudentProfile; // Replaced with UUID
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,10 +31,8 @@ public class AIChatConversation {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "student_id", nullable = false)
-    @JsonIgnore
-    private StudentProfile student;
+    @Column(name = "student_id", nullable = false)
+    private UUID studentId; // Changed from StudentProfile entity to UUID
 
     @Column(name = "conversation_title")
     private String conversationTitle; // Auto-generated from first message

@@ -1,7 +1,7 @@
 package vn.careermate.aiservice.model;
 
 import jakarta.persistence.*;
-import vn.careermate.userservice.model.StudentProfile;
+// import vn.careermate.userservice.model.StudentProfile; // Replaced with UUID
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,9 +30,8 @@ public class CareerRoadmap {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "student_id", nullable = false)
-    private StudentProfile student;
+    @Column(name = "student_id", nullable = false)
+    private UUID studentId; // Changed from StudentProfile entity to UUID
 
     @Column(nullable = false)
     private String careerGoal; // Target job title or career path

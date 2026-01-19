@@ -5,7 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import vn.careermate.jobservice.model.Job;
+import vn.careermate.common.client.JobServiceClient;
+import vn.careermate.common.dto.JobDTO;
 
 import java.util.*;
 
@@ -15,6 +16,7 @@ import java.util.*;
 public class MockInterviewService {
 
     private final WebClient.Builder webClientBuilder;
+    private final JobServiceClient jobServiceClient;
 
     @Value("${ai.openrouter.api-key:}")
     private String openRouterApiKey;
@@ -25,7 +27,19 @@ public class MockInterviewService {
     @Value("${ai.openrouter.base-url:https://openrouter.ai/api/v1}")
     private String openRouterBaseUrl;
 
-    public Map<String, Object> startMockInterview(Job job, String studentProfile) {
+    public Map<String, Object> startMockInterview(UUID jobId, String studentProfile) {
+        // Get job via Feign Client
+        JobDTO job;
+        try {
+            job = jobServiceClient.getJobById(jobId);
+            if (job == null) {
+                throw new RuntimeException("Job not found");
+            }
+        } catch (Exception e) {
+            log.error("Error fetching job: {}", e.getMessage());
+            throw new RuntimeException("Job not found");
+        }
+        
         // Generate interview questions based on job
         String prompt = String.format(
             "Bạn là một người phỏng vấn chuyên nghiệp. Dựa trên công việc sau đây, hãy tạo 5 câu hỏi phỏng vấn phù hợp.\n" +

@@ -2,9 +2,9 @@ package vn.careermate.aiservice.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import vn.careermate.userservice.model.StudentProfile;
-import vn.careermate.userservice.model.CV;
-import vn.careermate.jobservice.model.Job;
+// import vn.careermate.userservice.model.StudentProfile; // Replaced with UUID
+// import vn.careermate.userservice.model.CV; // Replaced with UUID
+// import vn.careermate.jobservice.model.Job; // Replaced with UUID
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -37,20 +37,14 @@ public class MockInterview {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "student_id", nullable = false)
-    @JsonIgnore
-    private StudentProfile student;
+    @Column(name = "student_id", nullable = false)
+    private UUID studentId; // Changed from StudentProfile entity to UUID
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "job_id", nullable = false)
-    @JsonIgnore
-    private Job job;
+    @Column(name = "job_id", nullable = false)
+    private UUID jobId; // Changed from Job entity to UUID
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cv_id")
-    @JsonIgnore
-    private CV cv;
+    @Column(name = "cv_id")
+    private UUID cvId; // Changed from CV entity to UUID (optional)
 
     @Enumerated(EnumType.STRING)
     @Builder.Default

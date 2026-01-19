@@ -33,9 +33,8 @@ public class AIChatMessage {
     @JsonIgnore
     private AIChatConversation conversation;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "sender_type", nullable = false)
-    private SenderType senderType; // USER or AI
+    @Column(name = "role", nullable = false)
+    private String role; // "user", "assistant", "system" (changed from enum to match schema)
 
     @Column(name = "message", nullable = false, columnDefinition = "TEXT")
     private String message;

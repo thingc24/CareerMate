@@ -5,15 +5,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import lombok.extern.slf4j.Slf4j;
-import vn.careermate.userservice.model.CV;
-import vn.careermate.jobservice.model.Job;
-import vn.careermate.jobservice.model.JobSkill;
-import vn.careermate.userservice.repository.CVRepository;
-import vn.careermate.jobservice.repository.JobRepository;
-import vn.careermate.jobservice.repository.JobSkillRepository;
 import vn.careermate.aiservice.service.AIService;
-import vn.careermate.service.FileStorageService;
 import vn.careermate.aiservice.service.VectorDBService;
+import vn.careermate.common.client.UserServiceClient;
+import vn.careermate.common.client.JobServiceClient;
+import vn.careermate.common.dto.JobDTO;
 import vn.careermate.util.DOCXExtractor;
 import vn.careermate.util.PDFExtractor;
 
@@ -34,10 +30,8 @@ public class AIController {
 
     private final AIService aiService;
     private final VectorDBService vectorDBService;
-    private final CVRepository cvRepository;
-    private final JobRepository jobRepository;
-    private final JobSkillRepository jobSkillRepository;
-    private final FileStorageService fileStorageService;
+    private final UserServiceClient userServiceClient;
+    private final JobServiceClient jobServiceClient;
 
     /**
      * Analyze CV
@@ -46,49 +40,10 @@ public class AIController {
     @PostMapping("/cv/analyze/{cvId}")
     @PreAuthorize("hasAnyRole('STUDENT', 'RECRUITER')")
     public ResponseEntity<Map<String, Object>> analyzeCV(@PathVariable String cvId) {
-        try {
-            // Get CV from database
-            CV cv = cvRepository.findById(UUID.fromString(cvId))
-                .orElseThrow(() -> new RuntimeException("CV not found"));
-
-            // Extract text content from CV file
-            String cvContent = "";
-            if (cv.getFileUrl() != null) {
-                try {
-                    // Resolve web path to actual file system path
-                    String actualFilePath = fileStorageService.resolveFilePath(cv.getFileUrl());
-                    log.info("Extracting CV content from file: {} (resolved from: {})", actualFilePath, cv.getFileUrl());
-                    
-                    if (cv.getFileUrl().endsWith(".pdf")) {
-                        cvContent = PDFExtractor.extractText(actualFilePath);
-                    } else if (cv.getFileUrl().endsWith(".docx")) {
-                        cvContent = DOCXExtractor.extractText(actualFilePath);
-                    }
-                } catch (Exception e) {
-                    log.error("Error extracting CV content from file: {}", cv.getFileUrl(), e);
-                    throw new RuntimeException("Không thể đọc nội dung CV: " + e.getMessage(), e);
-                }
-            }
-
-            if (cvContent.isEmpty()) {
-                return ResponseEntity.badRequest()
-                    .body(Map.of("error", "CV content is empty"));
-            }
-
-            // Analyze CV with AI
-            Map<String, Object> analysis = aiService.analyzeCV(cvContent);
-            
-            // Store CV in vector DB for future matching
-            if (vectorDBService.isEnabled() && cvContent.length() > 100) {
-                // Generate embedding and store (async)
-                // This would be done in a separate service
-            }
-
-            return ResponseEntity.ok(analysis);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                .body(Map.of("error", "Error analyzing CV: " + e.getMessage()));
-        }
+        // TODO: Get CV via UserServiceClient (need to add CV endpoint to UserServiceClient)
+        // For now, CV content should be passed in request body
+        return ResponseEntity.badRequest()
+            .body(Map.of("error", "Please use POST /ai/cv/analyze with CV content in request body"));
     }
 
     /**
@@ -99,9 +54,17 @@ public class AIController {
     @PreAuthorize("hasRole('RECRUITER')")
     public ResponseEntity<Map<String, Object>> getJobMatching(@PathVariable String jobId) {
         try {
-            // Get job from database
-            Job job = jobRepository.findById(UUID.fromString(jobId))
-                .orElseThrow(() -> new RuntimeException("Job not found"));
+            // Get job via Feign Client
+            JobDTO job;
+            try {
+                job = jobServiceClient.getJobById(UUID.fromString(jobId));
+                if (job == null) {
+                    return ResponseEntity.notFound().build();
+                }
+            } catch (Exception e) {
+                log.error("Error fetching job: {}", e.getMessage());
+                return ResponseEntity.notFound().build();
+            }
 
             // Build job description for matching
             StringBuilder jobDescBuilder = new StringBuilder();
@@ -109,20 +72,8 @@ public class AIController {
             if (job.getDescription() != null) {
                 jobDescBuilder.append(job.getDescription()).append(". ");
             }
-            if (job.getRequirements() != null) {
-                jobDescBuilder.append("Requirements: ").append(job.getRequirements()).append(". ");
-            }
-            
-            // Get skills from JobSkill entities
-            List<JobSkill> jobSkills = jobSkillRepository.findByJobId(job.getId());
-            List<String> requiredSkills = jobSkills.stream()
-                .filter(JobSkill::getIsRequired)
-                .map(JobSkill::getSkillName)
-                .collect(Collectors.toList());
-            
-            if (!requiredSkills.isEmpty()) {
-                jobDescBuilder.append("Skills: ").append(String.join(", ", requiredSkills));
-            }
+            // Note: JobDTO may not have requirements field, or it might be in description
+            // TODO: Add requirements field to JobDTO if needed
             
             String jobDescription = jobDescBuilder.toString();
 
@@ -136,7 +87,6 @@ public class AIController {
                 ));
             } else {
                 // Fallback to AI-based matching
-                // This would use AI to score CVs
                 return ResponseEntity.ok(Map.of(
                     "jobId", jobId,
                     "matchingCVs", List.of(),
@@ -159,33 +109,25 @@ public class AIController {
     public ResponseEntity<Map<String, Object>> startMockInterview(
             @RequestBody Map<String, String> request) {
         try {
-            String jobId = request.get("jobId");
-            String cvId = request.get("cvId");
+            String jobIdStr = request.get("jobId");
+            String cvContent = request.get("cvContent"); // CV content passed directly
             
-            // Get job and CV
-            Job job = jobId != null ? jobRepository.findById(UUID.fromString(jobId))
-                .orElseThrow(() -> new RuntimeException("Job not found")) : null;
-            CV cv = cvId != null ? cvRepository.findById(UUID.fromString(cvId))
-                .orElseThrow(() -> new RuntimeException("CV not found")) : null;
-            
-            // Extract content
-            String jobDescription = job != null ? 
-                String.format("%s. %s", job.getTitle(), job.getDescription()) : "Job description";
-            String cvContent = "";
-            if (cv != null && cv.getFileUrl() != null) {
+            // Get job via Feign Client if jobId provided
+            String jobDescription = "Job description";
+            if (jobIdStr != null) {
                 try {
-                    // Resolve web path to actual file system path
-                    String actualFilePath = fileStorageService.resolveFilePath(cv.getFileUrl());
-                    log.info("Extracting CV content for interview from file: {} (resolved from: {})", actualFilePath, cv.getFileUrl());
-                    
-                    if (cv.getFileUrl().endsWith(".pdf")) {
-                        cvContent = PDFExtractor.extractText(actualFilePath);
-                    } else if (cv.getFileUrl().endsWith(".docx")) {
-                        cvContent = DOCXExtractor.extractText(actualFilePath);
+                    JobDTO job = jobServiceClient.getJobById(UUID.fromString(jobIdStr));
+                    if (job != null) {
+                        jobDescription = String.format("%s. %s", job.getTitle(), job.getDescription());
                     }
                 } catch (Exception e) {
-                    log.error("Error extracting CV content for interview from file: {}", cv.getFileUrl(), e);
+                    log.warn("Error fetching job: {}", e.getMessage());
                 }
+            }
+            
+            // Use CV content from request body (or empty if not provided)
+            if (cvContent == null) {
+                cvContent = "";
             }
             
             // Generate interview questions

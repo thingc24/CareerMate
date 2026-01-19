@@ -7,9 +7,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import vn.careermate.aiservice.model.CareerRoadmap;
-import vn.careermate.userservice.repository.StudentProfileRepository;
-import vn.careermate.userservice.repository.UserRepository;
 import vn.careermate.aiservice.service.CareerRoadmapService;
+import vn.careermate.common.client.UserServiceClient;
+import vn.careermate.common.dto.StudentProfileDTO;
+import vn.careermate.common.dto.UserDTO;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -22,8 +23,7 @@ import java.util.UUID;
 public class CareerRoadmapController {
 
     private final CareerRoadmapService roadmapService;
-    private final StudentProfileRepository studentProfileRepository;
-    private final UserRepository userRepository;
+    private final UserServiceClient userServiceClient;
 
     @PostMapping("/generate")
     public ResponseEntity<CareerRoadmap> generateRoadmap(
@@ -53,12 +53,21 @@ public class CareerRoadmapController {
     private UUID getCurrentStudentId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
-        UUID userId = userRepository.findByEmail(email)
-                .map(user -> user.getId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
         
-        return studentProfileRepository.findByUserId(userId)
-                .map(profile -> profile.getId())
-                .orElseThrow(() -> new RuntimeException("Student profile not found"));
+        try {
+            UserDTO user = userServiceClient.getUserByEmail(email);
+            if (user == null) {
+                throw new RuntimeException("User not found");
+            }
+            
+            StudentProfileDTO studentProfile = userServiceClient.getStudentProfileByUserId(user.getId());
+            if (studentProfile == null) {
+                throw new RuntimeException("Student profile not found");
+            }
+            
+            return studentProfile.getId();
+        } catch (Exception e) {
+            throw new RuntimeException("Student profile not found");
+        }
     }
 }
