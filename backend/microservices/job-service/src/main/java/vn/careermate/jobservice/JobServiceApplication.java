@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
 @EnableDiscoveryClient
-@EnableFeignClients
+@EnableFeignClients(basePackages = "vn.careermate.common.client")
 @EnableJpaAuditing
 @EntityScan("vn.careermate.jobservice.model")
 @EnableJpaRepositories("vn.careermate.jobservice.repository")

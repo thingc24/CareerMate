@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 // TODO: Company entity has been moved to content-service
 // import vn.careermate.contentservice.model.Company;
 import vn.careermate.common.dto.CompanyDTO;
+import vn.careermate.common.dto.RecruiterProfileDTO;
 import vn.careermate.userservice.dto.RecruiterProfileUpdateRequest;
 import vn.careermate.userservice.model.RecruiterProfile;
 import vn.careermate.userservice.model.User;
@@ -113,6 +114,85 @@ public class RecruiterProfileController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(profile);
+    }
+    
+    // Endpoints for Feign Clients
+    @GetMapping("/profile/current")
+    @PreAuthorize("hasRole('RECRUITER')")
+    public ResponseEntity<RecruiterProfileDTO> getCurrentRecruiterProfileForFeign() {
+        try {
+            RecruiterProfile profile = recruiterProfileService.getCurrentRecruiterProfile();
+            RecruiterProfileDTO dto = RecruiterProfileDTO.builder()
+                    .id(profile.getId())
+                    .userId(profile.getUser() != null ? profile.getUser().getId() : null)
+                    .companyId(profile.getCompanyId())
+                    .position(profile.getPosition())
+                    .department(profile.getDepartment())
+                    .phone(profile.getPhone())
+                    .bio(profile.getBio())
+                    .linkedinUrl(null) // RecruiterProfile doesn't have linkedinUrl field
+                    .createdAt(profile.getCreatedAt())
+                    .updatedAt(profile.getUpdatedAt())
+                    .build();
+            return ResponseEntity.ok(dto);
+        } catch (Exception e) {
+            log.error("Error getting current recruiter profile: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).build();
+        }
+    }
+    
+    @GetMapping("/profile/{recruiterId}")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<RecruiterProfileDTO> getRecruiterProfileById(@PathVariable UUID recruiterId) {
+        try {
+            RecruiterProfile profile = recruiterProfileService.getRecruiterProfileById(recruiterId);
+            if (profile == null) {
+                return ResponseEntity.notFound().build();
+            }
+            RecruiterProfileDTO dto = RecruiterProfileDTO.builder()
+                    .id(profile.getId())
+                    .userId(profile.getUser() != null ? profile.getUser().getId() : null)
+                    .companyId(profile.getCompanyId())
+                    .position(profile.getPosition())
+                    .department(profile.getDepartment())
+                    .phone(profile.getPhone())
+                    .bio(profile.getBio())
+                    .linkedinUrl(null) // RecruiterProfile doesn't have linkedinUrl field
+                    .createdAt(profile.getCreatedAt())
+                    .updatedAt(profile.getUpdatedAt())
+                    .build();
+            return ResponseEntity.ok(dto);
+        } catch (Exception e) {
+            log.error("Error getting recruiter profile: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).build();
+        }
+    }
+    
+    @GetMapping("/profile/user/{userId}")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<RecruiterProfileDTO> getRecruiterProfileByUserId(@PathVariable UUID userId) {
+        try {
+            RecruiterProfile profile = recruiterProfileService.getRecruiterByUserId(userId);
+            if (profile == null) {
+                return ResponseEntity.notFound().build();
+            }
+            RecruiterProfileDTO dto = RecruiterProfileDTO.builder()
+                    .id(profile.getId())
+                    .userId(profile.getUser() != null ? profile.getUser().getId() : null)
+                    .companyId(profile.getCompanyId())
+                    .position(profile.getPosition())
+                    .department(profile.getDepartment())
+                    .phone(profile.getPhone())
+                    .bio(profile.getBio())
+                    .linkedinUrl(null) // RecruiterProfile doesn't have linkedinUrl field
+                    .createdAt(profile.getCreatedAt())
+                    .updatedAt(profile.getUpdatedAt())
+                    .build();
+            return ResponseEntity.ok(dto);
+        } catch (Exception e) {
+            log.error("Error getting recruiter profile by user ID: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).build();
+        }
     }
 
     @PostMapping("/company/logo")

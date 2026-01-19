@@ -69,6 +69,10 @@ public class RecruiterProfileService {
     public RecruiterProfile getRecruiterByUserId(java.util.UUID userId) {
         return recruiterProfileRepository.findByUserId(userId).orElse(null);
     }
+    
+    public RecruiterProfile getRecruiterProfileById(UUID recruiterId) {
+        return recruiterProfileRepository.findById(recruiterId).orElse(null);
+    }
 
     public RecruiterProfile getMyProfile() {
         return getCurrentRecruiterProfile();
