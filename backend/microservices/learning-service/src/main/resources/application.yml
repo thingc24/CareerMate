@@ -6,7 +6,7 @@ spring:
     name: learning-service
   
   datasource:
-    url: jdbc:postgresql://localhost:5432/careermate_db
+    url: jdbc:postgresql://localhost:5432/learning_service_db
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:Aa1234}
     driver-class-name: org.postgresql.Driver
@@ -38,3 +38,12 @@ logging:
     vn.careermate.learningservice: DEBUG
   file:
     name: logs/learning-service.log
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
