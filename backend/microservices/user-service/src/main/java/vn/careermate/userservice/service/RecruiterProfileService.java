@@ -211,12 +211,19 @@ public class RecruiterProfileService {
     public Map<String, Object> getDashboardStats() {
         log.warn("getDashboardStats() is not available in microservice architecture. Use job-service endpoints directly.");
         // Return empty stats - should be fetched from job-service
-        return Map.of(
-            "activeJobs", 0L,
-            "newApplications", 0L,
-            "upcomingInterviews", 0L,
-            "successfulHires", 0L
-        );
+        try {
+            RecruiterProfile recruiter = getCurrentRecruiterProfile();
+            return jobServiceClient.getRecruiterStats(recruiter.getId());
+        } catch (Exception e) {
+            log.error("Error fetching stats from job-service: {}", e.getMessage());
+            return Map.of(
+                "activeJobs", 0L,
+                "newApplications", 0L,
+                "upcomingInterviews", 0L,
+                "successfulHires", 0L
+            );
+        }
+    }
         
         /* Original implementation - commented for microservice refactoring
         RecruiterProfile recruiter = getCurrentRecruiterProfile();
@@ -244,7 +251,7 @@ public class RecruiterProfileService {
             "successfulHires", successfulHiresCount
         );
         */
-    }
+    
 
     @Transactional
     public User updateFullName(String fullName) {

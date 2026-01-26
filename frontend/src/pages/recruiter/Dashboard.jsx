@@ -11,6 +11,7 @@ export default function RecruiterDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [recentJobs, setRecentJobs] = useState([]);
+  const [recentApplications, setRecentApplications] = useState([]);
 
   useEffect(() => {
     loadDashboardData();
@@ -29,7 +30,8 @@ export default function RecruiterDashboard() {
       };
 
       try {
-        statsData = await api.getRecruiterDashboardStats();
+        statsData = await api.getRecruiterStatistics();
+        // Backend returns: activeJobs, newApplications, upcomingInterviews, successfulHires
       } catch (err) {
         console.warn('Dashboard stats failed:', err);
       }
@@ -41,12 +43,17 @@ export default function RecruiterDashboard() {
         const jobsData = await api.getMyJobs(0, 6);
         setRecentJobs(jobsData.content || jobsData || []);
       } catch (err) {
-        if (err.response?.status === 410) {
-          console.warn('Recruiter has no company (410). Showing empty jobs.');
-        } else {
-          console.error('Error loading jobs:', err);
-        }
+        console.error('Error loading jobs:', err);
         setRecentJobs([]);
+      }
+
+      // Load recent applications
+      try {
+        const appsData = await api.getRecentApplications();
+        setRecentApplications(appsData || []);
+      } catch (err) {
+        console.error('Error loading recent applications:', err);
+        setRecentApplications([]);
       }
     } catch (error) {
       console.error('Error loading dashboard:', error);
@@ -239,6 +246,81 @@ export default function RecruiterDashboard() {
               <h3 className="font-bold text-gray-900 dark:text-white group-hover:text-emerald-600 transition-colors">Đăng tin mới</h3>
               <p className="text-xs text-gray-500 text-center mt-1">Tìm kiếm thêm ứng viên tiềm năng</p>
             </Link>
+          </div>
+        )}
+      </div>
+
+      {/* Recent Applications Section */}
+      <div className="mt-10 bg-white/60 dark:bg-gray-800/40 backdrop-blur-xl rounded-3xl p-8 border border-white/20 dark:border-white/5 shadow-xl">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+            <span className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-sm">
+              <i className="fas fa-users"></i>
+            </span>
+            Ứng cử viên mới nhất
+          </h2>
+          <Link to="/recruiter/applicants" className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm">
+            Xem tất cả hồ sơ <i className="fas fa-arrow-right"></i>
+          </Link>
+        </div>
+
+        {recentApplications.length === 0 ? (
+          <div className="text-center py-12 text-gray-400">
+            Chưa có ứng tuyển mới nào.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-gray-100 dark:border-gray-800">
+                  <th className="pb-4 font-bold text-gray-500 text-sm">Ứng viên</th>
+                  <th className="pb-4 font-bold text-gray-500 text-sm">Vị trí</th>
+                  <th className="pb-4 font-bold text-gray-500 text-sm">Ngày ứng tuyển</th>
+                  <th className="pb-4 font-bold text-gray-500 text-sm">Trạng thái</th>
+                  <th className="pb-4"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                {recentApplications.map((app) => (
+                  <tr key={app.id} className="group hover:bg-gray-50/50 dark:hover:bg-gray-700/20 transition-colors">
+                    <td className="py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 font-bold overflow-hidden border border-blue-100 dark:border-blue-800">
+                          {app.student?.avatarUrl ? (
+                            <img src={app.student.avatarUrl.startsWith('http') ? app.student.avatarUrl : `http://localhost:8080/api${app.student.avatarUrl}`} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            app.student?.fullName?.charAt(0) || '?'
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900 dark:text-white">{app.student?.fullName || 'Ứng viên ẩn danh'}</p>
+                          <p className="text-xs text-gray-500">{app.student?.email || 'N/A'}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4">
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{app.job?.title || 'N/A'}</p>
+                    </td>
+                    <td className="py-4 text-sm text-gray-500">
+                      {new Date(app.appliedAt).toLocaleDateString('vi-VN')}
+                    </td>
+                    <td className="py-4">
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${app.status === 'PENDING' ? 'bg-amber-100 text-amber-700' :
+                          app.status === 'VIEWED' ? 'bg-blue-100 text-blue-700' :
+                            'bg-gray-100 text-gray-700'
+                        }`}>
+                        {app.status}
+                      </span>
+                    </td>
+                    <td className="py-4 text-right">
+                      <Link to={`/recruiter/applicants?jobId=${app.job?.id}`} className="text-blue-500 hover:text-blue-600 font-bold text-sm">
+                        Chi tiết
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import api from '../../services/api';
 import UserInfoModal from '../../components/UserInfoModal';
 
 export default function Messages() {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -42,17 +43,38 @@ export default function Messages() {
     };
   }, [selectedConversation]); // Re-create poll if selected changes (closure capture)
 
-  // Auto-select conversation from URL
+  // Auto-select conversation from URL or State
   useEffect(() => {
-    const conversationId = searchParams.get('conversationId');
-    if (conversationId && conversations.length > 0) {
-      const conversation = conversations.find(c => c.id === conversationId);
-      if (conversation && (!selectedConversation || selectedConversation.id !== conversationId)) {
-        setSelectedConversation(conversation);
-        setSearchParams({});
+    const initConversation = async () => {
+      // Check for recipientId passed via state (from Applications page)
+      const stateRecipientId = location.state?.recipientId;
+      if (stateRecipientId) {
+        try {
+          const conv = await api.getOrCreateConversation(stateRecipientId);
+          if (conv) {
+            setSelectedConversation(conv);
+            // Clear state to prevent re-opening if navigated back
+            window.history.replaceState({}, document.title);
+            return;
+          }
+        } catch (e) {
+          console.error("Failed to init conversation with recipient", e);
+        }
       }
-    }
-  }, [conversations, searchParams, selectedConversation, setSearchParams]);
+
+      // Check for conversationId in URL
+      const conversationId = searchParams.get('conversationId');
+      if (conversationId && conversations.length > 0) {
+        const conversation = conversations.find(c => c.id === conversationId);
+        if (conversation && (!selectedConversation || selectedConversation.id !== conversationId)) {
+          setSelectedConversation(conversation);
+          setSearchParams({});
+        }
+      }
+    };
+
+    initConversation();
+  }, [conversations, searchParams, location.state]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -74,26 +96,40 @@ export default function Messages() {
     try {
       if (!silent) setLoadingConversations(true);
       const data = await api.getMyConversations();
-      setConversations(data || []);
+
+      // Only update if data changed (Simple check to prevent flicker)
+      setConversations(prev => {
+        if (JSON.stringify(prev) === JSON.stringify(data || [])) return prev;
+        return data || [];
+      });
 
       // Load metadata
       const lastMsgs = { ...lastMessages };
-      const counts = { ...conversationUnreadCounts };
+      let hasChanges = false;
 
       // Async metadata loading
       for (const conv of data || []) {
-        // Only fetch if not cached or every few polls? For now fetch all to be safe but cleaner 
-        // to optimization later.
         try {
+          // Optimization: Only fetch last message if we don't have it or if the conversation updated recently
+          // This assumes conv has an 'updatedAt' or 'lastMessageAt' field we can check against.
+          // For now, to stop flicker, we will fetch but check equality before setting.
+
+          // To reduce load, ideally we only fetch if we suspect change.
+          // Let's assume we must fetch for now but verify change.
           const info = await api.getMessages(conv.id, 0, 1);
           if (info && info.length > 0) {
-            const lastMsg = info[info.length - 1];
-            lastMsgs[conv.id] = lastMsg.content;
+            const lastMsgContent = info[info.length - 1].content;
+            if (lastMsgs[conv.id] !== lastMsgContent) {
+              lastMsgs[conv.id] = lastMsgContent;
+              hasChanges = true;
+            }
           }
-          // Unread count omitted for simplicity unless endpoint exists
         } catch (e) { }
       }
-      setLastMessages(lastMsgs);
+
+      if (hasChanges) {
+        setLastMessages(prev => ({ ...prev, ...lastMsgs }));
+      }
     } catch (error) {
       console.error('Error loading conversations:', error);
     } finally {

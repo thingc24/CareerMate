@@ -48,6 +48,12 @@ export default function JobList() {
     return new Date(dateStr).toLocaleDateString('vi-VN');
   };
 
+  const getCompanyLogo = (logoUrl) => {
+    if (!logoUrl) return null;
+    if (logoUrl.startsWith('http')) return logoUrl;
+    return `http://localhost:8080/api${logoUrl}`;
+  };
+
   const JobCard = ({ job, index }) => (
     <Link
       to={`/student/jobs/${job.id}`}
@@ -63,7 +69,7 @@ export default function JobList() {
       <div className="flex items-start gap-4">
         <div className="w-16 h-16 rounded-xl bg-white p-2 shadow-sm border border-gray-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
           {job.company?.logoUrl ? (
-            <img src={job.company.logoUrl} alt="" className="w-full h-full object-contain" />
+            <img src={getCompanyLogo(job.company.logoUrl)} alt="" className="w-full h-full object-contain" />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
               {job.company?.name?.charAt(0) || 'C'}

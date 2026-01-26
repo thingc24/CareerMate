@@ -21,6 +21,8 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
     Page<Application> findByStudentId(UUID studentId, Pageable pageable);
     Page<Application> findByJobId(UUID jobId, Pageable pageable);
     
+    List<Application> findTop5ByJobRecruiterIdOrderByAppliedAtDesc(UUID recruiterId);
+
     // Note: Job.recruiterId is now a UUID, not an entity relationship
     @Query("SELECT COUNT(a) FROM Application a WHERE a.job.recruiterId = :recruiterId AND a.status = :status")
     long countByJobRecruiterIdAndStatus(@Param("recruiterId") UUID recruiterId, 

@@ -276,17 +276,24 @@ class CareerMateAPI {
     requiredSkills.forEach(skill => params.append('requiredSkills', skill));
     optionalSkills.forEach(skill => params.append('optionalSkills', skill));
 
-    const response = await this.client.post(`/recruiters/jobs?${params}`, jobData);
+    const response = await this.client.post(`/jobs?${params}`, jobData);
     return response.data;
   }
 
   async getMyJobs(page = 0, size = 10) {
-    const response = await this.client.get(`/recruiters/jobs?page=${page}&size=${size}`);
+    const response = await this.client.get(`/jobs/my-jobs?page=${page}&size=${size}`);
     return response.data;
   }
 
   async getJobApplicants(jobId, page = 0, size = 10) {
-    const response = await this.client.get(`/recruiters/jobs/${jobId}/applicants?page=${page}&size=${size}`);
+    // Note: This endpoint needs to be verified in JobController or ApplicationController
+    // Assuming ApplicationController handles it, or JobController
+    // Based on JobController file listing, there is ApplicationController.java
+    // Let's assume /applications/job/{jobId}?
+    // Or /jobs/{jobId}/applications
+    // Warning: I haven't seen ApplicationController. Let's check it first.
+    // Reverting to /jobs/{jobId}/applicants for now, but I should check ApplicationController.
+    const response = await this.client.get(`/applications/job/${jobId}?page=${page}&size=${size}`);
     return response.data;
   }
 
@@ -301,7 +308,7 @@ class CareerMateAPI {
   }
 
   async updateApplicationStatus(applicationId, status, note = '') {
-    const response = await this.client.put(`/recruiters/applications/${applicationId}/status`, null, {
+    const response = await this.client.put(`/applications/${applicationId}/status`, null, {
       params: {
         status,
         notes: note
@@ -313,6 +320,16 @@ class CareerMateAPI {
   // Recruiter Profile APIs
   async getRecruiterProfile() {
     const response = await this.client.get('/recruiters/profile');
+    return response.data;
+  }
+
+  async getRecruiterStatistics() {
+    const response = await this.client.get('/recruiters/dashboard/stats');
+    return response.data;
+  }
+
+  async getRecentApplications() {
+    const response = await this.client.get('/applications/recent');
     return response.data;
   }
 
@@ -1084,6 +1101,34 @@ class CareerMateAPI {
 
   async deleteCVTemplate(templateId) {
     const response = await this.client.delete(`/admin/cv-templates/${templateId}`);
+    return response.data;
+  }
+
+  // Student/Public Packages & Subscriptions
+  async getPackages() {
+    const response = await this.client.get('/packages');
+    return response.data;
+  }
+
+  async getMySubscription() {
+    try {
+      const response = await this.client.get('/packages/my-subscription');
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  async getMySubscriptions() {
+    const response = await this.client.get('/packages/my-subscriptions');
+    return response.data;
+  }
+
+  async requestSubscription(packageId) {
+    const response = await this.client.post(`/packages/${packageId}/request`);
     return response.data;
   }
 

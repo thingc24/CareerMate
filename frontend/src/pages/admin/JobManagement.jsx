@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
+import JobDetail from '../student/JobDetail';
 
 export default function JobManagement() {
   const navigate = useNavigate();
@@ -236,7 +237,7 @@ export default function JobManagement() {
                   <td className="px-8 py-5 text-right">
                     <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
-                        onClick={() => navigate(`/student/jobs/${job.id}`)}
+                        onClick={() => { setSelectedJobId(job.id); setReasonAction(null); }}
                         className="w-9 h-9 flex items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
                         title="Xem chi tiết"
                       >
@@ -349,6 +350,32 @@ export default function JobManagement() {
               >
                 Xác nhận {reasonAction === 'hide' ? 'Ẩn' : 'Xóa'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Detail Modal */}
+      {selectedJobId && !reasonAction && !showReasonModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-[150] p-4 animate-fade-in" onClick={() => setSelectedJobId(null)}>
+          <div className="bg-white dark:bg-slate-900 w-full max-w-5xl h-[90vh] rounded-[2.5rem] shadow-2xl overflow-hidden relative border border-white/20 flex flex-col" onClick={e => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className="px-8 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white/80 dark:bg-slate-900/80 backdrop-blur z-10 shrink-0">
+              <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                <i className="fas fa-briefcase text-indigo-600"></i>
+                Chi tiết tuyển dụng
+              </h3>
+              <button
+                onClick={() => setSelectedJobId(null)}
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-colors"
+              >
+                <i className="fas fa-times text-lg"></i>
+              </button>
+            </div>
+
+            {/* Modal Content - Scrollable */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/50 dark:bg-slate-950/50">
+              <JobDetail jobId={selectedJobId} isModal={true} onClose={() => setSelectedJobId(null)} />
             </div>
           </div>
         </div>

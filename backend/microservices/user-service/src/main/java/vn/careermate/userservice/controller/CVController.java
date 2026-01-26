@@ -115,4 +115,25 @@ public class CVController {
                 .body(Map.of("error", "Error creating CV: " + e.getMessage()));
         }
     }
+    @GetMapping("/download/{cvId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<org.springframework.core.io.Resource> downloadCV(@PathVariable UUID cvId) {
+        try {
+            Map<String, Object> result = cvService.downloadCV(cvId);
+            org.springframework.core.io.Resource resource = (org.springframework.core.io.Resource) result.get("resource");
+            String fileName = (String) result.get("fileName");
+            String contentType = (String) result.get("contentType");
+            
+            return ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.parseMediaType(contentType))
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                .body(resource);
+        } catch (RuntimeException e) {
+            log.error("Error downloading CV: {}", e.getMessage());
+            return ResponseEntity.status(404).build();
+        } catch (Exception e) {
+            log.error("Unexpected error downloading CV", e);
+            return ResponseEntity.status(500).build();
+        }
+    }
 }

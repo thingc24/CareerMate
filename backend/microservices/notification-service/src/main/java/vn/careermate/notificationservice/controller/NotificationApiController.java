@@ -1,12 +1,14 @@
 package vn.careermate.notificationservice.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.careermate.common.dto.NotificationRequest;
 import vn.careermate.notificationservice.model.Notification;
 import vn.careermate.notificationservice.service.NotificationService;
 
+@Slf4j
 @RestController
 @RequestMapping("/notifications")
 @RequiredArgsConstructor
@@ -16,15 +18,22 @@ public class NotificationApiController {
     
     @PostMapping("/create")
     public ResponseEntity<Void> createNotification(@RequestBody NotificationRequest request) {
-        notificationService.createNotification(
-            request.getUserId(),
-            request.getTitle(),
-            request.getMessage(),
-            Notification.NotificationType.valueOf(request.getType()),
-            null,
-            request.getRelatedEntityType(),
-            request.getRelatedEntityId()
-        );
+        log.info("Received request to create notification: type={}, title={}, targetUserId={}", 
+                request.getType(), request.getTitle(), request.getUserId());
+        try {
+            notificationService.createNotification(
+                request.getUserId(),
+                request.getTitle(),
+                request.getMessage(),
+                Notification.NotificationType.valueOf(request.getType()),
+                null,
+                request.getRelatedEntityType(),
+                request.getRelatedEntityId()
+            );
+            log.info("Notification created successfully for user={}", request.getUserId());
+        } catch (Exception e) {
+            log.error("Error creating notification: {}", e.getMessage(), e);
+        }
         return ResponseEntity.ok().build();
     }
     

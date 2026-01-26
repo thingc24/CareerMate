@@ -67,4 +67,7 @@ public interface JobServiceClient {
 
     @GetMapping("/jobs/applications/admin/count")
     Long getApplicationCount();
+
+    @GetMapping("/jobs/recruiter/stats")
+    java.util.Map<String, Object> getRecruiterStats(@RequestParam UUID recruiterId);
 }

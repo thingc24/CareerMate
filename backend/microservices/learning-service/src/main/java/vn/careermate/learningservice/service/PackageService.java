@@ -38,9 +38,12 @@ public class PackageService {
     }
 
     public Optional<Subscription> getCurrentSubscription(UUID userId) {
-        // Check for APPROVED subscriptions first, then ACTIVE (for backward compatibility)
-        List<Subscription> approvedSubs = subscriptionRepository.findByUserIdAndStatus(userId, Subscription.SubscriptionStatus.APPROVED);
-        Optional<Subscription> approvedActive = approvedSubs.stream()
+        // Use JOIN FETCH to avoid LazyInitializationException
+        List<Subscription> allSubs = subscriptionRepository.findByUserIdWithPackage(userId);
+        
+        // Check for APPROVED subscriptions first
+        Optional<Subscription> approvedActive = allSubs.stream()
+                .filter(sub -> sub.getStatus() == Subscription.SubscriptionStatus.APPROVED)
                 .filter(sub -> sub.getEndDate().isAfter(java.time.LocalDateTime.now()))
                 .findFirst();
         
@@ -48,9 +51,9 @@ public class PackageService {
             return approvedActive;
         }
         
-        // Fallback to ACTIVE status for backward compatibility
-        List<Subscription> activeSubs = subscriptionRepository.findByUserIdAndStatus(userId, Subscription.SubscriptionStatus.ACTIVE);
-        return activeSubs.stream()
+        // Fallback to ACTIVE status
+        return allSubs.stream()
+                .filter(sub -> sub.getStatus() == Subscription.SubscriptionStatus.ACTIVE)
                 .filter(sub -> sub.getEndDate().isAfter(java.time.LocalDateTime.now()))
                 .findFirst();
     }

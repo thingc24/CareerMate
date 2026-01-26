@@ -45,6 +45,7 @@ public class SecurityConfig {
                        // Public endpoints for inter-service and frontend
                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/users/**").permitAll()
                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/recruiters/**").permitAll()
+                       .requestMatchers(org.springframework.http.HttpMethod.GET, "/students/**").permitAll()
                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/users/by-roles").permitAll() // For notifications
                        // All other endpoints require authentication
                        .anyRequest().authenticated()

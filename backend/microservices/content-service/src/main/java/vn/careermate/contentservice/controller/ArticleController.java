@@ -189,12 +189,13 @@ public class ArticleController {
         try {
             ArticleReaction reaction = reactionService.getUserReaction(articleId);
             if (reaction == null) {
-                return ResponseEntity.notFound().build();
+                return ResponseEntity.noContent().build();
             }
             return ResponseEntity.ok(reaction);
         } catch (Exception e) {
-            log.error("Error getting my reaction: {}", e.getMessage(), e);
-            return ResponseEntity.notFound().build();
+            log.error("Error getting my reaction: {}", e.getMessage());
+            // Return 204 to avoid console errors in frontend
+            return ResponseEntity.noContent().build();
         }
     }
 

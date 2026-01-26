@@ -43,6 +43,12 @@ public class Job {
     @Column(name = "company_id", nullable = false)
     private UUID companyId;
 
+    @Transient
+    private vn.careermate.common.dto.CompanyDTO company;
+    
+    @Transient
+    private UUID recruiterUserId;
+
     @Column(nullable = false)
     private String title;
 

@@ -100,6 +100,18 @@ public class ApplicationController {
         }
     }
 
+    @GetMapping("/recent")
+    @PreAuthorize("hasRole('RECRUITER')")
+    public ResponseEntity<?> getRecentApplications() {
+        try {
+            java.util.List<Application> apps = applicationService.getRecentApplications();
+             return ResponseEntity.ok(apps);
+        } catch (Exception e) {
+            log.error("Error getting recent applications", e);
+            return ResponseEntity.status(500).body(java.util.List.of());
+        }
+    }
+
     @GetMapping("/job/{jobId}")
     @PreAuthorize("hasRole('RECRUITER') or hasRole('ADMIN')")
     public ResponseEntity<Page<Application>> getJobApplicants(

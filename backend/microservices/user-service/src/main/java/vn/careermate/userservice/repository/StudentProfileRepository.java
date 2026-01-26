@@ -9,5 +9,11 @@ import java.util.UUID;
 
 @Repository
 public interface StudentProfileRepository extends JpaRepository<StudentProfile, UUID> {
-    Optional<StudentProfile> findByUserId(UUID userId);
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user"})
+    java.util.Optional<StudentProfile> findWithUserById(UUID id);
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user"})
+    java.util.Optional<StudentProfile> findWithUserByUserId(UUID userId);
+
+    java.util.Optional<StudentProfile> findByUserId(UUID userId);
 }

@@ -28,6 +28,7 @@ import vn.careermate.common.dto.NotificationRequest;
 import vn.careermate.common.dto.RecruiterProfileDTO;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -175,6 +176,7 @@ public class JobService {
             Page<Job> jobs = jobRepository.findByRecruiterId(recruiter.getId(), pageable);
             
             // Company info will be fetched via ContentServiceClient when needed in DTOs
+            populateCompanyDetails(jobs);
             return jobs;
         } catch (Exception e) {
             log.error("Error getting my jobs: {}", e.getMessage(), e);
@@ -192,6 +194,7 @@ public class JobService {
             Page<Job> jobs = jobRepository.searchJobs(normalizedKeyword, normalizedLocation, pageable);
             
             // Company info will be fetched via ContentServiceClient when needed
+            populateCompanyDetails(jobs);
             
             return jobs != null ? jobs : Page.empty(pageable);
         } catch (RuntimeException e) {
@@ -205,8 +208,10 @@ public class JobService {
 
     @Transactional(readOnly = true)
     public Job getJob(UUID jobId) {
-        return jobRepository.findById(jobId)
+        Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new RuntimeException("Job not found"));
+        populateCompanyDetails(job);
+        return job;
     }
 
     @Transactional(readOnly = true)
@@ -224,20 +229,26 @@ public class JobService {
 
     @Transactional(readOnly = true)
     public Page<Job> getAllJobs(String status, Pageable pageable) {
+        Page<Job> jobs;
         if (status == null || status.trim().isEmpty()) {
-            return jobRepository.findAll(pageable);
+            jobs = jobRepository.findAll(pageable);
+        } else {
+            try {
+                jobs = jobRepository.findByStatus(Job.JobStatus.valueOf(status.toUpperCase()), pageable);
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid status for get all jobs: {}", status);
+                return Page.empty(pageable);
+            }
         }
-        try {
-            return jobRepository.findByStatus(Job.JobStatus.valueOf(status.toUpperCase()), pageable);
-        } catch (IllegalArgumentException e) {
-            log.warn("Invalid status for get all jobs: {}", status);
-            return Page.empty(pageable);
-        }
+        populateCompanyDetails(jobs);
+        return jobs;
     }
 
     @Transactional(readOnly = true)
     public Page<Job> getPendingJobs(Pageable pageable) {
-        return jobRepository.findByStatus(Job.JobStatus.PENDING, pageable);
+        Page<Job> jobs = jobRepository.findByStatus(Job.JobStatus.PENDING, pageable);
+        populateCompanyDetails(jobs);
+        return jobs;
     }
 
     @Transactional
@@ -285,5 +296,43 @@ public class JobService {
     @Transactional(readOnly = true)
     public long getApplicationCount() {
         return applicationRepository.count();
+    }
+
+    private void populateCompanyDetails(Page<Job> jobs) {
+        if (jobs == null || jobs.isEmpty()) return;
+        jobs.forEach(this::populateCompanyDetails);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> getRecruiterStats(UUID recruiterId) {
+        long activeJobs = jobRepository.countByRecruiterIdAndStatus(recruiterId, Job.JobStatus.ACTIVE);
+        long newApplications = applicationRepository.countByJobRecruiterIdAndStatus(
+            recruiterId, vn.careermate.jobservice.model.Application.ApplicationStatus.PENDING);
+        long successfulHires = applicationRepository.countByJobRecruiterIdAndStatus(
+            recruiterId, vn.careermate.jobservice.model.Application.ApplicationStatus.OFFERED);
+        long upcomingInterviews = applicationRepository.countUpcomingInterviewsByRecruiter(recruiterId, java.time.LocalDateTime.now());
+        
+        return Map.of(
+            "activeJobs", activeJobs,
+            "newApplications", newApplications,
+            "upcomingInterviews", upcomingInterviews,
+            "successfulHires", successfulHires
+        );
+    }
+
+    
+    private void populateCompanyDetails(Job job) {
+        if (job.getCompanyId() != null) {
+            try {
+                CompanyDTO company = contentServiceClient.getCompanyById(job.getCompanyId());
+                job.setCompany(company);
+            } catch (Exception e) {
+                log.error("Error fetching company details for job {}: {}", job.getId(), e.getMessage());
+                CompanyDTO placeholder = new CompanyDTO();
+                placeholder.setId(job.getCompanyId());
+                placeholder.setName("Công ty (Lỗi tải)");
+                job.setCompany(placeholder);
+            }
+        }
     }
 }

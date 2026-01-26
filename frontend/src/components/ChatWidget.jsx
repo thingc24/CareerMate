@@ -10,7 +10,7 @@ export default function ChatWidget({ role = 'STUDENT' }) {
   const [selectedFile, setSelectedFile] = useState(null);
 
   // Draggable state
-  const [position, setPosition] = useState({ bottom: 24, right: 24 }); // Initial position in px from edge
+  const [position, setPosition] = useState({ bottom: 24, right: 24 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [hasMoved, setHasMoved] = useState(false);
@@ -20,11 +20,11 @@ export default function ChatWidget({ role = 'STUDENT' }) {
   const buttonRef = useRef(null);
 
   useEffect(() => {
-    // Initialize with welcome message based on role
+    // Initialize with welcome message
     const welcomeMessages = {
-      STUDENT: 'Xin chào! Tôi là Career AI Coach. Tôi có thể giúp bạn:\n\n• Phân tích CV (upload file PDF)\n• Tư vấn nghề nghiệp\n• Đề xuất kỹ năng cần phát triển\n• Luyện tập phỏng vấn\n• Tạo lộ trình nghề nghiệp',
-      RECRUITER: 'Xin chào! Tôi là AI Assistant cho Nhà tuyển dụng. Tôi có thể giúp bạn:\n\n• Tìm ứng viên phù hợp\n• Phân tích CV ứng viên\n• Đề xuất câu hỏi phỏng vấn\n• Đánh giá ứng viên',
-      ADMIN: 'Xin chào! Tôi là AI Assistant cho Admin. Tôi có thể giúp bạn:\n\n• Phân tích dữ liệu hệ thống\n• Đề xuất cải thiện\n• Hỗ trợ quản lý người dùng\n• Báo cáo và thống kê',
+      STUDENT: 'Xin chào! Tôi là Career AI Coach. Tôi có thể giúp bạn:\n\n• Phân tích CV (upload file PDF)\n• Tư vấn nghề nghiệp\n• Đề xuất kỹ năng cần phát triển\n• Luyện tập phỏng vấn',
+      RECRUITER: 'Xin chào! Tôi là AI Assistant cho Nhà tuyển dụng. Tôi có thể giúp bạn:\n\n• Tìm ứng viên phù hợp\n• Phân tích CV ứng viên\n• Đề xuất câu hỏi phỏng vấn',
+      ADMIN: 'Xin chào! Tôi là AI Assistant cho Admin. Tôi có thể giúp bạn:\n\n• Phân tích dữ liệu hệ thống\n• Đề xuất cải thiện\n• Báo cáo và thống kê',
     };
 
     setMessages([
@@ -41,11 +41,11 @@ export default function ChatWidget({ role = 'STUDENT' }) {
     }
   }, [messages, isOpen]);
 
-  // Handle global move/up events for smoother dragging
+  // Handle global drag events
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (!isDragging) return;
-      e.preventDefault(); // Prevent text selection
+      e.preventDefault();
 
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -84,23 +84,17 @@ export default function ChatWidget({ role = 'STUDENT' }) {
     };
   }, [isDragging, dragStart]);
 
-
   const handleMouseDown = (e) => {
-    // Only drag if left click
     if (e.type === 'mousedown' && e.button !== 0) return;
-
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
     setIsDragging(true);
     setDragStart({ x: clientX, y: clientY });
     setHasMoved(false);
   };
 
-  const handleButtonClick = (e) => {
-    if (!hasMoved) {
-      setIsOpen(!isOpen);
-    }
+  const handleButtonClick = () => {
+    if (!hasMoved) setIsOpen(!isOpen);
   };
 
   const handleFileSelect = (e) => {
@@ -120,7 +114,6 @@ export default function ChatWidget({ role = 'STUDENT' }) {
 
   const handleUploadCV = async () => {
     if (!selectedFile) return;
-
     try {
       setUploadingCV(true);
       const userMessage = {
@@ -134,24 +127,22 @@ export default function ChatWidget({ role = 'STUDENT' }) {
       const analysis = await api.analyzeCV(cv.id);
 
       if (analysis.error) {
-        const errorMessage = {
+        setMessages((prev) => [...prev, {
           role: 'assistant',
-          content: `❌ Lỗi phân tích CV: ${analysis.error}\n\nVui lòng thử lại sau hoặc kiểm tra:\n• File CV có đúng định dạng PDF không\n• Kết nối mạng có ổn định không\n• Dịch vụ AI có đang hoạt động không`,
-        };
-        setMessages((prev) => [...prev, errorMessage]);
+          content: `❌ Lỗi phân tích: ${analysis.error}`,
+        }]);
       } else {
         const score = analysis.score || analysis.overallScore;
         const summary = analysis.summary || 'CV của bạn có tiềm năng nhưng cần cải thiện một số điểm.';
         const suggestions = analysis.suggestions || [];
 
-        let content = `✅ Đã phân tích CV của bạn!\n\n`;
-        content += score !== undefined ? `📊 Điểm số: ${score}/100\n\n` : `📊 Điểm số: Đang xử lý...\n\n`;
+        let content = `✅ Đã phân tích CV!\n\n`;
+        content += score !== undefined ? `📊 Điểm số: ${score}/100\n\n` : '';
         content += `${summary}\n\n`;
         if (suggestions.length > 0) {
           content += `💡 Gợi ý:\n${suggestions.slice(0, 3).map((s, i) => `${i + 1}. ${s}`).join('\n')}\n\n`;
         }
         content += `Xem chi tiết tại trang CV của bạn.`;
-
         setMessages((prev) => [...prev, { role: 'assistant', content }]);
       }
       setSelectedFile(null);
@@ -159,7 +150,7 @@ export default function ChatWidget({ role = 'STUDENT' }) {
     } catch (error) {
       setMessages((prev) => [...prev, {
         role: 'assistant',
-        content: '❌ Lỗi: ' + (error.response?.data?.message || 'Không thể phân tích CV. Vui lòng thử lại.'),
+        content: '❌ Lỗi: ' + (error.response?.data?.message || 'Không thể phân tích CV.'),
       }]);
     } finally {
       setUploadingCV(false);
@@ -177,7 +168,7 @@ export default function ChatWidget({ role = 'STUDENT' }) {
 
     try {
       const token = localStorage.getItem('token');
-      if (!token) throw new Error('Chưa đăng nhập. Vui lòng đăng nhập lại.');
+      if (!token) throw new Error('Chưa đăng nhập.');
 
       const response = await api.client.post('/ai/chat', {
         message: userMessage.content,
@@ -190,19 +181,14 @@ export default function ChatWidget({ role = 'STUDENT' }) {
       setMessages((prev) => [...prev, { role: 'assistant', content: aiResponse }]);
     } catch (error) {
       console.error('Error calling AI chat:', error);
-      let errorMessage = error.message || 'Không thể kết nối với server';
-      if (error.response?.data?.error) errorMessage = error.response.data.error;
-      else if (error.response?.data?.message) errorMessage = error.response.data.message;
-
       const fallbackMessages = {
-        STUDENT: 'Cảm ơn bạn đã hỏi! Hiện tại dịch vụ AI đang gặp sự cố. Bạn có thể:\n\n• Upload CV để phân tích\n• Hỏi về kỹ năng cần phát triển\n• Hỏi về lộ trình nghề nghiệp',
-        RECRUITER: 'Cảm ơn bạn đã hỏi! Hiện tại dịch vụ AI đang gặp sự cố. Tôi có thể giúp bạn tìm ứng viên phù hợp hoặc phân tích CV.',
-        ADMIN: 'Cảm ơn bạn đã hỏi! Hiện tại dịch vụ AI đang gặp sự cố. Tôi có thể hỗ trợ bạn quản lý hệ thống và phân tích dữ liệu.',
+        STUDENT: 'Dịch vụ AI đang bận. Bạn có thể thử upload CV để được phân tích nhé.',
+        RECRUITER: 'Dịch vụ AI đang bận. Tôi có thể giúp bạn tìm kiếm ứng viên sau.',
+        ADMIN: 'Dịch vụ AI đang bận. Vui lòng thử lại sau.',
       };
-
       setMessages((prev) => [...prev, {
         role: 'assistant',
-        content: fallbackMessages[role] || `Xin lỗi, có lỗi xảy ra: ${errorMessage}. Vui lòng thử lại sau.`,
+        content: fallbackMessages[role] || 'Xin lỗi, có lỗi xảy ra. Vui lòng thử lại sau.',
       }]);
     } finally {
       setLoading(false);
@@ -210,21 +196,9 @@ export default function ChatWidget({ role = 'STUDENT' }) {
   };
 
   const quickQuestions = {
-    STUDENT: [
-      'Làm thế nào để cải thiện CV?',
-      'Tôi nên học kỹ năng gì cho ngành IT?',
-      'Lộ trình phát triển sự nghiệp như thế nào?',
-    ],
-    RECRUITER: [
-      'Làm thế nào để tìm ứng viên phù hợp?',
-      'Câu hỏi phỏng vấn hay cho vị trí này?',
-      'Đánh giá ứng viên như thế nào?',
-    ],
-    ADMIN: [
-      'Thống kê người dùng hiện tại?',
-      'Cách quản lý nội dung tốt hơn?',
-      'Báo cáo hoạt động hệ thống?',
-    ],
+    STUDENT: ['Cách cải thiện CV?', 'Kỹ năng IT cần thiết?', 'Lộ trình phát triển?'],
+    RECRUITER: ['Cách tìm ứng viên?', 'Câu hỏi phỏng vấn?', 'Đánh giá CV?'],
+    ADMIN: ['Thống kê người dùng?', 'Báo cáo hệ thống?', 'Tối ưu nội dung?'],
   };
 
   return (
@@ -235,122 +209,136 @@ export default function ChatWidget({ role = 'STUDENT' }) {
           position: 'fixed',
           bottom: `${position.bottom}px`,
           right: `${position.right}px`,
-          touchAction: 'none', // Prevent scrolling on mobile while dragging
-          zIndex: 50 // High z-index but below modal
+          touchAction: 'none',
+          zIndex: 50
         }}
-        className={`${isDragging ? 'cursor-grabbing scale-105' : 'cursor-pointer hover:scale-110'} transition-transform duration-200`}
+        className={`transition-transform duration-200 ${isDragging ? 'scale-95 cursor-grabbing' : 'hover:scale-105 cursor-pointer'}`}
         onMouseDown={handleMouseDown}
         onTouchStart={handleMouseDown}
       >
         <button
           ref={buttonRef}
           onClick={handleButtonClick}
-          // Remove onClick from here and handle in onMouseUp logic? 
-          // Better: use handleButtonClick which checks 'hasMoved'
-          className="h-14 w-14 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg flex items-center justify-center hover:shadow-xl active:shadow-md"
-          aria-label="Mở chat AI"
-          title="Chat AI (Nhấn giữ để di chuyển)"
+          className="relative group h-16 w-16 rounded-full bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 p-[2px] shadow-2xl shadow-indigo-500/40"
         >
-          {isOpen ? (
-            <i className="fas fa-times text-xl"></i>
-          ) : (
-            <i className="fas fa-robot text-xl"></i>
-          )}
+          <div className="h-full w-full rounded-full bg-slate-900/90 backdrop-blur-md flex items-center justify-center border border-white/10 group-hover:bg-slate-900/80 transition-all">
+            {isOpen ? (
+              <i className="fas fa-times text-2xl text-white/90"></i>
+            ) : (
+              <i className="fas fa-sparkles text-2xl text-transparent bg-clip-text bg-gradient-to-tr from-indigo-300 to-pink-300 animate-pulse"></i>
+            )}
+          </div>
+          {/* Status Dot */}
+          <span className="absolute -top-1 -right-1 flex h-4 w-4">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-4 w-4 bg-green-500 border-2 border-white"></span>
+          </span>
         </button>
       </div>
 
-      {/* Chat Window - Anchored to button or fixed bottom right? 
-          User asked to move button. Window usually stays fixed or follows button?
-          If button moves up, window should open near it.
-          Let's make window follow button but keep inside viewport.
-      */}
+      {/* Glassmorphic Chat Window */}
       {isOpen && (
         <div
           style={{
             position: 'fixed',
-            bottom: `${position.bottom + 70}px`, // Open above button
+            bottom: `${position.bottom + 80}px`,
             right: `${position.right}px`,
             zIndex: 50
           }}
-          className="w-96 h-[500px] md:h-[600px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden animate-scale-in origin-bottom-right"
+          className="w-[380px] h-[600px] flex flex-col rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-white/80 backdrop-blur-xl animate-scale-in origin-bottom-right"
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 flex items-center justify-between shadow-md">
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
-                <i className="fas fa-robot text-sm"></i>
+          <div className="absolute inset-0 bg-gradient-to-b from-white/40 to-transparent pointer-events-none z-0"></div>
+
+          <div className="relative z-10 p-5 bg-gradient-to-r from-indigo-600/90 to-purple-600/90 backdrop-blur-md text-white shadow-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-inner">
+                  <i className="fas fa-robot text-lg text-indigo-100"></i>
+                </div>
+                <div>
+                  <h3 className="font-bold text-base tracking-wide">AI Assistant</h3>
+                  <div className="flex items-center gap-1.5 opacity-80">
+                    <span className="w-1.5 h-1.5 bg-green-400 rounded-full shadow-[0_0_8px_rgba(74,222,128,0.6)]"></span>
+                    <span className="text-xs font-medium">Always Active</span>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-sm">Career AI Coach</h3>
-                <p className="text-[10px] text-white/80 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
-                  Online
-                </p>
-              </div>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+              >
+                <i className="fas fa-minus text-xs"></i>
+              </button>
             </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="text-white/80 hover:text-white p-1 hover:bg-white/10 rounded transition"
-            >
-              <i className="fas fa-times"></i>
-            </button>
           </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 custom-scrollbar">
+          {/* Messages Area */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-5 custom-scrollbar bg-slate-50/50 relative">
             {messages.map((msg, idx) => (
               <div
                 key={idx}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {msg.role !== 'user' && (
-                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white text-[10px] mr-2 mt-1 flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs shadow-md mt-1 flex-shrink-0">
                     <i className="fas fa-robot"></i>
                   </div>
                 )}
-                <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm shadow-sm ${msg.role === 'user'
-                      ? 'bg-blue-600 text-white rounded-br-sm'
-                      : 'bg-white text-gray-800 border border-gray-100 rounded-bl-sm'
-                    }`}
-                >
-                  {msg.file && (
-                    <div className="mb-2 pb-2 border-b border-white/20 flex items-center gap-2">
-                      <i className="fas fa-file-pdf"></i>
-                      <span className="font-medium truncate">{msg.file}</span>
-                    </div>
-                  )}
-                  <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>
+
+                <div className={`max-w-[80%] space-y-1 ${msg.role === 'user' ? 'items-end flex flex-col' : 'items-start flex flex-col'}`}>
+                  <div
+                    className={`p-3.5 rounded-2xl shadow-sm text-sm leading-relaxed ${msg.role === 'user'
+                        ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-tr-sm'
+                        : 'bg-white border border-gray-100 text-gray-800 rounded-tl-sm'
+                      }`}
+                  >
+                    {msg.file && (
+                      <div className="mb-2 pb-2 border-b border-white/20 flex items-center gap-2">
+                        <i className="fas fa-file-pdf text-red-200"></i>
+                        <span className="font-medium truncate">{msg.file}</span>
+                      </div>
+                    )}
+                    <div className="whitespace-pre-wrap">{msg.content}</div>
+                  </div>
+                  <span className="text-[10px] text-gray-400 px-1 opacity-70">
+                    {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
                 </div>
+
+                {msg.role === 'user' && (
+                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs mt-1 flex-shrink-0">
+                    <i className="fas fa-user"></i>
+                  </div>
+                )}
               </div>
             ))}
+
             {loading && (
-              <div className="flex justify-start">
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white text-[10px] mr-2 mt-1 flex-shrink-0">
+              <div className="flex gap-3 justify-start">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs shadow-md mt-1 flex-shrink-0">
                   <i className="fas fa-robot"></i>
                 </div>
-                <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm rounded-bl-sm">
-                  <div className="flex gap-1">
-                    <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce"></div>
-                    <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce delay-75"></div>
-                    <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce delay-150"></div>
-                  </div>
+                <div className="bg-white border border-gray-100 p-4 rounded-2xl rounded-tl-sm shadow-sm flex gap-1.5 items-center">
+                  <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                  <div className="w-2 h-2 bg-pink-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
                 </div>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Actions Area */}
-          <div className="p-3 bg-white border-t border-gray-100">
-            {/* Quick Questions (Horizontal Scroll) */}
+          {/* Input & Actions */}
+          <div className="relative z-10 bg-white/80 backdrop-blur-xl border-t border-white/20 p-4">
+            {/* Quick Chips */}
             {messages.length === 1 && (
-              <div className="flex gap-2 mb-3 overflow-x-auto pb-1 custom-scrollbar hide-scrollbar">
-                {(quickQuestions[role] || []).map((q, idx) => (
+              <div className="flex gap-2 overflow-x-auto pb-3 custom-scrollbar hide-scrollbar">
+                {(quickQuestions[role] || []).map((q, i) => (
                   <button
-                    key={idx}
+                    key={i}
                     onClick={() => setInput(q)}
-                    className="whitespace-nowrap px-3 py-1.5 bg-blue-50 text-blue-700 text-xs rounded-full hover:bg-blue-100 transition border border-blue-100 flex-shrink-0"
+                    className="whitespace-nowrap px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-600 text-xs font-medium border border-indigo-100 hover:bg-indigo-100 transition active:scale-95"
                   >
                     {q}
                   </button>
@@ -358,71 +346,70 @@ export default function ChatWidget({ role = 'STUDENT' }) {
               </div>
             )}
 
-            {/* Upload CV - Compact */}
-            {role === 'STUDENT' && !selectedFile && (
-              <label className="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition mb-2 border border-dashed border-gray-200">
+            {/* File & Input */}
+            <div className="space-y-3">
+              {role === 'STUDENT' && !selectedFile && !uploadingCV && (
+                <div onClick={() => fileInputRef.current?.click()} className="group cursor-pointer flex items-center justify-between p-2.5 rounded-xl border border-dashed border-gray-300 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform">
+                      <i className="fas fa-file-pdf"></i>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-gray-700">Phân tích CV</p>
+                      <p className="text-[10px] text-gray-400">Tải lên PDF để chấm điểm</p>
+                    </div>
+                  </div>
+                  <i className="fas fa-chevron-right text-gray-400 text-xs group-hover:translate-x-1 transition-transform"></i>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                </div>
+              )}
+
+              {selectedFile && (
+                <div className="flex items-center justify-between p-3 bg-indigo-50/80 border border-indigo-100 rounded-xl">
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    <i className="fas fa-file-pdf text-red-500"></i>
+                    <span className="text-xs font-semibold text-indigo-900 truncate max-w-[180px]">{selectedFile.name}</span>
+                  </div>
+                  <div className="flex gap-1">
+                    <button onClick={handleUploadCV} disabled={uploadingCV} className="p-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-xs shadow-sm">
+                      {uploadingCV ? <i className="fas fa-spinner fa-spin"></i> : 'Gửi'}
+                    </button>
+                    <button onClick={() => setSelectedFile(null)} className="p-1.5 text-gray-400 hover:text-red-500">
+                      <i className="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={handleSend} className="relative flex items-center gap-2">
                 <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf"
-                  onChange={handleFileSelect}
-                  className="hidden"
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Hỏi tôi bất cứ điều gì..."
+                  className="w-full bg-gray-100 hover:bg-white focus:bg-white text-gray-800 text-sm rounded-xl py-3 pl-4 pr-12 border border-transparent focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100 transition-all outline-none"
+                  disabled={loading}
                 />
-                <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-500">
-                  <i className="fas fa-file-pdf"></i>
-                </div>
-                <div className="flex-1">
-                  <p className="text-xs font-semibold text-gray-700">Phân tích CV</p>
-                  <p className="text-[10px] text-gray-500">Tải lên PDF để AI chấm điểm</p>
-                </div>
-                <i className="fas fa-arrow-right text-gray-400 text-xs"></i>
-              </label>
-            )}
-
-            {/* Selected File Preview */}
-            {selectedFile && (
-              <div className="flex items-center justify-between p-2 bg-blue-50 rounded-lg border border-blue-100 mb-2">
-                <div className="flex items-center gap-2 overflow-hidden">
-                  <i className="fas fa-file-pdf text-red-500"></i>
-                  <span className="text-xs font-medium truncate max-w-[150px]">{selectedFile.name}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={handleUploadCV}
-                    disabled={uploadingCV}
-                    className="bg-blue-600 text-white text-xs px-2 py-1 rounded hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    {uploadingCV ? <i className="fas fa-spinner fa-spin"></i> : 'Gửi'}
-                  </button>
-                  <button
-                    onClick={() => setSelectedFile(null)}
-                    className="text-gray-400 hover:text-red-500 p-1"
-                  >
-                    <i className="fas fa-times"></i>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Input */}
-            <form onSubmit={handleSend} className="relative">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Nhập tin nhắn..."
-                className="w-full pl-4 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-sm transition-all"
-                disabled={loading}
-              />
-              <button
-                type="submit"
-                disabled={loading || !input.trim()}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:bg-gray-300"
-              >
-                {loading ? <i className="fas fa-spinner fa-spin text-xs"></i> : <i className="fas fa-paper-plane text-xs"></i>}
-              </button>
-            </form>
+                <button
+                  type="submit"
+                  disabled={loading || !input.trim()}
+                  className="absolute right-2 p-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:shadow-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:shadow-none disabled:scale-100"
+                >
+                  {loading ? <i className="fas fa-spinner fa-spin text-xs"></i> : <i className="fas fa-paper-plane text-xs"></i>}
+                </button>
+              </form>
+            </div>
           </div>
+
+          {/* Decorative Elements */}
+          <div className="absolute top-20 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute bottom-20 left-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
         </div>
       )}
     </>

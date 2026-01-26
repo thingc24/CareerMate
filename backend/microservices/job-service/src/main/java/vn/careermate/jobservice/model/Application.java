@@ -42,8 +42,14 @@ public class Application {
     @Column(name = "student_id", nullable = false)
     private UUID studentId;
 
+    @Transient
+    private vn.careermate.common.dto.StudentProfileDTO student;
+
     @Column(name = "cv_id")
     private UUID cvId;
+    
+    @Transient
+    private String cvUrl;
 
     @Column(name = "cover_letter", columnDefinition = "TEXT")
     private String coverLetter;

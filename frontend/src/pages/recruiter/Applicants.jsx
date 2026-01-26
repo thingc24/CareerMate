@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import api from '../../services/api';
 
 export default function Applicants() {
@@ -231,7 +231,14 @@ function KanbanColumn({ title, count, icon, color, applicants, onStatusChange, f
 
 function ApplicantCard({ applicant, onStatusChange, formatDate }) {
   const [showDetails, setShowDetails] = useState(false);
-  const studentName = applicant.student?.fullName || applicant.studentName || 'Ứng viên';
+  const studentName = applicant.student?.user?.fullName || applicant.student?.fullName || applicant.studentName || 'Ứng viên ẩn danh';
+  const studentUserId = applicant.student?.user?.id || applicant.student?.userId;
+  // Helper for avatar URL
+  const getAvatar = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    return `http://localhost:8080/api${url}`;
+  };
   const matchScore = applicant.matchScore ? parseFloat(applicant.matchScore) : 0;
 
   const getScoreColor = () => {
@@ -244,13 +251,24 @@ function ApplicantCard({ applicant, onStatusChange, formatDate }) {
     <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-700/50 transition-all duration-300 group hover:-translate-y-1">
       {/* Header */}
       <div className="flex justify-between items-start mb-3">
-        <div>
-          <h4 className="font-bold text-gray-900 dark:text-white text-lg group-hover:text-blue-600 transition-colors cursor-pointer" onClick={() => setShowDetails(!showDetails)}>
-            {studentName}
-          </h4>
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1.5">
-            <i className="far fa-clock"></i> {formatDate(applicant.appliedAt)}
-          </p>
+        <div className="flex gap-3">
+          <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex-shrink-0 border border-gray-100 dark:border-gray-600">
+            {applicant.student?.avatarUrl ? (
+              <img src={getAvatar(applicant.student.avatarUrl)} alt={studentName} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold bg-white dark:bg-gray-800">
+                {studentName.charAt(0)}
+              </div>
+            )}
+          </div>
+          <div>
+            <h4 className="font-bold text-gray-900 dark:text-white text-lg group-hover:text-blue-600 transition-colors cursor-pointer" onClick={() => setShowDetails(!showDetails)}>
+              {studentName}
+            </h4>
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1.5">
+              <i className="far fa-clock"></i> {formatDate(applicant.appliedAt)}
+            </p>
+          </div>
         </div>
         {matchScore > 0 && (
           <div className="relative w-11 h-11 flex items-center justify-center shrink-0">
@@ -286,24 +304,40 @@ function ApplicantCard({ applicant, onStatusChange, formatDate }) {
 
       {/* Actions */}
       <div className="flex items-center gap-3">
-        {applicant.cv && (
+        {applicant.cvId && (
           <button
-            onClick={(e) => {
+            onClick={async (e) => {
               e.stopPropagation();
-              let cvUrl = applicant.cv.fileUrl;
-              if (cvUrl && !cvUrl.startsWith('http')) {
-                if (cvUrl.startsWith('/api')) {
-                  cvUrl = `http://localhost:8080${cvUrl}`;
-                } else {
-                  cvUrl = `http://localhost:8080/api${cvUrl}`;
-                }
+              try {
+                const response = await api.client.get(`/students/cv/download/${applicant.cvId}`, {
+                  responseType: 'blob'
+                });
+                // Create a blob with PDF type for browser to render
+                const file = new Blob([response.data], { type: 'application/pdf' });
+                const url = window.URL.createObjectURL(file);
+                window.open(url, '_blank');
+              } catch (error) {
+                console.error('Error viewing CV:', error);
+                alert('Không thể mở CV');
               }
-              window.open(cvUrl, '_blank');
             }}
             className="flex-1 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-xs font-bold flex items-center justify-center gap-2 text-gray-700 dark:text-gray-300 group/btn"
           >
             <i className="far fa-file-pdf text-red-500 group-hover/btn:scale-110 transition-transform"></i> Xem CV
           </button>
+        )}
+
+        {/* Message Button */}
+        {studentUserId && (
+          <Link
+            to="/recruiter/messages"
+            state={{ recipientId: studentUserId }}
+            onClick={(e) => e.stopPropagation()}
+            className="w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-blue-50 border border-blue-200 text-blue-600 hover:bg-blue-100 hover:scale-105"
+            title="Nhắn tin"
+          >
+            <i className="fas fa-comment-alt"></i>
+          </Link>
         )}
 
         <button

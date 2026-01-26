@@ -120,6 +120,13 @@ export default function Applications() {
     });
   };
 
+  const getCompanyLogo = (logoUrl) => {
+    if (!logoUrl) return null;
+    if (logoUrl.startsWith('http')) return logoUrl;
+    // Prepend API base URL for relative paths
+    return `http://localhost:8080/api${logoUrl.startsWith('/') ? '' : '/'}${logoUrl}`;
+  };
+
   const tabs = [
     { id: 'ALL', label: 'Tất cả' },
     { id: 'PENDING', label: 'Đang chờ' },
@@ -167,8 +174,8 @@ export default function Applications() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 md:flex-none px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab.id
-                    ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                   }`}
               >
                 {tab.label}
@@ -215,9 +222,9 @@ export default function Applications() {
                 <div className="flex flex-col md:flex-row gap-6">
                   {/* Left: Logo & Basic Info */}
                   <div className="flex gap-4 flex-1">
-                    <div className="w-16 h-16 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center p-2 flex-shrink-0 border dark:border-gray-700">
+                    <div className="w-16 h-16 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center p-2 flex-shrink-0 border dark:border-gray-700 overflow-hidden">
                       {app.job?.company?.logoUrl ? (
-                        <img src={app.job.company.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+                        <img src={getCompanyLogo(app.job.company.logoUrl)} alt="Logo" className="w-full h-full object-contain" />
                       ) : (
                         <i className="fas fa-building text-2xl text-gray-400"></i>
                       )}
@@ -226,7 +233,9 @@ export default function Applications() {
                       <Link to={`/student/jobs/${app.job?.id}`} className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                         {app.job?.title || 'Unknown Job'}
                       </Link>
-                      <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">{app.job?.company?.name || 'Unknown Company'}</p>
+                      <p className="text-gray-600 dark:text-gray-400 text-sm mb-1 font-medium">
+                        {app.job?.company?.name || 'Công ty ẩn danh'}
+                      </p>
                       <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-500">
                         <span className="flex items-center gap-1">
                           <i className="far fa-clock"></i>
@@ -247,6 +256,18 @@ export default function Applications() {
                     {getStatusBadge(app.status)}
 
                     <div className="flex items-center gap-2">
+                      {/* Contact/Message Button */}
+                      {app.job?.recruiterUserId && (
+                        <Link
+                          to="/student/messages"
+                          state={{ recipientId: app.job.recruiterUserId }}
+                          className="px-4 py-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 text-sm font-medium transition-colors flex items-center gap-2"
+                        >
+                          <i className="fas fa-comment-alt"></i>
+                          Nhắn tin
+                        </Link>
+                      )}
+
                       <Link
                         to={`/student/jobs/${app.job?.id}`}
                         className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
@@ -262,8 +283,8 @@ export default function Applications() {
                   <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
                     {app.note && (
                       <div className={`p-3 rounded-lg text-sm mb-2 ${app.status === 'ACCEPTED' ? 'bg-green-50 dark:bg-green-900/10 text-green-800 dark:text-green-300' :
-                          app.status === 'REJECTED' ? 'bg-red-50 dark:bg-red-900/10 text-red-800 dark:text-red-300' :
-                            'bg-blue-50 dark:bg-blue-900/10 text-blue-800 dark:text-blue-300'
+                        app.status === 'REJECTED' ? 'bg-red-50 dark:bg-red-900/10 text-red-800 dark:text-red-300' :
+                          'bg-blue-50 dark:bg-blue-900/10 text-blue-800 dark:text-blue-300'
                         }`}>
                         <span className="font-bold mr-2"><i className="fas fa-comment-dots"></i> Phản hồi:</span>
                         {app.note}

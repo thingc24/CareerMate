@@ -73,12 +73,8 @@ export default function Packages() {
     );
   }
 
-  // Mock data if API returns empty for better preview
-  const displayPackages = packages.length > 0 ? packages : [
-    { id: '1', name: 'Free', price: 0, description: 'Cho sinh viên mới bắt đầu', features: ['Tạo 1 CV cơ bản', 'Xem tin tuyển dụng'] },
-    { id: '2', name: 'Pro', price: 99000, description: 'Nâng cao cơ hội việc làm', features: ['Tạo CV không giới hạn', '5 mẫu CV Premium', 'AI Review CV'], isPopular: true },
-    { id: '3', name: 'Premium', price: 199000, description: 'Đầy đủ tính năng cao cấp nhất', features: ['Tất cả tính năng Pro', 'AI Interview Coach', 'Huy hiệu nổi bật', 'Ưu tiên hiển thị'] }
-  ];
+  // No mock data - rely on API
+  const displayPackages = packages;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-12">
@@ -118,8 +114,8 @@ export default function Packages() {
             <div
               key={pkg.id}
               className={`relative rounded-3xl p-8 transition-all duration-300 transform hover:-translate-y-2 ${isPopular
-                  ? 'bg-gradient-to-b from-gray-900 to-gray-800 text-white shadow-2xl border-2 border-gray-700 scale-105 z-10'
-                  : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl'
+                ? 'bg-gradient-to-b from-gray-900 to-gray-800 text-white shadow-2xl border-2 border-gray-700 scale-105 z-10'
+                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl'
                 }`}
             >
               {isPopular && (
@@ -144,12 +140,12 @@ export default function Packages() {
 
               <button
                 onClick={() => handleSubscribe(pkg.id)}
-                disabled={isActive || pkg.price === 0}
+                disabled={isActive}
                 className={`w-full py-3.5 rounded-xl font-bold text-sm transition-all duration-200 ${isActive
-                    ? 'bg-green-500 text-white cursor-default'
-                    : isPopular
-                      ? 'bg-white text-gray-900 hover:bg-gray-100'
-                      : 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100'
+                  ? 'bg-green-500 text-white cursor-default'
+                  : isPopular
+                    ? 'bg-white text-gray-900 hover:bg-gray-100'
+                    : 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100'
                   }`}
               >
                 {isActive ? 'Đang sử dụng' : pkg.price === 0 ? 'Bắt đầu miễn phí' : 'Đăng ký ngay'}

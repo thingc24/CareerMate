@@ -65,7 +65,7 @@ public class StudentProfileService {
 
             log.info("Found user: {} (ID: {})", user.getEmail(), user.getId());
 
-            StudentProfile profile = studentProfileRepository.findByUserId(user.getId())
+            StudentProfile profile = studentProfileRepository.findWithUserByUserId(user.getId())
                     .orElse(null);
 
             // Tạo profile mới nếu chưa có
@@ -81,7 +81,7 @@ public class StudentProfileService {
             UUID profileId = profile.getId();
             entityManager.flush(); // Ensure any pending changes are saved
             entityManager.clear(); // Clear persistence context
-            StudentProfile freshProfile = studentProfileRepository.findById(profileId)
+            StudentProfile freshProfile = studentProfileRepository.findWithUserById(profileId)
                     .orElseThrow(() -> new RuntimeException("Profile not found: " + profileId));
             
             log.info("Profile reloaded from database. ID: {}, University: {}, Major: {}, City: {}, Address: {}, Gender: {}", 
@@ -235,10 +235,10 @@ public class StudentProfileService {
     }
 
     public StudentProfile getStudentProfileById(UUID studentId) {
-        return studentProfileRepository.findById(studentId).orElse(null);
+        return studentProfileRepository.findWithUserById(studentId).orElse(null);
     }
 
     public StudentProfile getStudentProfileByUserId(UUID userId) {
-        return studentProfileRepository.findByUserId(userId).orElse(null);
+        return studentProfileRepository.findWithUserByUserId(userId).orElse(null);
     }
 }

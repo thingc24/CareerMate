@@ -155,4 +155,9 @@ public class JobController {
     public ResponseEntity<Long> getApplicationCount() {
         return ResponseEntity.ok(jobService.getApplicationCount());
     }
+
+    @GetMapping("/recruiter/stats")
+    public ResponseEntity<Map<String, Object>> getRecruiterStats(@RequestParam UUID recruiterId) {
+        return ResponseEntity.ok(jobService.getRecruiterStats(recruiterId));
+    }
 }

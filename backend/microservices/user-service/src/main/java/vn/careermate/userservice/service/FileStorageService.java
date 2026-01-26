@@ -111,4 +111,23 @@ public class FileStorageService {
         log.info("Resolving web path '{}' to file system path '{}'", webPath, resolvedPath.toString());
         return resolvedPath.toString();
     }
+    public org.springframework.core.io.Resource loadFileAsResource(String filePath) {
+        try {
+            String actualPath = resolveFilePath(filePath);
+            if (actualPath == null) {
+                throw new RuntimeException("File path invalid: " + filePath);
+            }
+            
+            Path path = Paths.get(actualPath);
+            org.springframework.core.io.Resource resource = new org.springframework.core.io.UrlResource(path.toUri());
+            
+            if (resource.exists() || resource.isReadable()) {
+                return resource;
+            } else {
+                throw new RuntimeException("Could not read file: " + filePath);
+            }
+        } catch (java.net.MalformedURLException e) {
+            throw new RuntimeException("Could not read file: " + filePath, e);
+        }
+    }
 }

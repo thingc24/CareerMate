@@ -9,6 +9,7 @@ import vn.careermate.userservice.model.StudentProfile;
 import vn.careermate.userservice.model.User;
 import vn.careermate.userservice.repository.UserRepository;
 import vn.careermate.userservice.service.StudentProfileService;
+import vn.careermate.common.dto.UserDTO;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -321,6 +322,14 @@ public class StudentProfileController {
                     .portfolioUrl(profile.getPortfolioUrl())
                     .createdAt(profile.getCreatedAt())
                     .updatedAt(profile.getUpdatedAt())
+                    .user(profile.getUser() != null ? vn.careermate.common.dto.UserDTO.builder()
+                            .id(profile.getUser().getId())
+                            .email(profile.getUser().getEmail())
+                            .fullName(profile.getUser().getFullName())
+                            .avatarUrl(profile.getUser().getAvatarUrl())
+                            .build() : null)
+                    .avatarUrl(profile.getAvatarUrl() != null ? profile.getAvatarUrl() : 
+                              (profile.getUser() != null ? profile.getUser().getAvatarUrl() : null))
                     .build();
             return ResponseEntity.ok(dto);
         } catch (Exception e) {
@@ -355,6 +364,14 @@ public class StudentProfileController {
                     .portfolioUrl(profile.getPortfolioUrl())
                     .createdAt(profile.getCreatedAt())
                     .updatedAt(profile.getUpdatedAt())
+                    .user(profile.getUser() != null ? vn.careermate.common.dto.UserDTO.builder()
+                            .id(profile.getUser().getId())
+                            .email(profile.getUser().getEmail())
+                            .fullName(profile.getUser().getFullName())
+                            .avatarUrl(profile.getUser().getAvatarUrl())
+                            .build() : null)
+                    .avatarUrl(profile.getAvatarUrl() != null ? profile.getAvatarUrl() : 
+                              (profile.getUser() != null ? profile.getUser().getAvatarUrl() : null))
                     .build();
             return ResponseEntity.ok(dto);
         } catch (Exception e) {
@@ -391,6 +408,14 @@ public class StudentProfileController {
                     .portfolioUrl(profile.getPortfolioUrl())
                     .createdAt(profile.getCreatedAt())
                     .updatedAt(profile.getUpdatedAt())
+                    .user(profile.getUser() != null ? vn.careermate.common.dto.UserDTO.builder()
+                            .id(profile.getUser().getId())
+                            .email(profile.getUser().getEmail())
+                            .fullName(profile.getUser().getFullName())
+                            .avatarUrl(profile.getUser().getAvatarUrl())
+                            .build() : null)
+                    .avatarUrl(profile.getAvatarUrl() != null ? profile.getAvatarUrl() : 
+                              (profile.getUser() != null ? profile.getUser().getAvatarUrl() : null))
                     .build();
             log.info("GET /students/profile/user/{} - Profile found: ID={}", userId, profile.getId());
             return ResponseEntity.ok(dto);
