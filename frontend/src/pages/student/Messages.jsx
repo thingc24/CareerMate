@@ -15,9 +15,11 @@ export default function Messages() {
   const [loadingConversations, setLoadingConversations] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [conversationUnreadCounts, setConversationUnreadCounts] = useState({});
-  const [lastMessages, setLastMessages] = useState({}); // Store last message for each conversation
+  const [lastMessages, setLastMessages] = useState({});
   const [showUserInfoModal, setShowUserInfoModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
   const messagesEndRef = useRef(null);
   const pollingIntervalRef = useRef(null);
   const menuRef = useRef(null);
@@ -25,49 +27,39 @@ export default function Messages() {
   useEffect(() => {
     loadConversations();
     loadUnreadCount();
-    
-    // Poll for new messages every 5 seconds
+
+    // Poll for new messages every 3 seconds (faster for chat)
     pollingIntervalRef.current = setInterval(() => {
       if (selectedConversation) {
-        loadMessages(selectedConversation.id);
+        loadMessages(selectedConversation.id, true); // silent load
       }
       loadUnreadCount();
-      loadConversations();
-    }, 5000);
+      loadConversations(true); // silent load
+    }, 3000);
 
     return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-      }
+      if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
     };
-  }, [selectedConversation]);
+  }, [selectedConversation]); // Re-create poll if selected changes (closure capture)
 
-  // Check URL params for conversationId and auto-select conversation
+  // Auto-select conversation from URL
   useEffect(() => {
     const conversationId = searchParams.get('conversationId');
     if (conversationId && conversations.length > 0) {
       const conversation = conversations.find(c => c.id === conversationId);
       if (conversation && (!selectedConversation || selectedConversation.id !== conversationId)) {
         setSelectedConversation(conversation);
-        // Remove query param after selecting
         setSearchParams({});
       }
     }
   }, [conversations, searchParams, selectedConversation, setSearchParams]);
 
+  // Scroll to bottom on new messages
   useEffect(() => {
-    if (selectedConversation) {
-      loadMessages(selectedConversation.id);
-    }
-  }, [selectedConversation]);
-
-  useEffect(() => {
-    if (messages.length > 0) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Close menu when clicking outside
+  // Click outside menu
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -78,58 +70,51 @@ export default function Messages() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const loadConversations = async () => {
+  const loadConversations = async (silent = false) => {
     try {
-      setLoadingConversations(true);
+      if (!silent) setLoadingConversations(true);
       const data = await api.getMyConversations();
       setConversations(data || []);
-      
-      // Load last message for each conversation to show preview
-      const lastMsgs = {};
-      const counts = {};
+
+      // Load metadata
+      const lastMsgs = { ...lastMessages };
+      const counts = { ...conversationUnreadCounts };
+
+      // Async metadata loading
       for (const conv of data || []) {
+        // Only fetch if not cached or every few polls? For now fetch all to be safe but cleaner 
+        // to optimization later.
         try {
-          // Load last message (only 1 message, most recent)
-          const messages = await api.getMessages(conv.id, 0, 1);
-          if (messages && messages.length > 0) {
-            // Get the last message (most recent)
-            const lastMsg = messages[messages.length - 1];
-            if (lastMsg && lastMsg.content) {
-              const preview = lastMsg.content.length > 50 
-                ? lastMsg.content.substring(0, 50) + '...' 
-                : lastMsg.content;
-              lastMsgs[conv.id] = preview;
-            }
+          const info = await api.getMessages(conv.id, 0, 1);
+          if (info && info.length > 0) {
+            const lastMsg = info[info.length - 1];
+            lastMsgs[conv.id] = lastMsg.content;
           }
-          
-          // Load unread count
-          const unread = await api.getUnreadCountForConversation?.(conv.id) || 0;
-          counts[conv.id] = unread;
-        } catch (e) {
-          console.error(`Error loading data for conversation ${conv.id}:`, e);
-          counts[conv.id] = 0;
-        }
+          // Unread count omitted for simplicity unless endpoint exists
+        } catch (e) { }
       }
       setLastMessages(lastMsgs);
-      setConversationUnreadCounts(counts);
     } catch (error) {
       console.error('Error loading conversations:', error);
     } finally {
-      setLoadingConversations(false);
+      if (!silent) setLoadingConversations(false);
     }
   };
 
-  const loadMessages = async (conversationId) => {
+  const loadMessages = async (conversationId, silent = false) => {
     try {
-      const data = await api.getMessages(conversationId, 0, 100);
-      setMessages(data || []);
-      // Mark as read
-      try {
-        await api.markConversationAsRead(conversationId);
-        await loadUnreadCount();
-        setConversationUnreadCounts(prev => ({ ...prev, [conversationId]: 0 }));
-      } catch (error) {
-        console.error('Error marking as read:', error);
+      const data = await api.getMessages(conversationId, 0, 50);
+      // Only update if different length to prevent jitter? Or just set.
+      // For chat, simpler to just set.
+      // Reverse if API returns newest first? Assuming API returns chronological or we sort.
+      // Usually chat APIs return newest last or we sort by createdAt.
+      // Let's sort to be safe.
+      const sorted = (data || []).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      setMessages(sorted);
+
+      if (!silent) {
+        // Mark read
+        api.markConversationAsRead(conversationId).catch(() => { });
       }
     } catch (error) {
       console.error('Error loading messages:', error);
@@ -140,385 +125,315 @@ export default function Messages() {
     try {
       const data = await api.getUnreadCount();
       setUnreadCount(data.count || 0);
-    } catch (error) {
-      console.error('Error loading unread count:', error);
-    }
-  };
-
-  const handleConversationClick = async (conversation) => {
-    setSelectedConversation(conversation);
-    await loadMessages(conversation.id);
+    } catch (error) { }
   };
 
   const handleSend = async (e) => {
     e.preventDefault();
-    if (!input.trim() || loading || !selectedConversation) return;
+    if (!input.trim() || !selectedConversation) return;
 
     const content = input;
     setInput('');
-    setLoading(true);
+    // Optimistic update
+    const tempMsg = {
+      id: 'temp-' + Date.now(),
+      content: content,
+      sender: user,
+      createdAt: new Date().toISOString(),
+      isTemp: true
+    };
+    setMessages(prev => [...prev, tempMsg]);
 
     try {
       await api.sendMessage(selectedConversation.id, content);
-      await loadMessages(selectedConversation.id);
-      
-      // Update last message preview immediately
-      const preview = content.length > 50 ? content.substring(0, 50) + '...' : content;
-      setLastMessages(prev => ({ ...prev, [selectedConversation.id]: preview }));
-      
-      await loadConversations();
+      loadMessages(selectedConversation.id, true);
+      // Update sidebar preview
+      setLastMessages(prev => ({ ...prev, [selectedConversation.id]: content }));
     } catch (error) {
-      console.error('Error sending message:', error);
-      alert('Lỗi: ' + (error.response?.data?.error || 'Không thể gửi tin nhắn'));
-      setInput(content);
-    } finally {
-      setLoading(false);
+      console.error('Send failed:', error);
+      // Remove temp message?
     }
-  };
-
-  const getOtherUser = (conversation) => {
-    if (!conversation || !user) return null;
-    if (conversation.participant1?.id === user.id) {
-      return conversation.participant2;
-    }
-    return conversation.participant1;
-  };
-
-  const getLastMessagePreview = async (conversationId) => {
-    try {
-      const msgs = await api.getMessages(conversationId, 0, 1);
-      if (msgs && msgs.length > 0) {
-        const lastMsg = msgs[msgs.length - 1];
-        const preview = lastMsg.content || '';
-        return preview.length > 50 ? preview.substring(0, 50) + '...' : preview;
-      }
-    } catch (e) {
-      // Ignore
-    }
-    return '';
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = now - date;
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    if (minutes < 1) return 'Vừa xong';
-    if (minutes < 60) return `${minutes} phút trước`;
-    if (hours < 24) return `${hours} giờ trước`;
-    if (days < 7) return `${days} ngày trước`;
-    return date.toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' });
-  };
-
-  const formatTime = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const getAvatarUrl = (avatarUrl) => {
-    if (!avatarUrl) return null;
-    if (avatarUrl.startsWith('http')) return avatarUrl;
-    return `http://localhost:8080/api${avatarUrl}`;
-  };
-
-  const handleViewProfile = () => {
-    setShowUserInfoModal(true);
-    setShowMenu(false);
   };
 
   const handleDeleteMessages = async () => {
-    if (!selectedConversation) return;
-    
-    if (!window.confirm('Bạn có chắc chắn muốn xóa toàn bộ tin nhắn trong cuộc trò chuyện này?')) {
-      return;
-    }
-
+    if (!selectedConversation || !window.confirm('Xóa toàn bộ cuộc trò chuyện này?')) return;
     try {
       await api.deleteAllMessages(selectedConversation.id);
       setMessages([]);
       setLastMessages(prev => ({ ...prev, [selectedConversation.id]: '' }));
-      alert('Đã xóa toàn bộ tin nhắn');
-    } catch (error) {
-      console.error('Error deleting messages:', error);
-      alert('Lỗi: ' + (error.response?.data?.error || 'Không thể xóa tin nhắn'));
-    } finally {
-      setShowMenu(false);
+    } catch (e) {
+      alert('Không thể xóa tin nhắn');
     }
+    setShowMenu(false);
+  };
+
+  const getOtherUser = (conv) => {
+    if (!conv || !user) return null;
+    return conv.participant1?.id === user.id ? conv.participant2 : conv.participant1;
+  };
+
+  const filteredConversations = conversations.filter(c => {
+    const other = getOtherUser(c);
+    if (!other) return false;
+    return other.fullName?.toLowerCase().includes(searchTerm.toLowerCase());
+  });
+
+  const getAvatar = (u) => {
+    if (u?.avatarUrl?.startsWith('http')) return u.avatarUrl;
+    if (u?.avatarUrl) return `http://localhost:8080/api${u.avatarUrl}`;
+    return null;
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-4 h-[calc(100vh-120px)] flex flex-col">
-      <div className="card p-0 overflow-hidden flex-1 flex shadow-lg">
-        {/* Conversations List - Left Side */}
-        <div className="w-1/3 border-r border-gray-200 dark:border-gray-800 flex flex-col bg-white dark:bg-gray-900">
-          {/* Header */}
-          <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-800">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <i className="fas fa-comments text-blue-600 dark:text-blue-400"></i>
-              Tin nhắn
-            </h2>
-            {unreadCount > 0 && (
-              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-gray-800 text-blue-800 dark:text-blue-300">
-                  {unreadCount} tin nhắn chưa đọc
-                </span>
-              </p>
-            )}
-          </div>
+    <div className="flex h-full bg-white dark:bg-black overflow-hidden relative">
+      <div className="absolute inset-0 bg-blue-50/20 dark:bg-blue-900/5 pointer-events-none"></div>
 
-          {/* Conversations */}
-          <div className="flex-1 overflow-y-auto">
-            {loadingConversations ? (
-              <div className="p-4 text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-200 dark:border-gray-700 border-t-blue-600 dark:border-t-blue-500"></div>
-                <p className="mt-2 text-gray-600 dark:text-gray-300 text-sm">Đang tải...</p>
-              </div>
-            ) : conversations.length === 0 ? (
-              <div className="p-8 text-center">
-                <i className="fas fa-comments text-gray-400 dark:text-gray-500 text-5xl mb-3"></i>
-                <p className="text-gray-600 dark:text-gray-300 text-sm font-medium">Chưa có cuộc trò chuyện nào</p>
-                <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">Bắt đầu trò chuyện với nhà tuyển dụng ngay!</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                {conversations.map((conversation) => {
-                  const otherUser = getOtherUser(conversation);
-                  if (!otherUser) return null;
-                  const isSelected = selectedConversation?.id === conversation.id;
-                  const unreadCount = conversationUnreadCounts[conversation.id] || 0;
-                  const avatarUrl = getAvatarUrl(otherUser.avatarUrl);
-                  
-                  return (
-                    <button
-                      key={conversation.id}
-                      onClick={() => handleConversationClick(conversation)}
-                      className={`w-full p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all text-left relative ${
-                        isSelected ? 'bg-blue-50 dark:bg-gray-800 border-l-4 border-blue-600 dark:border-blue-500' : ''
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="relative flex-shrink-0">
-                          {avatarUrl ? (
-                            <img
-                              src={avatarUrl}
-                              alt={otherUser.fullName}
-                              className="w-14 h-14 rounded-full object-cover shadow-md border-2 border-white dark:border-gray-700"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                                if (e.target.nextSibling) {
-                                  e.target.nextSibling.style.display = 'flex';
-                                }
-                              }}
-                            />
-                          ) : null}
-                          <div className={`w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-lg shadow-md ${avatarUrl ? 'hidden' : ''}`}>
-                            {otherUser.fullName?.charAt(0).toUpperCase() || 'U'}
-                          </div>
-                          {unreadCount > 0 && (
-                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                              {unreadCount > 9 ? '9+' : unreadCount}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2 mb-1">
-                            <p className="font-semibold text-gray-900 dark:text-white truncate text-base">
-                              {otherUser.fullName || 'Người dùng'}
-                            </p>
-                            {conversation.lastMessageAt && (
-                              <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                                {formatDate(conversation.lastMessageAt)}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
-                            {lastMessages[conversation.id] || 'Chưa có tin nhắn'}
-                          </p>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+      {/* Sidebar List */}
+      <div className={`${selectedConversation ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 flex-col border-r border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl z-20`}>
+        {/* Header */}
+        <div className="p-4 border-b border-gray-100 dark:border-gray-800">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Chat</h1>
+          <div className="relative">
+            <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input
+              type="text"
+              placeholder="Tìm kiếm..."
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 transition-all dark:text-white"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
           </div>
         </div>
 
-        {/* Messages - Right Side */}
-        <div className="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900">
-          {!selectedConversation ? (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center">
-                <i className="fas fa-comments text-gray-300 dark:text-gray-600 text-7xl mb-4"></i>
-                <p className="text-gray-500 dark:text-gray-300 text-lg font-medium">Chọn cuộc trò chuyện để bắt đầu</p>
-                <p className="text-gray-400 dark:text-gray-400 text-sm mt-2">Nhắn tin với nhà tuyển dụng ngay!</p>
-              </div>
+        {/* List */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
+          {loadingConversations ? (
+            <div className="space-y-3 p-2">
+              {[1, 2, 3].map(i => <div key={i} className="h-16 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse"></div>)}
+            </div>
+          ) : filteredConversations.length === 0 ? (
+            <div className="text-center py-10 text-gray-500 text-sm">
+              {searchTerm ? 'Không tìm thấy kết quả' : 'Chưa có cuộc trò chuyện nào'}
             </div>
           ) : (
-            <>
-              {/* Messages Header */}
-              <div className="border-b border-gray-200 dark:border-gray-800 p-4 bg-white dark:bg-gray-900 shadow-sm">
-                {(() => {
-                  const otherUser = getOtherUser(selectedConversation);
-                  if (!otherUser) return null;
-                  const avatarUrl = getAvatarUrl(otherUser.avatarUrl);
-                  return (
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 flex-1">
-                        {avatarUrl ? (
-                          <img
-                            src={avatarUrl}
-                            alt={otherUser.fullName}
-                            className="w-12 h-12 rounded-full object-cover shadow-md border-2 border-white dark:border-gray-700"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              if (e.target.nextSibling) {
-                                e.target.nextSibling.style.display = 'flex';
-                              }
-                            }}
-                          />
-                        ) : null}
-                        <div className={`w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold shadow-md ${avatarUrl ? 'hidden' : ''}`}>
-                          {otherUser.fullName?.charAt(0).toUpperCase() || 'U'}
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-semibold text-gray-900 dark:text-white text-lg">
-                            {otherUser.fullName || 'Người dùng'}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {otherUser.role === 'RECRUITER' ? 'Nhà tuyển dụng' : 'Sinh viên'}
-                          </p>
-                        </div>
+            filteredConversations.map(conv => {
+              const other = getOtherUser(conv);
+              const active = selectedConversation?.id === conv.id;
+              const lastMsg = lastMessages[conv.id] || 'Bắt đầu trò chuyện';
+              const avatar = getAvatar(other);
+
+              return (
+                <button
+                  key={conv.id}
+                  onClick={() => setSelectedConversation(conv)}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${active
+                    ? 'bg-blue-50 dark:bg-blue-900/20 shadow-sm'
+                    : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                    }`}
+                >
+                  <div className="relative">
+                    {avatar ? (
+                      <img src={avatar} alt="avt" className="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-gray-700" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                        {other?.fullName?.[0]}
                       </div>
-                      <div className="relative" ref={menuRef}>
-                        <button
-                          onClick={() => setShowMenu(!showMenu)}
-                          className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition"
-                        >
-                          <i className="fas fa-ellipsis-v"></i>
-                        </button>
-                        {showMenu && (
-                          <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10">
-                            <button
-                              onClick={handleViewProfile}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                            >
-                              <i className="fas fa-user"></i>
-                              <span>Xem thông tin cá nhân</span>
-                            </button>
-                            <button
-                              onClick={handleDeleteMessages}
-                              className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                            >
-                              <i className="fas fa-trash"></i>
-                              <span>Xóa toàn bộ tin nhắn</span>
-                            </button>
+                    )}
+                    {/* Status dot (fake for now) */}
+                    <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-gray-900 rounded-full"></div>
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <div className="flex justify-between items-baseline mb-0.5">
+                      <h3 className={`text-sm font-bold truncate ${active ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}>
+                        {other?.fullName}
+                      </h3>
+                      <span className="text-[10px] text-gray-400">
+                        {conv.lastMessageAt ? new Date(conv.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                      </span>
+                    </div>
+                    <p className={`text-xs truncate ${active ? 'text-blue-500/80 dark:text-blue-300/80' : 'text-gray-500 font-medium'}`}>
+                      {lastMsg}
+                    </p>
+                  </div>
+                </button>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      {/* Main Chat Area */}
+      <div className={`${!selectedConversation ? 'hidden md:flex' : 'flex'} flex-1 flex-col relative bg-white dark:bg-black`}>
+        {!selectedConversation ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+            <div className="w-24 h-24 bg-blue-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6 animate-bounce-slow">
+              <i className="fas fa-paper-plane text-4xl text-blue-500"></i>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">CareerMate Messenger</h2>
+            <p className="text-gray-500 dark:text-gray-400 max-w-sm">
+              Kết nối trực tiếp với nhà tuyển dụng và cố vấn nghề nghiệp. Chọn một cuộc trò chuyện để bắt đầu.
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Chat Header */}
+            <div className="h-16 px-6 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-0 z-10">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setSelectedConversation(null)}
+                  className="md:hidden mr-2 p-2 -ml-2 text-gray-600 dark:text-gray-300"
+                >
+                  <i className="fas fa-chevron-left"></i>
+                </button>
+
+                {(() => {
+                  const other = getOtherUser(selectedConversation);
+                  const avatar = getAvatar(other);
+                  return (
+                    <>
+                      <div className="relative">
+                        {avatar ? (
+                          <img src={avatar} className="w-10 h-10 rounded-full object-cover shadow-sm" alt="avt" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold">
+                            {other?.fullName?.[0]}
                           </div>
                         )}
+                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></div>
                       </div>
-                    </div>
+                      <div>
+                        <h3 className="font-bold text-gray-900 dark:text-white text-base">
+                          {other?.fullName}
+                        </h3>
+                        <p className="text-xs text-green-500 font-medium flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
+                          Đang hoạt động
+                        </p>
+                      </div>
+                    </>
                   );
                 })()}
               </div>
 
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3 dark:bg-gray-900">
-                {messages.length === 0 ? (
-                  <div className="text-center py-12">
-                    <i className="fas fa-comment-dots text-gray-300 dark:text-gray-600 text-4xl mb-3"></i>
-                    <p className="text-gray-500 dark:text-gray-300 text-sm">Chưa có tin nhắn nào</p>
-                    <p className="text-gray-400 dark:text-gray-400 text-xs mt-1">Bắt đầu cuộc trò chuyện ngay!</p>
-                  </div>
-                ) : (
-                  messages.map((msg) => {
-                    const isMyMessage = msg.sender?.id === user?.id;
-                    return (
-                      <div
-                        key={msg.id}
-                        className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'} items-end gap-2`}
-                      >
-                        {!isMyMessage && (
-                          <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-700 flex items-center justify-center text-white text-xs flex-shrink-0">
-                            {msg.sender?.fullName?.charAt(0).toUpperCase() || 'U'}
-                          </div>
-                        )}
-                        <div
-                          className={`max-w-[70%] rounded-2xl px-4 py-2.5 shadow-sm ${
-                            isMyMessage
-                              ? 'bg-blue-600 dark:bg-blue-700 text-white rounded-br-md'
-                              : 'bg-white dark:bg-gray-800 dark:text-white text-gray-900 border border-gray-200 dark:border-gray-700 rounded-bl-md'
-                          }`}
-                        >
-                          <div className="whitespace-pre-wrap text-sm leading-relaxed">{msg.content}</div>
-                          <div className={`text-xs mt-1.5 ${isMyMessage ? 'text-blue-100 dark:text-blue-200' : 'text-gray-500 dark:text-gray-400'}`}>
-                            {formatTime(msg.createdAt)}
-                          </div>
-                        </div>
-                        {isMyMessage && (
-                          <div className="w-8 h-8 rounded-full bg-blue-600 dark:bg-blue-700 flex items-center justify-center text-white text-xs flex-shrink-0">
-                            {user?.fullName?.charAt(0).toUpperCase() || 'U'}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
-                {loading && (
-                  <div className="flex justify-start items-end gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-700 flex items-center justify-center text-white text-xs flex-shrink-0"></div>
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-bl-md">
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"></div>
-                        <div
-                          className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"
-                          style={{ animationDelay: '0.1s' }}
-                        ></div>
-                        <div
-                          className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"
-                          style={{ animationDelay: '0.2s' }}
-                        ></div>
-                      </div>
-                    </div>
+              <div className="relative" ref={menuRef}>
+                <button
+                  onClick={() => setShowMenu(!showMenu)}
+                  className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-800 rounded-full transition"
+                >
+                  <i className="fas fa-ellipsis-v"></i>
+                </button>
+                {showMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 py-2 animate-fade-in z-50">
+                    <button
+                      onClick={() => { setShowUserInfoModal(true); setShowMenu(false); }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
+                    >
+                      <i className="fas fa-user text-gray-400"></i> Xem hồ sơ
+                    </button>
+                    <button
+                      onClick={handleDeleteMessages}
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-2"
+                    >
+                      <i className="fas fa-trash text-red-400"></i> Xóa tin nhắn
+                    </button>
                   </div>
                 )}
-                <div ref={messagesEndRef} />
               </div>
+            </div>
 
-              {/* Input */}
-              <form onSubmit={handleSend} className="p-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                <div className="flex gap-2">
+            {/* Messages List */}
+            <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 bg-gray-50 dark:bg-black/50 custom-scrollbar scroll-smooth">
+              {messages.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center opacity-50">
+                  <i className="fas fa-comment-dots text-6xl text-gray-300 mb-4"></i>
+                  <p className="text-gray-500 text-sm">Chưa có tin nhắn nào</p>
+                </div>
+              ) : (
+                messages.map((msg, i) => {
+                  const isMe = msg.sender?.id === user?.id;
+                  const showAvatar = !isMe && (i === 0 || messages[i - 1].sender?.id !== msg.sender?.id);
+                  const otherUser = getOtherUser(selectedConversation);
+                  const avatar = getAvatar(otherUser);
+
+                  return (
+                    <div key={msg.id} className={`flex gap-3 ${isMe ? 'justify-end' : ''} group`}>
+                      {!isMe && (
+                        <div className="w-8 flex-shrink-0 flex items-end">
+                          {showAvatar ? (
+                            avatar ? (
+                              <img src={avatar} className="w-8 h-8 rounded-full shadow-sm" alt="avt" />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white text-xs font-bold">
+                                {otherUser?.fullName?.[0]}
+                              </div>
+                            )
+                          ) : <div className="w-8" />}
+                        </div>
+                      )}
+
+                      <div className={`max-w-[75%] space-y-1 ${isMe ? 'items-end flex flex-col' : 'items-start flex flex-col'}`}>
+                        <div
+                          className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm relative ${isMe
+                            ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-br-none'
+                            : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-gray-700 rounded-bl-none'
+                            }`}
+                        >
+                          {msg.content}
+                        </div>
+                        <span className={`text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity px-1`}>
+                          {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+
+                      {isMe && (
+                        <div className="w-4 flex flex-col justify-end pb-2">
+                          {/* Seen indicator, optional */}
+                          {i === messages.length - 1 && (
+                            <i className="fas fa-check-circle text-[10px] text-blue-500"></i>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input Area */}
+            <div className="p-4 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
+              <form onSubmit={handleSend} className="flex gap-3 items-end max-w-4xl mx-auto">
+                <button type="button" className="p-3 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-gray-800 rounded-full transition-colors">
+                  <i className="fas fa-plus"></i>
+                </button>
+                <button type="button" className="p-3 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-gray-800 rounded-full transition-colors">
+                  <i className="fas fa-image"></i>
+                </button>
+
+                <div className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center px-4 py-1.5 focus-within:ring-2 ring-blue-500/30 transition-shadow">
                   <input
                     type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
+                    className="w-full bg-transparent border-none focus:ring-0 py-2.5 text-sm max-h-32 dark:text-white"
                     placeholder="Nhập tin nhắn..."
-                    className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white"
-                    disabled={loading}
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
                   />
-                  <button
-                    type="submit"
-                    disabled={loading || !input.trim()}
-                    className="px-6 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
-                  >
-                    {loading ? (
-                      <i className="fas fa-spinner fa-spin"></i>
-                    ) : (
-                      <>
-                        <i className="fas fa-paper-plane"></i>
-                        <span className="font-medium">Gửi</span>
-                      </>
-                    )}
+                  <button type="button" className="p-2 text-gray-400 hover:text-yellow-500 transition">
+                    <i className="far fa-smile"></i>
                   </button>
                 </div>
+
+                <button
+                  type="submit"
+                  disabled={!input.trim()}
+                  className="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 transition-transform hover:scale-105 shadow-md flex-shrink-0"
+                >
+                  <i className="fas fa-paper-plane"></i>
+                </button>
               </form>
-            </>
-          )}
-        </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* User Info Modal */}

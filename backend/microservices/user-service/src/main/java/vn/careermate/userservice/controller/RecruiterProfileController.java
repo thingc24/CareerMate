@@ -24,7 +24,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/recruiters")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class RecruiterProfileController {
 
     private final RecruiterProfileService recruiterProfileService;
@@ -261,6 +260,42 @@ public class RecruiterProfileController {
             log.error("Unexpected error uploading avatar", e);
             return ResponseEntity.status(500)
                 .body(Map.of("error", "Error uploading avatar: " + e.getMessage()));
+        }
+    }
+    @PostMapping("/company/reset")
+    @PreAuthorize("hasRole('RECRUITER')")
+    public ResponseEntity<Void> resetCompanyLink() {
+        try {
+            recruiterProfileService.resetCompanyLink();
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            log.error("Error resetting company link: {}", e.getMessage());
+            return ResponseEntity.status(500).build();
+        }
+    }
+    @GetMapping("/by-company/{companyId}")
+    @PreAuthorize("permitAll()") // Internal use mostly, but can be open
+    public ResponseEntity<RecruiterProfileDTO> getRecruiterByCompanyId(@PathVariable UUID companyId) {
+        try {
+            RecruiterProfile profile = recruiterProfileService.getRecruiterByCompanyId(companyId);
+            if (profile == null) {
+                return ResponseEntity.notFound().build();
+            }
+            RecruiterProfileDTO dto = RecruiterProfileDTO.builder()
+                    .id(profile.getId())
+                    .userId(profile.getUser() != null ? profile.getUser().getId() : null)
+                    .companyId(profile.getCompanyId())
+                    .position(profile.getPosition())
+                    .department(profile.getDepartment())
+                    .phone(profile.getPhone())
+                    .bio(profile.getBio())
+                    .createdAt(profile.getCreatedAt())
+                    .updatedAt(profile.getUpdatedAt())
+                    .build();
+            return ResponseEntity.ok(dto);
+        } catch (Exception e) {
+            log.error("Error getting recruiter by company ID: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).build();
         }
     }
 }

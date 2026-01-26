@@ -20,17 +20,21 @@ import vn.careermate.common.dto.UserDTO;
 import vn.careermate.common.dto.JobDTO;
 import vn.careermate.common.dto.ArticleDTO;
 import vn.careermate.common.dto.CVTemplateDTO;
+import vn.careermate.common.dto.PackageDTO;
+import vn.careermate.common.dto.SubscriptionDTO;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+// Note: Subscription and Package classes are in learning-service
+// These endpoints need LearningServiceClient methods to be implemented
 
 @Slf4j
 @RestController
 @RequestMapping("/admin")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
-@CrossOrigin(origins = "*")
 public class AdminController {
 
     private final AdminService adminService;
@@ -39,7 +43,9 @@ public class AdminController {
 
     @GetMapping("/dashboard/stats")
     public ResponseEntity<AdminDashboardStats> getDashboardStats() {
-        return ResponseEntity.ok(adminService.getDashboardStats());
+        AdminDashboardStats stats = adminService.getDashboardStats();
+        log.info("GET /admin/dashboard/stats - Returning stats: {}", stats);
+        return ResponseEntity.ok(stats);
     }
 
     @GetMapping("/users")
@@ -117,6 +123,36 @@ public class AdminController {
         return ResponseEntity.ok(adminService.rejectJob(jobId, admin.getId()));
     }
 
+    @GetMapping("/articles")
+    public ResponseEntity<Page<ArticleDTO>> getAllArticles(
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(adminService.getAllArticles(status, pageable));
+    }
+
+    @GetMapping("/articles/pending")
+    public ResponseEntity<Page<ArticleDTO>> getPendingArticles(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(adminService.getPendingArticles(pageable));
+    }
+
+    // Article Approval and Rejection
+    @PostMapping("/articles/{articleId}/approve")
+    public ResponseEntity<ArticleDTO> approveArticle(@PathVariable UUID articleId) {
+        return ResponseEntity.ok(adminService.approveArticle(articleId));
+    }
+
+    @PostMapping("/articles/{articleId}/reject")
+    public ResponseEntity<ArticleDTO> rejectArticle(@PathVariable UUID articleId) {
+        return ResponseEntity.ok(adminService.rejectArticle(articleId));
+    }
+
     // CV Templates Management
     @GetMapping("/cv-templates")
     public ResponseEntity<List<CVTemplateDTO>> getAllCVTemplates() {
@@ -125,8 +161,7 @@ public class AdminController {
 
     @PostMapping("/cv-templates")
     public ResponseEntity<CVTemplateDTO> createCVTemplate(@RequestBody CVTemplateDTO template) {
-        // TODO: Add createCVTemplate endpoint to LearningServiceClient
-        throw new RuntimeException("Create CV template endpoint not yet implemented");
+        return ResponseEntity.ok(learningServiceClient.createCVTemplate(template));
     }
 
     @PutMapping("/cv-templates/{templateId}")
@@ -134,48 +169,72 @@ public class AdminController {
             @PathVariable UUID templateId,
             @RequestBody CVTemplateDTO template
     ) {
-        // TODO: Add updateCVTemplate endpoint to LearningServiceClient
-        throw new RuntimeException("Update CV template endpoint not yet implemented");
+        return ResponseEntity.ok(learningServiceClient.updateCVTemplate(templateId, template));
     }
 
     @DeleteMapping("/cv-templates/{templateId}")
     public ResponseEntity<Void> deleteCVTemplate(@PathVariable UUID templateId) {
-        // TODO: Add deleteCVTemplate endpoint to LearningServiceClient
-        throw new RuntimeException("Delete CV template endpoint not yet implemented");
+        learningServiceClient.deleteCVTemplate(templateId);
+        return ResponseEntity.ok().build();
     }
 
     // Packages Management
     @GetMapping("/packages")
-    public ResponseEntity<List<Package>> getAllPackages() {
-        // TODO: Add getAllPackages endpoint to LearningServiceClient
-        throw new RuntimeException("Get all packages endpoint not yet implemented");
+    public ResponseEntity<List<PackageDTO>> getAllPackages() {
+        return ResponseEntity.ok(learningServiceClient.getAllPackages());
     }
 
     @PostMapping("/packages")
-    public ResponseEntity<Package> createPackage(@RequestBody Package packageEntity) {
-        // TODO: Add createPackage endpoint to LearningServiceClient
-        throw new RuntimeException("Create package endpoint not yet implemented");
+    public ResponseEntity<PackageDTO> createPackage(@RequestBody PackageDTO packageDTO) {
+        return ResponseEntity.ok(learningServiceClient.createPackage(packageDTO));
     }
 
     @PutMapping("/packages/{packageId}")
-    public ResponseEntity<Package> updatePackage(
+    public ResponseEntity<PackageDTO> updatePackage(
             @PathVariable UUID packageId,
-            @RequestBody Package packageEntity
+            @RequestBody PackageDTO packageDTO
     ) {
-        // TODO: Add updatePackage endpoint to LearningServiceClient
-        throw new RuntimeException("Update package endpoint not yet implemented");
+        return ResponseEntity.ok(learningServiceClient.updatePackage(packageId, packageDTO));
     }
 
     @DeleteMapping("/packages/{packageId}")
     public ResponseEntity<Void> deletePackage(@PathVariable UUID packageId) {
-        // TODO: Add deletePackage endpoint to LearningServiceClient
-        throw new RuntimeException("Delete package endpoint not yet implemented");
+        learningServiceClient.deletePackage(packageId);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/subscriptions")
-    public ResponseEntity<List<Subscription>> getAllSubscriptions() {
-        // TODO: Add getAllSubscriptions endpoint to LearningServiceClient
-        throw new RuntimeException("Get all subscriptions endpoint not yet implemented");
+    public ResponseEntity<Page<SubscriptionDTO>> getAllSubscriptions(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok(learningServiceClient.getAllSubscriptions(page, size));
+    }
+    
+    @GetMapping("/subscriptions/pending")
+    public ResponseEntity<Page<SubscriptionDTO>> getPendingSubscriptions(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok(learningServiceClient.getPendingSubscriptions(page, size));
+    }
+    
+    @GetMapping("/subscriptions/approved")
+    public ResponseEntity<Page<SubscriptionDTO>> getApprovedSubscriptions(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok(learningServiceClient.getApprovedSubscriptions(page, size));
+    }
+    
+    @PostMapping("/subscriptions/{subscriptionId}/approve")
+    public ResponseEntity<SubscriptionDTO> approveSubscription(@PathVariable UUID subscriptionId) {
+        return ResponseEntity.ok(learningServiceClient.approveSubscription(subscriptionId));
+    }
+    
+    @PostMapping("/subscriptions/{subscriptionId}/reject")
+    public ResponseEntity<SubscriptionDTO> rejectSubscription(@PathVariable UUID subscriptionId) {
+        return ResponseEntity.ok(learningServiceClient.rejectSubscription(subscriptionId));
     }
 
     // Analytics

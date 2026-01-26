@@ -11,7 +11,7 @@ spring:
         - id: user-service
           uri: lb://user-service
           predicates:
-            - Path=/api/users/**, /api/auth/**, /api/students/**, /api/recruiters/**
+            - Path=/api/users/**, /api/auth/**, /api/students/**, /api/recruiters/**, /api/messaging/**, /api/uploads/**
           filters:
             - StripPrefix=1
         
@@ -35,7 +35,7 @@ spring:
         - id: learning-service
           uri: lb://learning-service
           predicates:
-            - Path=/api/courses/**, /api/challenges/**, /api/cv-templates/**, /api/packages/**
+            - Path=/api/courses/**, /api/challenges/**, /api/cv-templates/**, /api/packages/**, /api/course-content/**
           filters:
             - StripPrefix=1
         
@@ -62,14 +62,14 @@ spring:
             - Path=/api/ai/**, /api/career-roadmap/**
           filters:
             - StripPrefix=1
-      
+      # Disable Spring Cloud Gateway's default CORS handling
       globalcors:
         cors-configurations:
           '[/**]':
-            allowedOrigins: "*"
-            allowedMethods: "*"
-            allowedHeaders: "*"
-            allowCredentials: true
+            allowedOriginPatterns: []
+            allowedMethods: []
+            allowedHeaders: []
+            allowCredentials: false
 
 eureka:
   client:

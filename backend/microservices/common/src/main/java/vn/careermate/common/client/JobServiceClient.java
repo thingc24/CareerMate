@@ -1,65 +1,70 @@
 package vn.careermate.common.client;
 
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 import vn.careermate.common.dto.JobDTO;
 import vn.careermate.common.dto.ApplicationDTO;
+import vn.careermate.common.config.FeignClientConfiguration;
 
 import java.util.List;
 import java.util.UUID;
 
-@FeignClient(name = "job-service")
+@FeignClient(name = "job-service", configuration = FeignClientConfiguration.class)
 public interface JobServiceClient {
-    @GetMapping("/api/jobs/{jobId}")
+    @GetMapping("/jobs/{jobId}")
     JobDTO getJobById(@PathVariable UUID jobId);
     
-    @GetMapping("/api/jobs")
+    @GetMapping("/jobs")
     List<JobDTO> getJobsByRecruiter(@RequestParam UUID recruiterId);
     
-    @GetMapping("/api/applications")
+    @GetMapping("/applications")
     List<ApplicationDTO> getApplicationsByStudent(@RequestParam UUID studentId);
     
-    @GetMapping("/api/applications/{applicationId}")
+    @GetMapping("/applications/{applicationId}")
     ApplicationDTO getApplicationById(@PathVariable UUID applicationId);
     
-    @GetMapping("/api/saved-jobs")
+    @GetMapping("/saved-jobs")
     List<JobDTO> getSavedJobsByStudent(@RequestParam UUID studentId);
     
-    @PostMapping("/api/saved-jobs")
+    @PostMapping("/saved-jobs")
     void saveJob(@RequestParam UUID studentId, @RequestParam UUID jobId);
     
-    @DeleteMapping("/api/saved-jobs/{savedJobId}")
+    @DeleteMapping("/saved-jobs/{savedJobId}")
     void unsaveJob(@PathVariable UUID savedJobId);
     
     // Admin endpoints (TODO: Implement in job-service)
-    @PostMapping("/api/jobs/{jobId}/approve")
+    @PostMapping("/jobs/{jobId}/approve")
     JobDTO approveJob(@PathVariable UUID jobId, @RequestParam UUID adminId);
     
-    @PostMapping("/api/jobs/{jobId}/reject")
+    @PostMapping("/jobs/{jobId}/reject")
     JobDTO rejectJob(@PathVariable UUID jobId, @RequestParam UUID adminId);
     
-    @PostMapping("/api/jobs/{jobId}/hide")
+    @PostMapping("/jobs/{jobId}/hide")
     JobDTO hideJob(@PathVariable UUID jobId, @RequestParam UUID adminId, @RequestParam String reason);
     
-    @PostMapping("/api/jobs/{jobId}/unhide")
+    @PostMapping("/jobs/{jobId}/unhide")
     JobDTO unhideJob(@PathVariable UUID jobId, @RequestParam UUID adminId);
     
-    @DeleteMapping("/api/jobs/{jobId}")
+    @DeleteMapping("/jobs/{jobId}")
     void deleteJob(@PathVariable UUID jobId, @RequestParam UUID adminId, @RequestParam String reason);
     
-    @GetMapping("/api/jobs/admin/all")
-    List<JobDTO> getAllJobs(
+    @GetMapping("/jobs/admin/all")
+    Page<JobDTO> getAllJobs(
         @RequestParam(required = false) String status,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size
     );
     
-    @GetMapping("/api/jobs/admin/pending")
-    List<JobDTO> getPendingJobs(
+    @GetMapping("/jobs/admin/pending")
+    Page<JobDTO> getPendingJobs(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size
     );
     
-    @GetMapping("/api/jobs/admin/count")
+    @GetMapping("/jobs/admin/count")
     Long getJobCount(@RequestParam(required = false) String status);
+
+    @GetMapping("/jobs/applications/admin/count")
+    Long getApplicationCount();
 }

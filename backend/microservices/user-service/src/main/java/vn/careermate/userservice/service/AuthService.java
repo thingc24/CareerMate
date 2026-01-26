@@ -19,6 +19,8 @@ import vn.careermate.userservice.repository.StudentProfileRepository;
 import vn.careermate.userservice.repository.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -116,7 +118,11 @@ public class AuthService {
                 .roles(user.getRole().name())
                 .build();
 
-        String accessToken = jwtService.generateToken(userDetails);
+        // Add role claim to JWT token
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("role", user.getRole().name());
+        
+        String accessToken = jwtService.generateToken(extraClaims, userDetails);
         String refreshToken = jwtService.generateRefreshToken(userDetails);
 
         UserInfo userInfo = UserInfo.builder()

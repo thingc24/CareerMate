@@ -1,21 +1,22 @@
 package vn.careermate.aiservice.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import vn.careermate.jobservice.model.Job;
-import vn.careermate.jobservice.repository.JobRepository;
 import vn.careermate.aiservice.service.MockInterviewService;
+import vn.careermate.common.client.JobServiceClient;
+import vn.careermate.common.dto.JobDTO;
 
 import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/students/mock-interview")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('STUDENT') or hasRole('ADMIN')")
-@CrossOrigin(origins = "*")
 public class MockInterviewController {
 
     private final MockInterviewService mockInterviewService;

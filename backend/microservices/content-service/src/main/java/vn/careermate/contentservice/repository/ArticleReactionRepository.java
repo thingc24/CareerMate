@@ -15,7 +15,8 @@ public interface ArticleReactionRepository extends JpaRepository<ArticleReaction
     
     long countByArticleId(UUID articleId);
     
-    @Query("SELECT COUNT(r) FROM ArticleReaction r WHERE r.articleId = :articleId AND r.reactionType = :reactionType")
+    // Note: ArticleReaction has Article entity relationship, not articleId UUID
+    @Query("SELECT COUNT(r) FROM ArticleReaction r WHERE r.article.id = :articleId AND r.reactionType = :reactionType")
     long countByArticleIdAndReactionType(@Param("articleId") UUID articleId, 
                                           @Param("reactionType") ArticleReaction.ReactionType reactionType);
     

@@ -179,13 +179,50 @@ public class ArticleService {
             }
         }
         
-        // Note: Author info now fetched via Feign Client when needed
-        
         // Increment views
         article.setViewsCount(article.getViewsCount() + 1);
         articleRepository.save(article);
         
         return article;
+    }
+
+    public vn.careermate.common.dto.ArticleDTO getArticleDTOById(UUID articleId) {
+        Article article = getArticleById(articleId);
+        return convertToDTO(article);
+    }
+
+    private vn.careermate.common.dto.ArticleDTO convertToDTO(Article article) {
+        vn.careermate.common.dto.ArticleDTO dto = vn.careermate.common.dto.ArticleDTO.builder()
+                .id(article.getId())
+                .authorId(article.getAuthorId())
+                .title(article.getTitle())
+                .content(article.getContent())
+                .excerpt(article.getExcerpt())
+                .category(article.getCategory())
+                .tags(article.getTags())
+                .thumbnailUrl(article.getThumbnailUrl())
+                .status(article.getStatus().name())
+                .hidden(article.getHidden())
+                .hiddenReason(article.getHiddenReason())
+                .hiddenAt(article.getHiddenAt())
+                .publishedAt(article.getPublishedAt())
+                .createdAt(article.getCreatedAt())
+                .updatedAt(article.getUpdatedAt())
+                .viewsCount(Long.valueOf(article.getViewsCount()))
+                .likesCount(Long.valueOf(article.getLikesCount()))
+                .commentsCount(Long.valueOf(article.getCommentsCount()))
+                .reactionsCount(Long.valueOf(article.getReactionsCount()))
+                .build();
+
+        if (article.getAuthorId() != null) {
+            try {
+                UserDTO author = userServiceClient.getUserById(article.getAuthorId());
+                dto.setAuthor(author);
+            } catch (Exception e) {
+                log.error("Error fetching author details for article {}: {}", article.getId(), e.getMessage());
+            }
+        }
+        return dto;
     }
     
     /**
@@ -284,13 +321,14 @@ public class ArticleService {
     }
 
     @Transactional
-    public Article approveArticle(UUID articleId, UUID adminId) {
+    public Article approveArticle(UUID articleId) {
         Article article = articleRepository.findById(articleId)
                 .orElseThrow(() -> new RuntimeException("Article not found"));
         
+        UserDTO admin = getCurrentUser();
         article.setStatus(Article.ArticleStatus.PUBLISHED);
         article.setPublishedAt(LocalDateTime.now());
-        article.setApprovedBy(adminId);
+        article.setApprovedBy(admin.getId());
         article.setApprovedAt(LocalDateTime.now());
         
         article = articleRepository.save(article);
@@ -317,12 +355,13 @@ public class ArticleService {
     }
 
     @Transactional
-    public Article rejectArticle(UUID articleId, UUID adminId) {
+    public Article rejectArticle(UUID articleId) {
         Article article = articleRepository.findById(articleId)
                 .orElseThrow(() -> new RuntimeException("Article not found"));
         
+        UserDTO admin = getCurrentUser();
         article.setStatus(Article.ArticleStatus.REJECTED);
-        article.setApprovedBy(adminId);
+        article.setApprovedBy(admin.getId());
         article.setApprovedAt(LocalDateTime.now());
         
         article = articleRepository.save(article);
@@ -356,6 +395,44 @@ public class ArticleService {
         // No need to force load entity fields since we use UUID
         
         return articles;
+    }
+
+    @Transactional(readOnly = true)
+    public long getArticleCount(String status) {
+        if (status == null || status.trim().isEmpty()) {
+            return articleRepository.count();
+        }
+        try {
+            return articleRepository.countByStatus(Article.ArticleStatus.valueOf(status.toUpperCase()));
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid status for article count: {}", status);
+            return 0L;
+        }
+    }
+
+    @Transactional
+    public Article hideArticle(UUID articleId, String reason) {
+        Article article = articleRepository.findById(articleId)
+                .orElseThrow(() -> new RuntimeException("Article not found"));
+        article.setHidden(true);
+        // Reason could be logged or stored in a separate table/field
+        return articleRepository.save(article);
+    }
+
+    @Transactional
+    public Article unhideArticle(UUID articleId) {
+        Article article = articleRepository.findById(articleId)
+                .orElseThrow(() -> new RuntimeException("Article not found"));
+        article.setHidden(false);
+        return articleRepository.save(article);
+    }
+
+    @Transactional
+    public void deleteArticle(UUID articleId, String reason) {
+        if (!articleRepository.existsById(articleId)) {
+            throw new RuntimeException("Article not found");
+        }
+        articleRepository.deleteById(articleId);
     }
 
     private UserDTO getCurrentUser() {

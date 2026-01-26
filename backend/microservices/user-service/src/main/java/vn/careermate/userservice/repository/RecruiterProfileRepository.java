@@ -13,15 +13,18 @@ import java.util.UUID;
 public interface RecruiterProfileRepository extends JpaRepository<RecruiterProfile, UUID> {
     Optional<RecruiterProfile> findByUserId(UUID userId);
     
-    @Query("SELECT rp FROM RecruiterProfile rp LEFT JOIN FETCH rp.company WHERE rp.id = :id")
+    // Note: companyId is now a UUID reference, not an entity relationship
+    // Company info should be fetched via ContentServiceClient when needed
+    @Query("SELECT rp FROM RecruiterProfile rp LEFT JOIN FETCH rp.user WHERE rp.id = :id")
     Optional<RecruiterProfile> findByIdWithCompany(@Param("id") UUID id);
     
-    @Query("SELECT rp FROM RecruiterProfile rp LEFT JOIN FETCH rp.company LEFT JOIN FETCH rp.user WHERE rp.user.id = :userId")
+    @Query("SELECT rp FROM RecruiterProfile rp LEFT JOIN FETCH rp.user WHERE rp.user.id = :userId")
     Optional<RecruiterProfile> findByUserIdWithCompany(@Param("userId") UUID userId);
     
     @Query("SELECT rp FROM RecruiterProfile rp LEFT JOIN FETCH rp.user WHERE rp.user.id = :userId")
     Optional<RecruiterProfile> findByUserIdWithUser(@Param("userId") UUID userId);
     
-    @Query("SELECT rp FROM RecruiterProfile rp LEFT JOIN FETCH rp.user LEFT JOIN FETCH rp.company WHERE rp.company.id = :companyId")
+    // Find by companyId (UUID, not entity)
+    @Query("SELECT rp FROM RecruiterProfile rp LEFT JOIN FETCH rp.user WHERE rp.companyId = :companyId")
     Optional<RecruiterProfile> findByCompanyId(@Param("companyId") UUID companyId);
 }

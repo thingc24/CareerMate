@@ -1,5 +1,7 @@
 package vn.careermate.learningservice.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,6 +19,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class QuizQuestion {
 
     @Id
@@ -25,6 +28,7 @@ public class QuizQuestion {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quiz_id", nullable = false)
+    @JsonIgnore // Prevent circular reference when serializing Quiz -> QuizQuestion -> Quiz
     private Quiz quiz;
 
     @Column(nullable = false, columnDefinition = "TEXT")

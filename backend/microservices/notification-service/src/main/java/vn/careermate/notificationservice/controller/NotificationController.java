@@ -21,7 +21,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/notifications")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class NotificationController {
 
     private final NotificationService notificationService;
@@ -47,11 +46,18 @@ public class NotificationController {
     public ResponseEntity<Map<String, Long>> getUnreadCount() {
         try {
             UUID userId = getCurrentUserId();
+            if (userId == null) {
+                log.warn("User ID is null, returning 0 count");
+                return ResponseEntity.ok(Map.of("count", 0L));
+            }
             long count = notificationService.getUnreadCount(userId);
             return ResponseEntity.ok(Map.of("count", count));
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.error("Error getting unread count: {}", e.getMessage(), e);
-            return ResponseEntity.status(500).body(Map.of("count", 0L));
+            return ResponseEntity.ok(Map.of("count", 0L)); // Return 0 instead of 500
+        } catch (Exception e) {
+            log.error("Unexpected error getting unread count: {}", e.getMessage(), e);
+            return ResponseEntity.ok(Map.of("count", 0L)); // Return 0 instead of 500
         }
     }
 
@@ -79,12 +85,23 @@ public class NotificationController {
     }
 
     private UUID getCurrentUserId() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
-        UserDTO user = userServiceClient.getUserByEmail(email);
-        if (user == null) {
-            throw new RuntimeException("User not found");
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || auth.getName() == null || "anonymousUser".equals(auth.getName())) {
+                log.warn("Authentication is null or anonymous");
+                throw new RuntimeException("User not authenticated");
+            }
+            String email = auth.getName();
+            log.debug("Getting user ID for email: {}", email);
+            UserDTO user = userServiceClient.getUserByEmail(email);
+            if (user == null) {
+                log.error("User not found for email: {}", email);
+                throw new RuntimeException("User not found for email: " + email);
+            }
+            return user.getId();
+        } catch (Exception e) {
+            log.error("Error in getCurrentUserId: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to get current user ID: " + e.getMessage(), e);
         }
-        return user.getId();
     }
 }

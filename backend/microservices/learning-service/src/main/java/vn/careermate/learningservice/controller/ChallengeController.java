@@ -16,7 +16,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/challenges")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class ChallengeController {
 
     private final ChallengeService challengeService;
@@ -74,5 +73,12 @@ public class ChallengeController {
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<List<Badge>> getMyBadges() {
         return ResponseEntity.ok(challengeService.getMyBadges());
+    }
+
+    @DeleteMapping("/{challengeId}/participation")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<?> deleteParticipation(@PathVariable UUID challengeId) {
+        challengeService.deleteParticipation(challengeId);
+        return ResponseEntity.ok().build();
     }
 }

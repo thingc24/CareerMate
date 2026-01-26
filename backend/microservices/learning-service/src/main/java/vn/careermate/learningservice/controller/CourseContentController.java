@@ -16,7 +16,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/course-content")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Slf4j
 public class CourseContentController {
 
@@ -100,6 +99,32 @@ public class CourseContentController {
         } catch (Exception e) {
             log.error("POST /course-content/enrollments/{}/lessons/{}/complete - Unexpected error: {}", enrollmentId, lessonId, e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping("/lessons/{lessonId}/complete")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<LessonProgress> completeLesson(@PathVariable UUID lessonId) {
+        log.info("POST /course-content/lessons/{}/complete", lessonId);
+        try {
+            LessonProgress progress = contentService.completeLessonByLessonId(lessonId);
+            return ResponseEntity.ok(progress);
+        } catch (Exception e) {
+            log.error("POST /course-content/lessons/{}/complete - Error: {}", lessonId, e.getMessage(), e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/lessons/{lessonId}/progress")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<LessonProgress> getLessonProgress(@PathVariable UUID lessonId) {
+        log.info("GET /course-content/lessons/{}/progress", lessonId);
+        try {
+            LessonProgress progress = contentService.getLessonProgressByLessonId(lessonId);
+            return ResponseEntity.ok(progress);
+        } catch (Exception e) {
+            log.error("GET /course-content/lessons/{}/progress - Error: {}", lessonId, e.getMessage(), e);
+            return ResponseEntity.badRequest().build();
         }
     }
 }

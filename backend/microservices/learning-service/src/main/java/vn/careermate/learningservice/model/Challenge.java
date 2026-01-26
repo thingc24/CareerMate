@@ -1,5 +1,6 @@
 package vn.careermate.learningservice.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,6 +37,10 @@ public class Challenge {
 
     @Column(name = "badge_id")
     private UUID badgeId; // Changed from Badge entity to UUID (optional)
+
+    @Transient
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Badge badge; // Transient field for JSON serialization - loaded when needed
 
     @Column(name = "start_date")
     private LocalDateTime startDate;

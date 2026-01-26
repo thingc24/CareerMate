@@ -353,7 +353,12 @@ public class StudentService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<Application> checkApplication(UUID jobId) {
+    public Optional<ApplicationDTO> checkApplication(UUID jobId) {
+        // TODO: This method should use JobServiceClient to check application
+        // For now, return empty as Application entity is in job-service
+        log.warn("checkApplication() is not available in microservice architecture. Use job-service endpoints directly.");
+        return Optional.empty();
+        /* Original implementation - commented for microservice refactoring
         try {
             StudentProfile student = getCurrentStudentProfile();
             if (student == null || student.getId() == null) {
@@ -383,6 +388,7 @@ public class StudentService {
             log.error("Error checking application for job: {}", jobId, e);
             return Optional.empty();
         }
+        */
     }
 
     // TODO: Refactor to use JobServiceClient.getApplicationsByStudent() when job-service is ready
@@ -506,18 +512,18 @@ public class StudentService {
         */
     }
 
+    // TODO: SavedJob functionality has been moved to job-service
+    // Use JobServiceClient to interact with saved jobs
     @Transactional
     public void deleteSavedJob(UUID jobId) {
-        StudentProfile student = getCurrentStudentProfile();
-        savedJobRepository.deleteByStudentIdAndJobId(student.getId(), jobId);
+        log.warn("deleteSavedJob() is not available in microservice architecture. Use job-service endpoints directly.");
+        throw new RuntimeException("SavedJob functionality has been moved to job-service. Please use /api/jobs/{jobId}/save endpoint.");
     }
 
+    // TODO: SavedJob functionality has been moved to job-service
     public boolean isJobSaved(UUID jobId) {
-        StudentProfile student = getCurrentStudentProfile();
-        if (student == null || student.getId() == null) {
-            return false;
-        }
-        return savedJobRepository.existsByStudentIdAndJobId(student.getId(), jobId);
+        log.warn("isJobSaved() is not available in microservice architecture. Use job-service endpoints directly.");
+        return false;
     }
 
     // ========== AI CHAT CONVERSATIONS ==========

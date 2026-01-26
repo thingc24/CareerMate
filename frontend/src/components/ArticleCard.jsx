@@ -3,6 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import CompanyDetailModal from './CompanyDetailModal';
 
+const getFullUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith('http')) return url;
+
+  const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+
+  // If the path already includes /api at start, use origin only
+  if (url.startsWith('/api')) {
+    const origin = apiBase.replace(/\/api$/, '');
+    return `${origin}${url}`;
+  }
+
+  const path = url.startsWith('/') ? url : `/${url}`;
+  return `${apiBase}${path}`;
+};
+
 // Component for rendering nested replies recursively
 function ReplyComment({ reply, onReply, replyingTo, setReplyingTo, replyContent, setReplyContent, formatDate, depth = 0 }) {
   const maxDepth = 10; // Prevent infinite nesting in UI (safety limit)
@@ -11,18 +27,9 @@ function ReplyComment({ reply, onReply, replyingTo, setReplyingTo, replyContent,
   const replyUserName = reply.user?.fullName || 'Người dùng';
   const replyAvatarUrl = reply.user?.avatarUrl;
   const replyInitials = replyUserName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-  
+
   // Construct full avatar URL
-  let fullReplyAvatarUrl = null;
-  if (replyAvatarUrl) {
-    if (replyAvatarUrl.startsWith('http')) {
-      fullReplyAvatarUrl = replyAvatarUrl;
-    } else if (replyAvatarUrl.startsWith('/api')) {
-      fullReplyAvatarUrl = `http://localhost:8080${replyAvatarUrl}`;
-    } else {
-      fullReplyAvatarUrl = `http://localhost:8080/api${replyAvatarUrl}`;
-    }
-  }
+  const fullReplyAvatarUrl = getFullUrl(replyAvatarUrl);
 
   return (
     <div className="flex gap-2">
@@ -118,6 +125,8 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
   const [authorName, setAuthorName] = useState('');
   const [authorAvatar, setAuthorAvatar] = useState(null);
   const [showCompanyModal, setShowCompanyModal] = useState(false);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
   const [recruiterProfile, setRecruiterProfile] = useState(null);
   const [company, setCompany] = useState(null);
 
@@ -128,42 +137,25 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
       loadComments();
       setShowComments(true);
     }
-    
+
     // Also try to load company logo if author is RECRUITER (priority over user avatar)
     if (article.author && article.author.role === 'RECRUITER') {
-      // Try to load company logo immediately if possible
-      // The full logic is in loadAuthorInfo, but this provides immediate display
       api.getRecruiterByUserId(article.author.id).then(profile => {
         if (profile?.company?.logoUrl) {
-          const logoUrl = profile.company.logoUrl.startsWith('http') 
-            ? profile.company.logoUrl 
-            : `http://localhost:8080/api${profile.company.logoUrl}`;
-          setAuthorAvatar(logoUrl);
+          setAuthorAvatar(getFullUrl(profile.company.logoUrl));
           if (profile.company.name) {
             setAuthorName(profile.company.name);
           }
         } else if (article.author.avatarUrl) {
-          // Fallback to user avatar if no company logo
-          const avatarUrl = article.author.avatarUrl.startsWith('http') 
-            ? article.author.avatarUrl 
-            : `http://localhost:8080/api${article.author.avatarUrl}`;
-          setAuthorAvatar(avatarUrl);
+          setAuthorAvatar(getFullUrl(article.author.avatarUrl));
         }
       }).catch(() => {
-        // If API fails, fallback to author avatar
         if (article.author.avatarUrl) {
-          const avatarUrl = article.author.avatarUrl.startsWith('http') 
-            ? article.author.avatarUrl 
-            : `http://localhost:8080/api${article.author.avatarUrl}`;
-          setAuthorAvatar(avatarUrl);
+          setAuthorAvatar(getFullUrl(article.author.avatarUrl));
         }
       });
     } else if (article.author && article.author.avatarUrl) {
-      // For non-recruiters, use author avatar directly
-      const avatarUrl = article.author.avatarUrl.startsWith('http') 
-        ? article.author.avatarUrl 
-        : `http://localhost:8080/api${article.author.avatarUrl}`;
-      setAuthorAvatar(avatarUrl);
+      setAuthorAvatar(getFullUrl(article.author.avatarUrl));
     }
   }, [article.id, showFullComments, article.author]);
 
@@ -171,7 +163,7 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
     try {
       const counts = await api.getArticleReactionCounts(article.id);
       setReactionCounts(counts);
-      
+
       try {
         const myReactionData = await api.getMyArticleReaction(article.id);
         setMyReaction(myReactionData);
@@ -187,22 +179,25 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
     try {
       const authorDisplayName = await api.getAuthorDisplayName(article.id);
       setAuthorName(authorDisplayName);
-      
+
       // Get author avatar - for RECRUITER, prioritize company logo over user avatar
       if (article.author) {
         // If author is RECRUITER, try to get company logo first
         if (article.author.role === 'RECRUITER') {
           try {
             const profile = await api.getRecruiterByUserId(article.author.id);
-            if (profile?.company?.logoUrl) {
-              // Use company logo instead of recruiter avatar
-              const logoUrl = profile.company.logoUrl.startsWith('http') 
-                ? profile.company.logoUrl 
-                : `http://localhost:8080/api${profile.company.logoUrl}`;
-              setAuthorAvatar(logoUrl);
-              // Also update author name to company name if available
-              if (profile.company.name) {
-                setAuthorName(profile.company.name);
+
+            let companyInfo = profile?.company;
+            if (!companyInfo && profile?.companyId) {
+              try {
+                companyInfo = await api.getCompany(profile.companyId);
+              } catch (e) { }
+            }
+
+            if (companyInfo?.logoUrl) {
+              setAuthorAvatar(getFullUrl(companyInfo.logoUrl));
+              if (companyInfo.name) {
+                setAuthorName(companyInfo.name);
               }
               return; // Exit early if we have company logo
             }
@@ -210,23 +205,23 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
             console.error('Error loading recruiter/company info:', err);
           }
         }
-        
+
         // Fallback: use author avatar (for STUDENT or if company logo not available)
         if (article.author.avatarUrl) {
-          const avatarUrl = article.author.avatarUrl.startsWith('http') 
-            ? article.author.avatarUrl 
+          const avatarUrl = article.author.avatarUrl.startsWith('http')
+            ? article.author.avatarUrl
             : `http://localhost:8080/api${article.author.avatarUrl}`;
           setAuthorAvatar(avatarUrl);
           return; // Exit early if we have avatar
         }
-        
+
         // If no avatarUrl in article.author, try to get from user profile (for non-recruiter)
         try {
           if (article.author.role === 'STUDENT') {
             const profile = await api.getStudentProfile?.();
             if (profile?.user?.avatarUrl) {
-              const avatarUrl = profile.user.avatarUrl.startsWith('http') 
-                ? profile.user.avatarUrl 
+              const avatarUrl = profile.user.avatarUrl.startsWith('http')
+                ? profile.user.avatarUrl
                 : `http://localhost:8080/api${profile.user.avatarUrl}`;
               setAuthorAvatar(avatarUrl);
             }
@@ -241,8 +236,8 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
         setAuthorName(article.author.fullName || 'Người dùng');
         // Try to get avatar from article.author directly
         if (article.author.avatarUrl) {
-          const avatarUrl = article.author.avatarUrl.startsWith('http') 
-            ? article.author.avatarUrl 
+          const avatarUrl = article.author.avatarUrl.startsWith('http')
+            ? article.author.avatarUrl
             : `http://localhost:8080/api${article.author.avatarUrl}`;
           setAuthorAvatar(avatarUrl);
         }
@@ -330,26 +325,43 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
   };
 
   const handleAuthorClick = async () => {
-    if (article.author && article.author.role === 'RECRUITER') {
+    if (article.author?.role === 'RECRUITER') {
       try {
-        // Get recruiter profile to find company
         const profile = await api.getRecruiterByUserId(article.author.id);
-        if (profile && profile.company) {
+
+        let companyData = profile?.company;
+        if (!companyData && profile?.companyId) {
+          try {
+            companyData = await api.getCompany(profile.companyId);
+          } catch (e) { }
+        }
+
+        if (companyData) {
           setRecruiterProfile(profile);
-          setCompany(profile.company);
+          setCompany(companyData);
           setShowCompanyModal(true);
         } else {
-          // If no company, show recruiter info or navigate to companies list
-          alert(`Nhà tuyển dụng: ${authorName}\nChưa có thông tin công ty.`);
+          // Fallback to User Modal if no company info found
+          setUserProfile({ ...profile, role: 'RECRUITER', user: article.author, fullName: authorName });
+          setShowUserModal(true);
         }
       } catch (error) {
-        console.error('Error loading recruiter info:', error);
-        // Fallback: navigate to companies list
-        navigate('/student/companies');
+        // Fallback to User Modal on error
+        setUserProfile({ user: article.author, role: 'RECRUITER', fullName: authorName });
+        setShowUserModal(true);
       }
-    } else if (article.author && article.author.role === 'ADMIN') {
-      // Admin - maybe show admin info or do nothing
-      alert(`Admin: ${authorName}`);
+    } else if (article.author?.role === 'STUDENT') {
+      try {
+        const profile = await api.getStudentProfileByUserId(article.author.id);
+        setUserProfile({ ...profile, role: 'STUDENT' });
+        setShowUserModal(true);
+      } catch (e) {
+        setUserProfile({ user: article.author, role: 'STUDENT', fullName: authorName });
+        setShowUserModal(true);
+      }
+    } else if (article.author?.role === 'ADMIN') {
+      setUserProfile({ user: article.author, role: 'ADMIN', fullName: authorName });
+      setShowUserModal(true);
     }
   };
 
@@ -402,7 +414,7 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
 
       {/* Content */}
       <div className="p-5 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-900">
-        <h2 
+        <h2
           className="text-xl font-bold text-gray-900 dark:text-white mb-3 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors line-clamp-2 group"
           onClick={() => navigate(`/student/articles/${article.id}`)}
         >
@@ -415,8 +427,8 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
         {article.thumbnailUrl && (
           <div className="relative overflow-hidden rounded-xl mb-4 border-2 border-gray-100 dark:border-gray-800 group cursor-pointer" onClick={() => navigate(`/student/articles/${article.id}`)}>
             <img
-              src={article.thumbnailUrl.startsWith('http') 
-                ? article.thumbnailUrl 
+              src={article.thumbnailUrl.startsWith('http')
+                ? article.thumbnailUrl
                 : `http://localhost:8080/api${article.thumbnailUrl}`}
               alt={article.title}
               className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
@@ -455,20 +467,18 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
         <div className="flex items-center justify-around gap-2">
           <button
             onClick={() => handleReaction('LIKE')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-200 flex-1 justify-center ${
-              myReaction?.reactionType === 'LIKE' 
-                ? 'bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-gray-800 dark:to-gray-800 text-blue-700 dark:text-blue-300 shadow-md transform scale-105' 
-                : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 dark:hover:from-gray-800 dark:hover:to-gray-800 hover:shadow-sm'
-            }`}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-200 flex-1 justify-center ${myReaction?.reactionType === 'LIKE'
+              ? 'bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-gray-800 dark:to-gray-800 text-blue-700 dark:text-blue-300 shadow-md transform scale-105'
+              : 'text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 dark:hover:from-gray-800 dark:hover:to-gray-800 hover:shadow-sm'
+              }`}
           >
             <span className="text-xl">{getReactionEmoji('LIKE')}</span>
             <span className="font-semibold">Thích</span>
           </button>
           <button
             onClick={() => setShowComments(!showComments)}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-200 flex-1 justify-center text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 dark:hover:from-gray-800 dark:hover:to-gray-800 hover:shadow-sm ${
-              showComments ? 'bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-800' : ''
-            }`}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-200 flex-1 justify-center text-gray-600 dark:text-gray-300 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 dark:hover:from-gray-800 dark:hover:to-gray-800 hover:shadow-sm ${showComments ? 'bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-800' : ''
+              }`}
             onMouseEnter={showComments ? null : loadComments}
           >
             <i className="fas fa-comment text-lg"></i>
@@ -528,99 +538,155 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
               const commentUserName = comment.user?.fullName || 'Người dùng';
               const commentAvatarUrl = comment.user?.avatarUrl;
               const commentInitials = commentUserName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-              
-              // Construct full avatar URL
-              let fullCommentAvatarUrl = null;
-              if (commentAvatarUrl) {
-                if (commentAvatarUrl.startsWith('http')) {
-                  fullCommentAvatarUrl = commentAvatarUrl;
-                } else if (commentAvatarUrl.startsWith('/api')) {
-                  fullCommentAvatarUrl = `http://localhost:8080${commentAvatarUrl}`;
-                } else {
-                  fullCommentAvatarUrl = `http://localhost:8080/api${commentAvatarUrl}`;
-                }
-              }
-              
-              return (
-              <div key={comment.id} className="bg-white dark:bg-gray-900 rounded-xl p-4 border-2 border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-600 transition-all shadow-sm">
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0">
-                    {fullCommentAvatarUrl ? (
-                      <img
-                        src={fullCommentAvatarUrl}
-                        alt={commentUserName}
-                        className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-gray-800 shadow-md ring-2 ring-gray-100 dark:ring-gray-800"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
-                      />
-                    ) : null}
-                    <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md ring-2 ring-gray-100 dark:ring-gray-800 ${fullCommentAvatarUrl ? 'hidden' : ''}`}>
-                      {commentInitials}
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 rounded-xl p-3 border border-gray-200 dark:border-gray-700">
-                      <p className="font-bold text-sm text-gray-900 dark:text-white mb-1">
-                        {commentUserName}
-                      </p>
-                      <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">{comment.content}</p>
-                    </div>
-                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-500 dark:text-gray-400">
-                      <i className="fas fa-clock"></i>
-                      <span>{formatDate(comment.createdAt)}</span>
-                      <button
-                        onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-                        className="hover:text-blue-600 dark:hover:text-blue-400 hover:font-semibold transition-all flex items-center gap-1"
-                      >
-                        <i className="fas fa-reply text-xs"></i>
-                        Trả lời
-                      </button>
-                    </div>
 
-                    {/* Reply Input */}
-                    {replyingTo === comment.id && (
-                      <div className="mt-3 flex gap-2">
-                        <input
-                          type="text"
-                          value={replyContent}
-                          onChange={(e) => setReplyContent(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && handleReply(comment.id)}
-                          placeholder="Viết phản hồi..."
-                          className="flex-1 px-3 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-gray-900 dark:text-white"
+              // Construct full avatar URL
+              const fullCommentAvatarUrl = getFullUrl(commentAvatarUrl);
+
+              return (
+                <div key={comment.id} className="bg-white dark:bg-gray-900 rounded-xl p-4 border-2 border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-600 transition-all shadow-sm">
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0">
+                      {fullCommentAvatarUrl ? (
+                        <img
+                          src={fullCommentAvatarUrl}
+                          alt={commentUserName}
+                          className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-gray-800 shadow-md ring-2 ring-gray-100 dark:ring-gray-800"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
                         />
+                      ) : null}
+                      <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md ring-2 ring-gray-100 dark:ring-gray-800 ${fullCommentAvatarUrl ? 'hidden' : ''}`}>
+                        {commentInitials}
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-800 rounded-xl p-3 border border-gray-200 dark:border-gray-700">
+                        <p className="font-bold text-sm text-gray-900 dark:text-white mb-1">
+                          {commentUserName}
+                        </p>
+                        <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">{comment.content}</p>
+                      </div>
+                      <div className="flex items-center gap-3 mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        <i className="fas fa-clock"></i>
+                        <span>{formatDate(comment.createdAt)}</span>
                         <button
-                          onClick={() => handleReply(comment.id)}
-                          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105 text-sm font-semibold"
+                          onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                          className="hover:text-blue-600 dark:hover:text-blue-400 hover:font-semibold transition-all flex items-center gap-1"
                         >
-                          Gửi
+                          <i className="fas fa-reply text-xs"></i>
+                          Trả lời
                         </button>
                       </div>
-                    )}
 
-                    {/* Replies - Support unlimited nested levels */}
-                    {comment.replies && comment.replies.length > 0 && (
-                      <div className="mt-3 ml-4 space-y-3 border-l-4 border-blue-300 dark:border-blue-600 pl-4">
-                        {comment.replies.map((reply) => (
-                          <ReplyComment 
-                            key={reply.id} 
-                            reply={reply} 
-                            onReply={handleReply}
-                            replyingTo={replyingTo}
-                            setReplyingTo={setReplyingTo}
-                            replyContent={replyContent}
-                            setReplyContent={setReplyContent}
-                            formatDate={formatDate}
+                      {/* Reply Input */}
+                      {replyingTo === comment.id && (
+                        <div className="mt-3 flex gap-2">
+                          <input
+                            type="text"
+                            value={replyContent}
+                            onChange={(e) => setReplyContent(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && handleReply(comment.id)}
+                            placeholder="Viết phản hồi..."
+                            className="flex-1 px-3 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-gray-900 dark:text-white"
                           />
-                        ))}
-                      </div>
-                    )}
+                          <button
+                            onClick={() => handleReply(comment.id)}
+                            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105 text-sm font-semibold"
+                          >
+                            Gửi
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Replies - Support unlimited nested levels */}
+                      {comment.replies && comment.replies.length > 0 && (
+                        <div className="mt-3 ml-4 space-y-3 border-l-4 border-blue-300 dark:border-blue-600 pl-4">
+                          {comment.replies.map((reply) => (
+                            <ReplyComment
+                              key={reply.id}
+                              reply={reply}
+                              onReply={handleReply}
+                              replyingTo={replyingTo}
+                              setReplyingTo={setReplyingTo}
+                              replyContent={replyContent}
+                              setReplyContent={setReplyContent}
+                              formatDate={formatDate}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* User Detail Modal */}
+      {showUserModal && userProfile && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowUserModal(false)}>
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] shadow-2xl p-8 transform transition-all scale-100 animate-scale-in relative border border-white/20" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => setShowUserModal(false)}
+              className="absolute top-6 right-6 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors"
+            >
+              <i className="fas fa-times"></i>
+            </button>
+
+            <div className="text-center">
+              <div className="w-24 h-24 mx-auto bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-full p-1 mb-4 shadow-xl flex items-center justify-center overflow-hidden">
+                {userProfile.user?.avatarUrl || userProfile.avatarUrl ? (
+                  <img src={getFullUrl(userProfile.user?.avatarUrl || userProfile.avatarUrl)} className="w-full h-full rounded-full object-cover border-4 border-white bg-white" />
+                ) : (
+                  <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-indigo-600 font-black text-2xl">
+                    {(userProfile.fullName || userProfile.user?.fullName || 'U').charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+
+              <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-1">{userProfile.fullName || userProfile.user?.fullName}</h2>
+              <p className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-6">
+                {userProfile.role === 'STUDENT' ? 'Sinh viên' : userProfile.role === 'ADMIN' ? 'Quản trị viên' : 'Thành viên'}
+              </p>
+
+              {userProfile.role === 'STUDENT' && (
+                <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-5 mb-6 text-left border border-slate-100 dark:border-slate-700">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <i className="fas fa-graduation-cap text-slate-400 w-6 text-center"></i>
+                      <div>
+                        <p className="text-xs font-bold text-slate-400 uppercase">Trường</p>
+                        <p className="font-bold text-slate-900 dark:text-white text-sm">{userProfile.university || 'Chưa cập nhật'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <i className="fas fa-book text-slate-400 w-6 text-center"></i>
+                      <div>
+                        <p className="text-xs font-bold text-slate-400 uppercase">Chuyên ngành</p>
+                        <p className="font-bold text-slate-900 dark:text-white text-sm">{userProfile.major || 'Chưa cập nhật'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {userProfile.role === 'ADMIN' && (
+                <p className="text-slate-500 text-sm mb-8 px-8">Quản trị viên hệ thống CareerMate.</p>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <button className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/30">
+                  <i className="fas fa-user-circle mr-2"></i> Xem hồ sơ
+                </button>
+                <button className="px-6 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-sm hover:bg-slate-200 transition-colors">
+                  <i className="fas fa-envelope mr-2"></i> Nhắn tin
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

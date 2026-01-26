@@ -12,6 +12,7 @@ import vn.careermate.jobservice.model.Job;
 import vn.careermate.jobservice.model.JobSkill;
 import vn.careermate.jobservice.repository.JobRepository;
 import vn.careermate.jobservice.repository.JobSkillRepository;
+import vn.careermate.jobservice.repository.ApplicationRepository;
 // import vn.careermate.contentservice.model.Company; // Replaced with ContentServiceClient
 // import vn.careermate.userservice.model.RecruiterProfile; // Replaced with UserServiceClient
 // import vn.careermate.userservice.model.User; // Replaced with UserServiceClient
@@ -36,6 +37,7 @@ public class JobService {
 
     private final JobRepository jobRepository;
     private final JobSkillRepository jobSkillRepository;
+    private final ApplicationRepository applicationRepository;
     // Feign Clients for inter-service communication
     private final UserServiceClient userServiceClient;
     private final ContentServiceClient contentServiceClient;
@@ -203,57 +205,85 @@ public class JobService {
 
     @Transactional(readOnly = true)
     public Job getJob(UUID jobId) {
-        try {
-            Job job = jobRepository.findById(jobId)
-                    .orElseThrow(() -> new RuntimeException("Job not found"));
-            
-            // Check if job is hidden - only allow admin or job owner to see hidden jobs
-            if (job.getHidden() != null && job.getHidden()) {
-                try {
-                    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-                    if (auth != null && auth.getAuthorities() != null) {
-                        boolean isAdmin = auth.getAuthorities().stream()
-                                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-                        if (isAdmin) {
-                            // Admin can see hidden jobs
-                        } else {
-                            // Check if current user is the job owner using UserServiceClient
-                            try {
-                                String email = auth.getName();
-                                UserDTO currentUser = userServiceClient.getUserByEmail(email);
-                                if (currentUser != null) {
-                                    RecruiterProfileDTO recruiter = userServiceClient.getRecruiterProfileByUserId(currentUser.getId());
-                                    if (recruiter != null && recruiter.getId().equals(job.getRecruiterId())) {
-                                        // Job owner can see their hidden job
-                                        log.info("Job owner viewing hidden job: jobId={}, recruiterId={}", jobId, recruiter.getId());
-                                    } else {
-                                        throw new RuntimeException("Job not found or has been hidden");
-                                    }
-                                } else {
-                                    throw new RuntimeException("Job not found or has been hidden");
-                                }
-                            } catch (Exception e) {
-                                log.warn("Error checking job ownership: {}", e.getMessage());
-                                throw new RuntimeException("Job not found or has been hidden");
-                            }
-                        }
-                    } else {
-                        throw new RuntimeException("Job not found or has been hidden");
-                    }
-                } catch (Exception e) {
-                    if (e instanceof RuntimeException) {
-                        throw e;
-                    }
-                    throw new RuntimeException("Job not found or has been hidden");
-                }
-            }
-            return job;
-        } catch (RuntimeException e) {
-            log.error("Runtime error getting job: {}", e.getMessage());
-            throw e;
-        } catch (Exception e) {
-            log.error("Unexpected error getting job", e);
-            throw new RuntimeException("Error getting job: " + e.getMessage(), e);
+        return jobRepository.findById(jobId)
+                .orElseThrow(() -> new RuntimeException("Job not found"));
+    }
+
+    @Transactional(readOnly = true)
+    public long getJobCount(String status) {
+        if (status == null || status.trim().isEmpty()) {
+            return jobRepository.count();
         }
+        try {
+            return jobRepository.countByStatus(Job.JobStatus.valueOf(status.toUpperCase()));
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid status for job count: {}", status);
+            return 0L;
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Job> getAllJobs(String status, Pageable pageable) {
+        if (status == null || status.trim().isEmpty()) {
+            return jobRepository.findAll(pageable);
+        }
+        try {
+            return jobRepository.findByStatus(Job.JobStatus.valueOf(status.toUpperCase()), pageable);
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid status for get all jobs: {}", status);
+            return Page.empty(pageable);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Job> getPendingJobs(Pageable pageable) {
+        return jobRepository.findByStatus(Job.JobStatus.PENDING, pageable);
+    }
+
+    @Transactional
+    public Job approveJob(UUID jobId, UUID adminId) {
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new RuntimeException("Job not found"));
+        job.setStatus(Job.JobStatus.ACTIVE);
+        // In a real app, we might store who approved it
+        return jobRepository.save(job);
+    }
+
+    @Transactional
+    public Job rejectJob(UUID jobId, UUID adminId) {
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new RuntimeException("Job not found"));
+        job.setStatus(Job.JobStatus.REJECTED);
+        return jobRepository.save(job);
+    }
+
+    @Transactional
+    public Job hideJob(UUID jobId, UUID adminId, String reason) {
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new RuntimeException("Job not found"));
+        job.setHidden(true);
+        // Log reason elsewhere or add field
+        return jobRepository.save(job);
+    }
+
+    @Transactional
+    public Job unhideJob(UUID jobId, UUID adminId) {
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new RuntimeException("Job not found"));
+        job.setHidden(false);
+        return jobRepository.save(job);
+    }
+
+    @Transactional
+    public void deleteJob(UUID jobId, UUID adminId, String reason) {
+        if (!jobRepository.existsById(jobId)) {
+            throw new RuntimeException("Job not found");
+        }
+        jobRepository.deleteById(jobId);
+    }
+
+    @Transactional(readOnly = true)
+    public long getApplicationCount() {
+        return applicationRepository.count();
     }
 }

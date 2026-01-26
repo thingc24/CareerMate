@@ -74,7 +74,12 @@ public class RecruiterService {
     }
 
     @Transactional(readOnly = true)
-    public Page<Application> getJobApplicants(UUID jobId, Pageable pageable) {
+    public Page<ApplicationDTO> getJobApplicants(UUID jobId, Pageable pageable) {
+        // TODO: This method should use JobServiceClient to get applications
+        // For now, return empty page as Application entity is in job-service
+        log.warn("getJobApplicants() is not available in microservice architecture. Use job-service endpoints directly.");
+        return Page.empty(pageable);
+        /* Original implementation - commented for microservice refactoring
         Page<Application> applications = applicationRepository.findByJobId(jobId, pageable);
         
         // Force load all fields to avoid lazy loading issues

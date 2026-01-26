@@ -19,14 +19,35 @@ export default function RecruiterDashboard() {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      
-      // Load statistics
-      const statsData = await api.getRecruiterDashboardStats();
+
+      // Load statistics (may fail if no company, but usually robust)
+      let statsData = {
+        activeJobs: 0,
+        newApplications: 0,
+        upcomingInterviews: 0,
+        successfulHires: 0
+      };
+
+      try {
+        statsData = await api.getRecruiterDashboardStats();
+      } catch (err) {
+        console.warn('Dashboard stats failed:', err);
+      }
       setStats(statsData);
-      
+
       // Load recent jobs
-      const jobsData = await api.getMyJobs(0, 5);
-      setRecentJobs(jobsData.content || jobsData || []);
+      try {
+        // Get more jobs to show in a grid
+        const jobsData = await api.getMyJobs(0, 6);
+        setRecentJobs(jobsData.content || jobsData || []);
+      } catch (err) {
+        if (err.response?.status === 410) {
+          console.warn('Recruiter has no company (410). Showing empty jobs.');
+        } else {
+          console.error('Error loading jobs:', err);
+        }
+        setRecentJobs([]);
+      }
     } catch (error) {
       console.error('Error loading dashboard:', error);
     } finally {
@@ -36,133 +57,188 @@ export default function RecruiterDashboard() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Đang tải...</p>
+      <div className="h-[calc(100vh-80px)] flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+          <p className="text-gray-500 font-medium">Đang tải dữ liệu...</p>
         </div>
       </div>
     );
   }
 
+  const StatCard = ({ label, count, icon, color, bg, text, delay }) => (
+    <div className={`bg-white/60 dark:bg-gray-800/40 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-white/5 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group animate-slide-up`} style={{ animationDelay: `${delay}ms` }}>
+      <div className="flex items-center justify-between mb-4">
+        <div className={`w-14 h-14 rounded-2xl ${bg} flex items-center justify-center transform group-hover:rotate-6 transition-transform duration-300`}>
+          <i className={`${icon} text-2xl ${text}`}></i>
+        </div>
+        <span className={`text-xs font-bold px-2 py-1 rounded-lg ${bg} ${text} opacity-0 group-hover:opacity-100 transition-opacity`}>
+          Chi tiết <i className="fas fa-arrow-right ml-1"></i>
+        </span>
+      </div>
+      <h3 className="text-gray-500 dark:text-gray-400 font-medium text-sm mb-1">{label}</h3>
+      <p className={`text-4xl font-bold bg-gradient-to-r ${color} bg-clip-text text-transparent`}>
+        {count}
+      </p>
+    </div>
+  );
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="mb-8 flex items-center justify-between">
+    <div className="max-w-[1600px] mx-auto px-6 py-8 animate-fade-in">
+      {/* Header */}
+      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Dashboard</h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300">Tổng quan hoạt động tuyển dụng</p>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-1">
+            Chào mừng trở lại!
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400">
+            Cập nhật tình hình tuyển dụng mới nhất của bạn hôm nay.
+          </p>
         </div>
-        <Link to="/recruiter/post-job" className="btn-primary">
-          <i className="fas fa-plus mr-2"></i>
-          Đăng tin tuyển dụng
-        </Link>
-      </div>
-
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-6 border-l-4 border-blue-500 dark:border-gray-800">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Tin đang tuyển</h3>
-              <p className="text-3xl font-bold text-blue-600">{stats.activeJobs}</p>
-            </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-              <i className="fas fa-briefcase text-blue-600 text-xl"></i>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-6 border-l-4 border-green-500 dark:border-gray-800">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Ứng viên mới</h3>
-              <p className="text-3xl font-bold text-green-600">{stats.newApplications}</p>
-            </div>
-            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-              <i className="fas fa-user-plus text-green-600 text-xl"></i>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-6 border-l-4 border-purple-500 dark:border-gray-800">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Phỏng vấn sắp tới</h3>
-              <p className="text-3xl font-bold text-purple-600">{stats.upcomingInterviews}</p>
-            </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-              <i className="fas fa-calendar-check text-purple-600 text-xl"></i>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-6 border-l-4 border-orange-500 dark:border-gray-800">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Đã tuyển thành công</h3>
-              <p className="text-3xl font-bold text-orange-600">{stats.successfulHires}</p>
-            </div>
-            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-              <i className="fas fa-check-circle text-orange-600 text-xl"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Jobs */}
-      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Tin tuyển dụng gần đây</h2>
-          <Link to="/recruiter/applicants" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
-            Xem tất cả <i className="fas fa-arrow-right ml-1"></i>
+        <div className="flex flex-wrap gap-3">
+          <Link to="/recruiter/company/edit" className="px-5 py-3 rounded-xl font-bold transition-all duration-200 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm hover:shadow-md flex items-center gap-2">
+            <i className="fas fa-building text-blue-500"></i>
+            Hồ sơ Công ty
+          </Link>
+          <Link to="/recruiter/post-job" className="px-5 py-3 rounded-xl font-bold transition-all duration-200 bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/40 hover:-translate-y-0.5 flex items-center gap-2">
+            <i className="fas fa-plus"></i>
+            Đăng tin mới
           </Link>
         </div>
+      </div>
+
+      {/* Statistics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        <StatCard
+          label="Tin đang tuyển"
+          count={stats.activeJobs}
+          icon="fas fa-briefcase"
+          color="from-blue-500 to-indigo-600"
+          bg="bg-blue-50 dark:bg-blue-900/10"
+          text="text-blue-600 dark:text-blue-400"
+          delay={0}
+        />
+        <StatCard
+          label="Ứng viên mới"
+          count={stats.newApplications}
+          icon="fas fa-user-plus"
+          color="from-emerald-500 to-teal-500"
+          bg="bg-emerald-50 dark:bg-emerald-900/10"
+          text="text-emerald-600 dark:text-emerald-400"
+          delay={100}
+        />
+        <StatCard
+          label="Phỏng vấn sắp tới"
+          count={stats.upcomingInterviews}
+          icon="fas fa-calendar-check"
+          color="from-purple-500 to-pink-500"
+          bg="bg-purple-50 dark:bg-purple-900/10"
+          text="text-purple-600 dark:text-purple-400"
+          delay={200}
+        />
+        <StatCard
+          label="Tuyển thành công"
+          count={stats.successfulHires}
+          icon="fas fa-trophy"
+          color="from-amber-400 to-orange-500"
+          bg="bg-orange-50 dark:bg-orange-900/10"
+          text="text-orange-600 dark:text-orange-400"
+          delay={300}
+        />
+      </div>
+
+      {/* Recent Jobs Section */}
+      <div className="bg-white/60 dark:bg-gray-800/40 backdrop-blur-xl rounded-3xl p-8 border border-white/20 dark:border-white/5 shadow-xl">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+            <span className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-sm">
+              <i className="fas fa-history"></i>
+            </span>
+            Tin tuyển dụng gần đây
+          </h2>
+          <Link to="/recruiter/applicants" className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm">
+            Xem tất cả <i className="fas fa-arrow-right"></i>
+          </Link>
+        </div>
+
         {recentJobs.length === 0 ? (
-          <div className="text-center py-8">
-            <i className="fas fa-briefcase text-gray-400 dark:text-gray-500 text-4xl mb-4"></i>
-            <p className="text-gray-600 dark:text-gray-300">Chưa có tin tuyển dụng nào</p>
-            <Link to="/recruiter/post-job" className="btn-primary mt-4 inline-block">
-              Đăng tin đầu tiên
+          <div className="text-center py-16 bg-white/40 dark:bg-gray-900/40 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-700">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 mb-4 text-gray-400 dark:text-gray-500 animate-bounce-slow">
+              <i className="fas fa-briefcase text-3xl"></i>
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Chưa có tin tuyển dụng nào</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">
+              Bắt đầu tìm kiếm nhân tài bằng cách đăng tin tuyển dụng đầu tiên của bạn.
+            </p>
+            <Link to="/recruiter/post-job" className="px-6 py-3 rounded-xl font-bold transition-all duration-200 bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 hover:scale-105 inline-flex items-center gap-2">
+              <i className="fas fa-plus"></i> Đăng tin ngay
             </Link>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {recentJobs.map((job) => (
-              <div key={job.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{job.title}</h3>
-                    <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300 mb-2">
-                      <span><i className="fas fa-map-marker-alt mr-1"></i>{job.location || 'N/A'}</span>
-                      <span><i className="fas fa-dollar-sign mr-1"></i>
-                        {job.minSalary && job.maxSalary 
-                          ? `${job.minSalary.toLocaleString()} - ${job.maxSalary.toLocaleString()} VND`
-                          : 'Thỏa thuận'}
-                      </span>
-                      <span className={`badge ${
-                        job.status === 'ACTIVE' ? 'badge-success' :
-                        job.status === 'PENDING' ? 'badge-warning' :
-                        'badge-secondary'
-                      }`}>
-                        {job.status === 'ACTIVE' ? 'Đang tuyển' :
-                         job.status === 'PENDING' ? 'Chờ duyệt' :
-                         job.status}
-                      </span>
+              <div key={job.id} className="group bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-100 dark:border-gray-800 hover:border-emerald-200 dark:hover:border-emerald-800 hover:shadow-lg hover:shadow-emerald-500/5 transition-all duration-300 flex flex-col h-full relative overflow-hidden">
+                {/* Status Badge */}
+                <div className="absolute top-4 right-4">
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold border ${job.status === 'ACTIVE'
+                    ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                    : job.status === 'PENDING'
+                      ? 'bg-amber-50 text-amber-600 border-amber-200'
+                      : 'bg-gray-50 text-gray-600 border-gray-200'
+                    }`}>
+                    {job.status === 'ACTIVE' ? 'Đang tuyển' :
+                      job.status === 'PENDING' ? 'Chờ duyệt' :
+                        job.status}
+                  </span>
+                </div>
+
+                <div className="mb-4 pr-16">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-emerald-600 transition-colors line-clamp-1" title={job.title}>
+                    {job.title}
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                    <i className="far fa-clock"></i> {new Date(job.createdAt).toLocaleDateString('vi-VN')}
+                  </p>
+                </div>
+
+                <div className="space-y-2 mb-6 flex-1">
+                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                    <div className="w-6 h-6 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400">
+                      <i className="fas fa-map-marker-alt text-xs"></i>
                     </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{job.description}</p>
+                    <span className="truncate">{job.location || 'N/A'}</span>
                   </div>
-                  <div className="ml-4 flex items-center gap-2">
-                    <Link
-                      to={`/recruiter/applicants?jobId=${job.id}`}
-                      className="btn-secondary text-sm"
-                    >
-                      <i className="fas fa-users mr-1"></i>
-                      Xem ứng viên ({job.applicationsCount || 0})
-                    </Link>
+                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                    <div className="w-6 h-6 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400">
+                      <i className="fas fa-dollar-sign text-xs"></i>
+                    </div>
+                    <span className="truncate font-medium text-emerald-600 dark:text-emerald-400">
+                      {job.minSalary && job.maxSalary
+                        ? `${(job.minSalary / 1000000).toLocaleString()} - ${(job.maxSalary / 1000000).toLocaleString()} triệu`
+                        : 'Thỏa thuận'}
+                    </span>
                   </div>
+                </div>
+
+                <div className="pt-4 border-t border-gray-100 dark:border-gray-800 mt-auto flex items-center gap-3">
+                  <Link
+                    to={`/recruiter/applicants?jobId=${job.id}`}
+                    className="flex-1 py-2 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-sm hover:bg-emerald-100 transition-colors text-center border border-emerald-100"
+                  >
+                    Hồ sơ ({job.applicationsCount || 0})
+                  </Link>
                 </div>
               </div>
             ))}
+
+            {/* Add New Card (always visible if < 6 jobs) */}
+            <Link to="/recruiter/post-job" className="group bg-gray-50 dark:bg-gray-900/30 rounded-2xl p-6 border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-emerald-400 hover:bg-emerald-50/50 transition-all duration-300 flex flex-col items-center justify-center min-h-[220px]">
+              <div className="w-16 h-16 rounded-full bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <i className="fas fa-plus text-2xl text-emerald-500"></i>
+              </div>
+              <h3 className="font-bold text-gray-900 dark:text-white group-hover:text-emerald-600 transition-colors">Đăng tin mới</h3>
+              <p className="text-xs text-gray-500 text-center mt-1">Tìm kiếm thêm ứng viên tiềm năng</p>
+            </Link>
           </div>
         )}
       </div>

@@ -91,7 +91,6 @@ public class RecruiterProfileService {
     // TODO: Refactor to use ContentServiceClient.getCompanyById() when content-service is ready
     @Transactional(readOnly = true)
     public CompanyDTO getMyCompany() {
-        log.warn("getMyCompany() is not available in microservice architecture. Use content-service endpoints directly.");
         // Fetch companyId from RecruiterProfile and use ContentServiceClient
         RecruiterProfile recruiter = getCurrentRecruiterProfile();
         if (recruiter.getCompanyId() == null) {
@@ -99,103 +98,60 @@ public class RecruiterProfileService {
         }
         try {
             CompanyDTO companyDTO = contentServiceClient.getCompanyById(recruiter.getCompanyId());
-            // Convert DTO to Company entity if needed, or return DTO
-            // For now, return null as Company entity is in content-service
-            log.warn("Company info should be fetched from content-service. Company ID: {}", recruiter.getCompanyId());
-            return null;
+            log.info("Fetched company info from content-service. Company ID: {}", recruiter.getCompanyId());
+            return companyDTO;
         } catch (Exception e) {
             log.error("Error fetching company from content-service: {}", e.getMessage());
             return null;
         }
-        
-        /* Original implementation - commented for microservice refactoring
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            String email = auth.getName();
-            User user = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-            
-            log.info("Getting company for user: {} (ID: {})", email, user.getId());
-            
-            // Use findByUserIdWithCompany directly to ensure company is loaded with JOIN FETCH
-            Optional<RecruiterProfile> recruiterOpt = recruiterProfileRepository.findByUserIdWithCompany(user.getId());
-            
-            if (!recruiterOpt.isPresent()) {
-                log.warn("Recruiter profile not found for user: {}", user.getId());
-                return null;
-            }
-            
-            RecruiterProfile recruiter = recruiterOpt.get();
-            log.info("Found recruiter profile: {} (ID: {})", email, recruiter.getId());
-            
-            Company company = recruiter.getCompany();
-            
-            if (company != null) {
-                // Force load by accessing ID and name to trigger fetch
-                UUID companyId = company.getId();
-                String companyName = company.getName();
-                log.info("Found company for recruiter {}: id={}, name={}", recruiter.getId(), companyId, companyName);
-            } else {
-                log.warn("Recruiter {} does not have a company (company_id is null in database)", recruiter.getId());
-            }
-            return company;
-        } catch (Exception e) {
-            log.error("Error getting company: {}", e.getMessage(), e);
-            throw new RuntimeException("Error loading company: " + e.getMessage(), e);
-        }
-        */
     }
 
     // TODO: Refactor to use ContentServiceClient.createOrUpdateCompany() when content-service is ready
     @Transactional
     public CompanyDTO createOrUpdateCompany(CompanyDTO companyDTO) {
-        log.warn("createOrUpdateCompany() is not available in microservice architecture. Use content-service endpoints directly.");
-        throw new RuntimeException("Company management has been moved to content-service. Please use /api/companies endpoint.");
+        // Fetch current recruiter to ensure they are authorized
+        RecruiterProfile recruiter = getCurrentRecruiterProfile();
+        UUID infoRecruiterId = recruiter.getId();
+        UUID infoCompanyId = recruiter.getCompanyId();
         
-        /* Original implementation - commented for microservice refactoring
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        
-        // Use findByUserIdWithCompany to ensure company is loaded
-        Optional<RecruiterProfile> recruiterOpt = recruiterProfileRepository.findByUserIdWithCompany(user.getId());
-        RecruiterProfile recruiter = recruiterOpt.orElseThrow(() -> new RuntimeException("Recruiter profile not found"));
-        
-        log.info("Creating/updating company for recruiter: {} (ID: {})", email, recruiter.getId());
-        
-        // Check if company exists
-        Company existingCompany = recruiter.getCompany();
-        
-        if (existingCompany != null) {
-            // Update existing company
-            log.info("Updating existing company: id={}, name={}", existingCompany.getId(), existingCompany.getName());
-            if (company.getName() != null) existingCompany.setName(company.getName());
-            if (company.getWebsiteUrl() != null) existingCompany.setWebsiteUrl(company.getWebsiteUrl());
-            if (company.getHeadquarters() != null) existingCompany.setHeadquarters(company.getHeadquarters());
-            if (company.getDescription() != null) existingCompany.setDescription(company.getDescription());
-            if (company.getCompanySize() != null) existingCompany.setCompanySize(company.getCompanySize());
-            if (company.getIndustry() != null) existingCompany.setIndustry(company.getIndustry());
-            if (company.getFoundedYear() != null) existingCompany.setFoundedYear(company.getFoundedYear());
-            if (company.getLogoUrl() != null) existingCompany.setLogoUrl(company.getLogoUrl());
-            company = companyRepository.save(existingCompany);
-            log.info("Company updated successfully: id={}, name={}", company.getId(), company.getName());
-        } else {
-            // Create new company
-            log.info("Creating new company for recruiter");
-            company = companyRepository.save(company);
-            log.info("Company created: id={}, name={}", company.getId(), company.getName());
+        log.info("Starting createOrUpdateCompany for Recruiter: {}. Existing CompanyID: {}", infoRecruiterId, infoCompanyId);
+
+        // Delegate to content-service
+        try {
+            // Ensure we are updating the existing company if the recruiter already has one
+            if (infoCompanyId != null) {
+                log.info("Recruiter {} linked to Company {}. Injecting ID to DTO to force UPDATE.", infoRecruiterId, infoCompanyId);
+                companyDTO.setId(infoCompanyId);
+            } else {
+                log.info("Recruiter {} has NO Company. Requesting CREATE.", infoRecruiterId);
+                companyDTO.setId(null); // Ensure ID is null for creation
+            }
+
+            log.info("Sending request to Content Service. Payload Name: {}", companyDTO.getName());
+            CompanyDTO result = contentServiceClient.createOrUpdateCompany(companyDTO);
+            log.info("Received result from Content Service. Result ID: {}", result.getId());
             
-            // Link company to recruiter
-            recruiter.setCompany(company);
-            recruiterProfileRepository.save(recruiter);
-            // Flush to ensure company_id is set in database
-            recruiterProfileRepository.flush();
-            log.info("Company linked to recruiter profile: recruiterId={}, companyId={}", recruiter.getId(), company.getId());
+            // Critical link step: If recruiter didn't have ID, or if it changed (unlikely but possible), save it now.
+            if (recruiter.getCompanyId() == null || !recruiter.getCompanyId().equals(result.getId())) {
+                log.info("Updating RecruiterProfile {} with new CompanyID: {}", infoRecruiterId, result.getId());
+                recruiter.setCompanyId(result.getId());
+                
+                // FORCE FLUSH to ensure this specific field update hits the DB immediately
+                recruiterProfileRepository.saveAndFlush(recruiter);
+                log.info("RecruiterProfile saved and flushed to DB.");
+                
+                // Verification fetch
+                Optional<RecruiterProfile> verify = recruiterProfileRepository.findById(infoRecruiterId);
+                log.info("Verification fetch - Recruiter CompanyID in DB is now: {}", verify.map(RecruiterProfile::getCompanyId).orElse(null));
+            } else {
+                log.info("RecruiterProfile already linked to Company {}. No update needed.", infoCompanyId);
+            }
+            
+            return result;
+        } catch (Exception e) {
+            log.error("CRITICAL ERROR in createOrUpdateCompany: {}", e.getMessage(), e);
+            throw new RuntimeException("Error communicating with content-service: " + e.getMessage(), e);
         }
-        
-        return company;
-        */
     }
 
     @Transactional
@@ -335,5 +291,17 @@ public class RecruiterProfileService {
         userRepository.save(user);
 
         return filePath;
+    }
+
+    public RecruiterProfile getRecruiterByCompanyId(UUID companyId) {
+        return recruiterProfileRepository.findByCompanyId(companyId).orElse(null);
+    }
+
+    @Transactional
+    public void resetCompanyLink() {
+        RecruiterProfile recruiter = getCurrentRecruiterProfile();
+        log.info("Resetting company link for recruiter {}", recruiter.getId());
+        recruiter.setCompanyId(null);
+        recruiterProfileRepository.saveAndFlush(recruiter);
     }
 }

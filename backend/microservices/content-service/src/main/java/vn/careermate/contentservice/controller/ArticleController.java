@@ -30,7 +30,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/articles")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class ArticleController {
 
     private final ArticleService articleService;
@@ -77,8 +76,8 @@ public class ArticleController {
     }
 
     @GetMapping("/{articleId}")
-    public ResponseEntity<Article> getArticle(@PathVariable UUID articleId) {
-        return ResponseEntity.ok(articleService.getArticleById(articleId));
+    public ResponseEntity<vn.careermate.common.dto.ArticleDTO> getArticle(@PathVariable UUID articleId) {
+        return ResponseEntity.ok(articleService.getArticleDTOById(articleId));
     }
 
     @PostMapping
@@ -93,7 +92,7 @@ public class ArticleController {
         return ResponseEntity.ok(articleService.getAuthorDisplayName(article));
     }
 
-    @GetMapping("/pending")
+    @GetMapping("/admin/pending")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<Article>> getPendingArticles(
             @RequestParam(defaultValue = "0") int page,
@@ -103,7 +102,7 @@ public class ArticleController {
         return ResponseEntity.ok(articleService.getPendingArticles(pageable));
     }
 
-    @GetMapping("/all")
+    @GetMapping("/admin/all")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<Article>> getAllArticles(
             @RequestParam(required = false) String status,
@@ -126,28 +125,46 @@ public class ArticleController {
     @PostMapping("/{articleId}/approve")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Article> approveArticle(@PathVariable UUID articleId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        UserDTO admin = userServiceClient.getUserByEmail(auth.getName());
-        if (admin == null) {
-            throw new RuntimeException("Admin not found");
-        }
-        
-        return ResponseEntity.ok(articleService.approveArticle(articleId, admin.getId()));
+        return ResponseEntity.ok(articleService.approveArticle(articleId));
     }
 
     @PostMapping("/{articleId}/reject")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Article> rejectArticle(@PathVariable UUID articleId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        UserDTO admin = userServiceClient.getUserByEmail(auth.getName());
-        if (admin == null) {
-            throw new RuntimeException("Admin not found");
-        }
-        
-        return ResponseEntity.ok(articleService.rejectArticle(articleId, admin.getId()));
+        return ResponseEntity.ok(articleService.rejectArticle(articleId));
     }
 
-    // Reactions endpoints
+    @PostMapping("/{articleId}/hide")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Article> hideArticle(
+            @PathVariable UUID articleId,
+            @RequestParam String reason
+    ) {
+        return ResponseEntity.ok(articleService.hideArticle(articleId, reason));
+    }
+
+    @PostMapping("/{articleId}/unhide")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Article> unhideArticle(@PathVariable UUID articleId) {
+        return ResponseEntity.ok(articleService.unhideArticle(articleId));
+    }
+
+    @DeleteMapping("/{articleId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteArticle(
+            @PathVariable UUID articleId,
+            @RequestParam String reason
+    ) {
+        articleService.deleteArticle(articleId, reason);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/admin/count")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Long> getArticleCount(@RequestParam(required = false) String status) {
+        return ResponseEntity.ok(articleService.getArticleCount(status));
+    }
+
     @PostMapping("/{articleId}/reactions")
     @PreAuthorize("hasRole('STUDENT') or hasRole('RECRUITER') or hasRole('ADMIN')")
     public ResponseEntity<ArticleReaction> toggleReaction(

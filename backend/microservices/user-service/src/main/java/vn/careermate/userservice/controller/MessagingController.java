@@ -16,7 +16,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/messaging")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class MessagingController {
 
     private final MessagingService messagingService;

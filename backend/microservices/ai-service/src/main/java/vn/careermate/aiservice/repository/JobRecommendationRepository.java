@@ -22,10 +22,11 @@ public interface JobRecommendationRepository extends JpaRepository<JobRecommenda
     
     Optional<JobRecommendation> findByStudentIdAndJobId(UUID studentId, UUID jobId);
     
-    @Query("SELECT jr FROM JobRecommendation jr WHERE jr.student.id = :studentId AND jr.isViewed = false ORDER BY jr.matchScore DESC, jr.createdAt DESC")
+    // Note: JobRecommendation now uses studentId (UUID) directly, not student entity
+    @Query("SELECT jr FROM JobRecommendation jr WHERE jr.studentId = :studentId AND jr.isViewed = false ORDER BY jr.matchScore DESC, jr.createdAt DESC")
     List<JobRecommendation> findUnviewedByStudentId(@Param("studentId") UUID studentId);
     
-    @Query("SELECT jr FROM JobRecommendation jr WHERE jr.student.id = :studentId AND jr.isApplied = false ORDER BY jr.matchScore DESC")
+    @Query("SELECT jr FROM JobRecommendation jr WHERE jr.studentId = :studentId AND jr.isApplied = false ORDER BY jr.matchScore DESC")
     List<JobRecommendation> findUnappliedByStudentId(@Param("studentId") UUID studentId);
     
     long countByStudentId(UUID studentId);
@@ -33,7 +34,7 @@ public interface JobRecommendationRepository extends JpaRepository<JobRecommenda
     long countByStudentIdAndIsViewed(UUID studentId, Boolean isViewed);
     
     @Modifying
-    @Query("UPDATE JobRecommendation jr SET jr.isViewed = true, jr.viewedAt = CURRENT_TIMESTAMP WHERE jr.student.id = :studentId AND jr.isViewed = false")
+    @Query("UPDATE JobRecommendation jr SET jr.isViewed = true, jr.viewedAt = CURRENT_TIMESTAMP WHERE jr.studentId = :studentId AND jr.isViewed = false")
     void markAllAsViewedByStudentId(@Param("studentId") UUID studentId);
 }
 

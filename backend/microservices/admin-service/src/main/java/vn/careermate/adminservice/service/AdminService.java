@@ -49,8 +49,8 @@ public class AdminService {
             Long pendingJobs = jobServiceClient.getJobCount("PENDING");
             Long activeJobs = jobServiceClient.getJobCount("ACTIVE");
 
-            // Get application count (TODO: Add endpoint to JobServiceClient)
-            long totalApplications = 0L; // TODO: Implement when endpoint available
+            // Get application count
+            Long totalApplications = jobServiceClient.getApplicationCount();
 
             // Get company count
             Long totalCompanies = contentServiceClient.getCompanyCount();
@@ -68,7 +68,7 @@ public class AdminService {
                     .totalJobs(totalJobs != null ? totalJobs : 0L)
                     .pendingJobs(pendingJobs != null ? pendingJobs : 0L)
                     .activeJobs(activeJobs != null ? activeJobs : 0L)
-                    .totalApplications(totalApplications)
+                    .totalApplications(totalApplications != null ? totalApplications : 0L)
                     .totalCompanies(totalCompanies != null ? totalCompanies : 0L)
                     .totalArticles(totalArticles != null ? totalArticles : 0L)
                     .pendingArticles(pendingArticles != null ? pendingArticles : 0L)
@@ -77,7 +77,7 @@ public class AdminService {
         } catch (Exception e) {
             log.error("Error getting dashboard stats: {}", e.getMessage(), e);
             // Return empty stats on error
-            return AdminDashboardStats.builder()
+        return AdminDashboardStats.builder()
                     .totalUsers(0L)
                     .totalStudents(0L)
                     .totalRecruiters(0L)
@@ -90,7 +90,7 @@ public class AdminService {
                     .totalArticles(0L)
                     .pendingArticles(0L)
                     .publishedArticles(0L)
-                    .build();
+                .build();
         }
     }
 
@@ -124,13 +124,7 @@ public class AdminService {
     @Transactional
     public UserDTO updateUserStatus(UUID userId, String status) {
         try {
-            // TODO: Add updateUserStatus endpoint to UserServiceClient
-            UserDTO user = userServiceClient.getUserById(userId);
-            if (user == null) {
-                throw new RuntimeException("User not found");
-            }
-            // Note: This will need to be implemented in user-service
-            return user;
+            return userServiceClient.updateUserStatus(userId, status);
         } catch (Exception e) {
             log.error("Error updating user status: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to update user status: " + e.getMessage());
@@ -153,11 +147,11 @@ public class AdminService {
                         .relatedEntityType("JOB")
                         .build();
                 notificationServiceClient.createNotification(request);
-            } catch (Exception e) {
+        } catch (Exception e) {
                 log.warn("Failed to send notification: {}", e.getMessage());
-            }
-            
-            return job;
+        }
+        
+        return job;
         } catch (Exception e) {
             log.error("Error approving job: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to approve job: " + e.getMessage());
@@ -180,11 +174,11 @@ public class AdminService {
                         .relatedEntityType("JOB")
                         .build();
                 notificationServiceClient.createNotification(request);
-            } catch (Exception e) {
+        } catch (Exception e) {
                 log.warn("Failed to send notification: {}", e.getMessage());
-            }
-            
-            return job;
+        }
+        
+        return job;
         } catch (Exception e) {
             log.error("Error rejecting job: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to reject job: " + e.getMessage());
@@ -193,8 +187,7 @@ public class AdminService {
 
     public Page<JobDTO> getPendingJobs(Pageable pageable) {
         try {
-            List<JobDTO> jobs = jobServiceClient.getPendingJobs(pageable.getPageNumber(), pageable.getPageSize());
-            return new PageImpl<>(jobs, pageable, jobs.size());
+            return jobServiceClient.getPendingJobs(pageable.getPageNumber(), pageable.getPageSize());
         } catch (Exception e) {
             log.error("Error getting pending jobs: {}", e.getMessage(), e);
             return Page.empty(pageable);
@@ -203,8 +196,7 @@ public class AdminService {
 
     public Page<JobDTO> getAllJobs(Pageable pageable) {
         try {
-            List<JobDTO> jobs = jobServiceClient.getAllJobs(null, pageable.getPageNumber(), pageable.getPageSize());
-            return new PageImpl<>(jobs, pageable, jobs.size());
+            return jobServiceClient.getAllJobs(null, pageable.getPageNumber(), pageable.getPageSize());
         } catch (Exception e) {
             log.error("Error getting all jobs: {}", e.getMessage(), e);
             return Page.empty(pageable);
@@ -213,11 +205,49 @@ public class AdminService {
 
     public Page<JobDTO> getJobsByStatus(String status, Pageable pageable) {
         try {
-            List<JobDTO> jobs = jobServiceClient.getAllJobs(status, pageable.getPageNumber(), pageable.getPageSize());
-            return new PageImpl<>(jobs, pageable, jobs.size());
+            return jobServiceClient.getAllJobs(status, pageable.getPageNumber(), pageable.getPageSize());
         } catch (Exception e) {
             log.error("Error getting jobs by status: {}", e.getMessage(), e);
             return Page.empty(pageable);
+        }
+    }
+
+    public Page<ArticleDTO> getPendingArticles(Pageable pageable) {
+        try {
+            return contentServiceClient.getPendingArticles(pageable.getPageNumber(), pageable.getPageSize());
+        } catch (Exception e) {
+            log.error("Error getting pending articles: {}", e.getMessage(), e);
+            return Page.empty(pageable);
+        }
+    }
+
+    public Page<ArticleDTO> getAllArticles(String status, Pageable pageable) {
+        try {
+            return contentServiceClient.getAllArticles(status, pageable.getPageNumber(), pageable.getPageSize());
+        } catch (Exception e) {
+            log.error("Error getting all articles: {}", e.getMessage(), e);
+            return Page.empty(pageable);
+        }
+    }
+
+    @Transactional
+    public ArticleDTO approveArticle(UUID articleId) {
+        try {
+            // No need to pass adminId, content-service will extract from token
+            return contentServiceClient.approveArticle(articleId, null); 
+        } catch (Exception e) {
+            log.error("Error approving article: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to approve article: " + e.getMessage());
+        }
+    }
+
+    @Transactional
+    public ArticleDTO rejectArticle(UUID articleId) {
+        try {
+            return contentServiceClient.rejectArticle(articleId, null);
+        } catch (Exception e) {
+            log.error("Error rejecting article: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to reject article: " + e.getMessage());
         }
     }
 
@@ -227,23 +257,23 @@ public class AdminService {
         LocalDateTime last7Days = now.minusDays(7);
 
         try {
-            // User analytics
+        // User analytics
             List<UserDTO> allUsers = userServiceClient.getUsersByRoles(Arrays.asList("STUDENT", "RECRUITER", "ADMIN"));
             long newUsersLast30Days = allUsers.stream()
-                    .filter(u -> u.getCreatedAt() != null && u.getCreatedAt().isAfter(last30Days))
-                    .count();
+                .filter(u -> u.getCreatedAt() != null && u.getCreatedAt().isAfter(last30Days))
+                .count();
             long newUsersLast7Days = allUsers.stream()
-                    .filter(u -> u.getCreatedAt() != null && u.getCreatedAt().isAfter(last7Days))
-                    .count();
-            
+                .filter(u -> u.getCreatedAt() != null && u.getCreatedAt().isAfter(last7Days))
+                .count();
+        
             Map<String, Long> usersByRole = allUsers.stream()
                     .collect(Collectors.groupingBy(UserDTO::getRole, Collectors.counting()));
 
             // Job analytics (simplified - would need more endpoints for full analytics)
             long newJobsLast30Days = 0L; // TODO: Implement when endpoint available
             long newJobsLast7Days = 0L; // TODO: Implement when endpoint available
-            
-            Map<String, Long> jobsByStatus = new HashMap<>();
+        
+        Map<String, Long> jobsByStatus = new HashMap<>();
             jobsByStatus.put("PENDING", jobServiceClient.getJobCount("PENDING") != null ? jobServiceClient.getJobCount("PENDING") : 0L);
             jobsByStatus.put("ACTIVE", jobServiceClient.getJobCount("ACTIVE") != null ? jobServiceClient.getJobCount("ACTIVE") : 0L);
 
@@ -252,18 +282,18 @@ public class AdminService {
             long newApplicationsLast7Days = 0L;
 
             // Top skills (TODO: Add endpoint to get top skills)
-            List<AdminAnalytics.SkillDemand> topSkills = new ArrayList<>();
+        List<AdminAnalytics.SkillDemand> topSkills = new ArrayList<>();
 
-            return AdminAnalytics.builder()
-                    .newUsersLast30Days(newUsersLast30Days)
-                    .newUsersLast7Days(newUsersLast7Days)
-                    .usersByRole(usersByRole)
-                    .newJobsLast30Days(newJobsLast30Days)
-                    .newJobsLast7Days(newJobsLast7Days)
-                    .jobsByStatus(jobsByStatus)
-                    .newApplicationsLast30Days(newApplicationsLast30Days)
-                    .newApplicationsLast7Days(newApplicationsLast7Days)
-                    .topSkillsInDemand(topSkills)
+        return AdminAnalytics.builder()
+                .newUsersLast30Days(newUsersLast30Days)
+                .newUsersLast7Days(newUsersLast7Days)
+                .usersByRole(usersByRole)
+                .newJobsLast30Days(newJobsLast30Days)
+                .newJobsLast7Days(newJobsLast7Days)
+                .jobsByStatus(jobsByStatus)
+                .newApplicationsLast30Days(newApplicationsLast30Days)
+                .newApplicationsLast7Days(newApplicationsLast7Days)
+                .topSkillsInDemand(topSkills)
                     .applicationTrafficLast30Days(new ArrayList<>())
                     .build();
         } catch (Exception e) {
@@ -279,7 +309,7 @@ public class AdminService {
                     .newApplicationsLast7Days(0L)
                     .topSkillsInDemand(new ArrayList<>())
                     .applicationTrafficLast30Days(new ArrayList<>())
-                    .build();
+                .build();
         }
     }
 
@@ -444,7 +474,6 @@ public class AdminService {
     @Transactional
     public void deleteUser(UUID userId, UUID adminId, String adminEmail, String ipAddress) {
         try {
-            // TODO: Add deleteUser endpoint to UserServiceClient
             UserDTO user = userServiceClient.getUserById(userId);
             if (user == null) {
                 throw new RuntimeException("User not found");
@@ -452,13 +481,12 @@ public class AdminService {
             
             String userName = user.getFullName() != null ? user.getFullName() : user.getEmail();
             
+            userServiceClient.deleteUser(userId);
+
             // Create audit log
             createAuditLog(adminId, adminEmail, AuditLog.ActionType.DELETE,
                     AuditLog.EntityType.USER, userId, userName,
                     "Admin deleted user: " + userName + " (Role: " + user.getRole() + ")", ipAddress);
-            
-            // Note: Actual deletion should be done via UserServiceClient endpoint
-            throw new RuntimeException("Delete user endpoint not yet implemented in user-service");
         } catch (Exception e) {
             log.error("Error deleting user: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to delete user: " + e.getMessage());

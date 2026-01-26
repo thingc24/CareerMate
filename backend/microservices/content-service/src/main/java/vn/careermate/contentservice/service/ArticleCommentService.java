@@ -72,10 +72,9 @@ public class ArticleCommentService {
             // Convert to DTOs - TODO: Fetch user details via UserServiceClient in DTO conversion
             List<ArticleCommentDTO> dtos = comments.stream()
                     .map(comment -> {
-                        // TODO: Fetch user details via UserServiceClient
-                        // UserDTO user = userServiceClient.getUserById(comment.getUserId());
-                        // Build DTO with user info
-                        return ArticleCommentDTO.fromEntity(comment);
+                        ArticleCommentDTO dto = ArticleCommentDTO.fromEntity(comment);
+                        populateUserInfo(dto);
+                        return dto;
                     })
                     .collect(Collectors.toList());
             
@@ -97,6 +96,27 @@ public class ArticleCommentService {
             loadRepliesRecursively(reply);
         }
         comment.setReplies(replies);
+    }
+
+    private void populateUserInfo(ArticleCommentDTO dto) {
+        if (dto.getUser() != null && dto.getUser().getId() != null) {
+            try {
+                UserDTO user = userServiceClient.getUserById(dto.getUser().getId());
+                if (user != null) {
+                    dto.setUser(user);
+                }
+            } catch (Exception e) {
+                log.warn("Failed to fetch user info for comment {}: {}", dto.getId(), e.getMessage());
+                dto.getUser().setFullName("Unknown User");
+            }
+        }
+
+        // Recursively populate user info for replies
+        if (dto.getReplies() != null) {
+            for (ArticleCommentDTO reply : dto.getReplies()) {
+                populateUserInfo(reply);
+            }
+        }
     }
 
     @Transactional

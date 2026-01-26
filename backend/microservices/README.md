@@ -1,56 +1,121 @@
-# CareerMate Microservices Architecture
+# 🚀 CareerMate Microservices
 
-## Cấu trúc Microservices
+Hướng dẫn chạy tất cả các microservices của CareerMate.
 
+## 📋 Danh sách Services
+
+| Service | Port | Mô tả |
+|---------|------|-------|
+| eureka-server | 8761 | Service Discovery |
+| api-gateway | 8080 | API Gateway |
+| user-service | 8081 | User Management |
+| job-service | 8082 | Job Management |
+| content-service | 8083 | Content & Articles |
+| notification-service | 8084 | Notifications |
+| learning-service | 8085 | Learning & Courses |
+| ai-service | 8086 | AI Services |
+| admin-service | 8087 | Admin Panel |
+
+## 🚀 Cách chạy tất cả services
+
+### Cách 1: Sử dụng script tự động (Khuyến nghị)
+
+```powershell
+cd backend\microservices
+.\start-all-services.ps1
 ```
-microservices/
-├── eureka-server/          # Service Discovery Server
-├── api-gateway/            # Spring Cloud Gateway
-├── user-service/            # User Management Service
-├── job-service/            # Job Management Service
-├── content-service/         # Article & Content Service
-├── learning-service/        # Course & Challenge Service
-├── admin-service/           # Admin Management Service
-├── notification-service/    # Notification Service
-└── ai-service/             # AI Services (CV Analysis, Mock Interview, etc.)
+
+Script này sẽ:
+- ✅ Tự động kill các process đang chạy trên các ports
+- ✅ Build các service chưa có JAR file
+- ✅ Start tất cả services theo thứ tự đúng
+- ✅ Kiểm tra health của từng service
+- ✅ Hiển thị trạng thái Eureka registry
+
+### Cách 2: Chạy từng service thủ công
+
+```powershell
+# 1. Start Eureka Server
+cd backend\microservices\eureka-server
+java -jar target\eureka-server-1.0.0.jar
+
+# 2. Start API Gateway (trong terminal mới)
+cd backend\microservices\api-gateway
+java -jar target\api-gateway-1.0.0.jar
+
+# 3. Start các services khác...
 ```
 
-## Ports
+## 🛑 Dừng tất cả services
 
-- Eureka Server: 8761
-- API Gateway: 8080
-- User Service: 8081
-- Job Service: 8082
-- Content Service: 8083
-- Learning Service: 8084
-- Admin Service: 8085
-- Notification Service: 8086
-- AI Service: 8087
+```powershell
+cd backend\microservices
+.\stop-all-services.ps1
+```
 
-## Database
+## 📊 Kiểm tra trạng thái
 
-Mỗi service có schema riêng trong cùng PostgreSQL database:
-- userservice schema
-- jobservice schema
-- contentservice schema
-- learningservice schema
-- adminservice schema
-- notificationservice schema
-- aiservice schema
+### Eureka Dashboard
+Mở trình duyệt: http://localhost:8761
 
-## Chạy Services
+### Health Check
+```powershell
+# Kiểm tra từng service
+Invoke-WebRequest -Uri "http://localhost:8081/actuator/health"
+Invoke-WebRequest -Uri "http://localhost:8082/actuator/health"
+# ... các service khác
+```
 
-1. Start Eureka Server: `cd eureka-server && mvn spring-boot:run`
-2. Start API Gateway: `cd api-gateway && mvn spring-boot:run`
-3. Start các services theo thứ tự:
-   - User Service
-   - Notification Service
-   - Job Service
-   - Content Service
-   - Learning Service
-   - Admin Service
-   - AI Service
+## ⚙️ Yêu cầu hệ thống
 
-## Inter-Service Communication
+- ✅ Java 17+ (JDK 23 được khuyến nghị)
+- ✅ Maven 3.6+
+- ✅ PostgreSQL (đã tạo các databases riêng)
+- ✅ Redis (optional, cho caching)
 
-Sử dụng Feign Client để giao tiếp giữa các services.
+## 🔧 Troubleshooting
+
+### Port đã được sử dụng
+```powershell
+# Kiểm tra process trên port
+Get-NetTCPConnection -LocalPort 8081
+
+# Kill process
+Stop-Process -Id <PID> -Force
+```
+
+### Service không start được
+1. Kiểm tra logs trong console
+2. Kiểm tra database connection
+3. Kiểm tra Eureka Server đã chạy chưa
+4. Kiểm tra JAR file đã được build chưa: `mvn clean package -DskipTests`
+
+### Build failed
+```powershell
+# Build lại service cụ thể
+cd backend\microservices\<service-name>
+mvn clean package -DskipTests
+```
+
+## 📝 Lưu ý
+
+- ⏱️ Cần đợi 30-40 giây để tất cả services khởi động hoàn tất
+- 🔄 Eureka Server phải chạy trước các services khác
+- 🌐 API Gateway là entry point chính cho client
+- 💾 Đảm bảo các databases đã được tạo và cấu hình đúng
+
+## 🎯 Quick Start
+
+```powershell
+# 1. Di chuyển vào thư mục microservices
+cd C:\xampp\htdocs\CareerMate\backend\microservices
+
+# 2. Chạy script
+.\start-all-services.ps1
+
+# 3. Đợi 40 giây và kiểm tra kết quả
+```
+
+---
+
+**Happy Coding! 🎉**

@@ -21,7 +21,8 @@ public interface MockInterviewRepository extends JpaRepository<MockInterview, UU
     
     Optional<MockInterview> findByStudentIdAndJobId(UUID studentId, UUID jobId);
     
-    @Query("SELECT mi FROM MockInterview mi WHERE mi.student.id = :studentId AND mi.status = :status ORDER BY mi.startedAt DESC")
+    // Note: MockInterview now uses studentId (UUID) directly, not student entity
+    @Query("SELECT mi FROM MockInterview mi WHERE mi.studentId = :studentId AND mi.status = :status ORDER BY mi.startedAt DESC")
     List<MockInterview> findByStudentIdAndStatus(@Param("studentId") UUID studentId, @Param("status") MockInterview.InterviewStatus status);
     
     long countByStudentId(UUID studentId);

@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/companies")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class CompanyController {
 
     private final CompanyService companyService;
@@ -95,6 +94,11 @@ public class CompanyController {
         
         return ResponseEntity.ok(companyMap);
     }
+
+    @PostMapping
+    public ResponseEntity<Company> createOrUpdateCompany(@RequestBody Company company) {
+        return ResponseEntity.ok(companyService.createOrUpdateCompany(company));
+    }
     
     // TODO: Implement getRecruiterByCompany using UserServiceClient
     // Need to add endpoint in user-service to get recruiter by companyId
@@ -110,5 +114,15 @@ public class CompanyController {
         //     return ResponseEntity.notFound().build();
         // }
         // ... build response map
+    }
+    @DeleteMapping("/cleanup")
+    public ResponseEntity<Void> cleanupAllCompanies() {
+        companyService.deleteAllCompanies();
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/admin/count")
+    public ResponseEntity<Long> getCompanyCount() {
+        return ResponseEntity.ok(companyService.getCompanyCount());
     }
 }

@@ -16,7 +16,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/students")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class StudentController {
 
     private final StudentService studentService;

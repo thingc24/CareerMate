@@ -21,8 +21,7 @@ export default function Messages() {
 
   useEffect(() => {
     loadRecruiters();
-    
-    // Poll for new messages every 5 seconds
+
     pollingIntervalRef.current = setInterval(() => {
       if (conversation) {
         loadMessages(conversation.id);
@@ -49,7 +48,6 @@ export default function Messages() {
     }
   }, [messages]);
 
-  // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -65,32 +63,28 @@ export default function Messages() {
       setLoadingRecruiters(true);
       const data = await api.getAllRecruiters();
       setRecruiters(data || []);
-      
-      // Load conversations for each recruiter
+
       const conversations = await api.getAdminConversations();
       const lastMsgs = {};
-      
+
       for (const recruiter of data || []) {
-        // Find conversation with this recruiter
-        const conv = conversations?.find(c => 
+        const conv = conversations?.find(c =>
           (c.participant1?.id === recruiter.id || c.participant2?.id === recruiter.id)
         );
-        
+
         if (conv) {
           try {
             const msgs = await api.getAdminMessages(conv.id, 0, 1);
             if (msgs && msgs.length > 0) {
               const lastMsg = msgs[msgs.length - 1];
               if (lastMsg && lastMsg.content) {
-                const preview = lastMsg.content.length > 50 
-                  ? lastMsg.content.substring(0, 50) + '...' 
+                const preview = lastMsg.content.length > 30
+                  ? lastMsg.content.substring(0, 30) + '...'
                   : lastMsg.content;
                 lastMsgs[recruiter.id] = preview;
               }
             }
-          } catch (e) {
-            // Ignore
-          }
+          } catch (e) { }
         }
       }
       setLastMessages(lastMsgs);
@@ -105,17 +99,6 @@ export default function Messages() {
     try {
       const data = await api.getAdminMessages(conversationId, 0, 100);
       setMessages(data || []);
-      
-      // Update last message preview
-      if (data && data.length > 0) {
-        const lastMsg = data[data.length - 1];
-        if (lastMsg && lastMsg.content && selectedRecruiter) {
-          const preview = lastMsg.content.length > 50 
-            ? lastMsg.content.substring(0, 50) + '...' 
-            : lastMsg.content;
-          setLastMessages(prev => ({ ...prev, [selectedRecruiter.id]: preview }));
-        }
-      }
     } catch (error) {
       console.error('Error loading messages:', error);
     }
@@ -124,7 +107,6 @@ export default function Messages() {
   const handleRecruiterClick = async (recruiter) => {
     setSelectedRecruiter(recruiter);
     try {
-      // Get or create conversation with this recruiter
       const conv = await api.getOrCreateAdminConversation(recruiter.id);
       setConversation(conv);
       await loadMessages(conv.id);
@@ -145,14 +127,11 @@ export default function Messages() {
     try {
       await api.sendAdminMessage(conversation.id, content);
       await loadMessages(conversation.id);
-      
-      // Update last message preview immediately
+
       if (selectedRecruiter) {
-        const preview = content.length > 50 ? content.substring(0, 50) + '...' : content;
+        const preview = content.length > 30 ? content.substring(0, 30) + '...' : content;
         setLastMessages(prev => ({ ...prev, [selectedRecruiter.id]: preview }));
       }
-      
-      await loadRecruiters();
     } catch (error) {
       console.error('Error sending message:', error);
       alert('Lỗi: ' + (error.response?.data?.error || 'Không thể gửi tin nhắn'));
@@ -160,22 +139,6 @@ export default function Messages() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = now - date;
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    if (minutes < 1) return 'Vừa xong';
-    if (minutes < 60) return `${minutes} phút trước`;
-    if (hours < 24) return `${hours} giờ trước`;
-    if (days < 7) return `${days} ngày trước`;
-    return date.toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
   const formatTime = (dateString) => {
@@ -190,280 +153,176 @@ export default function Messages() {
     return `http://localhost:8080/api${avatarUrl}`;
   };
 
-  const handleViewProfile = () => {
-    setShowUserInfoModal(true);
-    setShowMenu(false);
-  };
-
   const handleDeleteMessages = async () => {
     if (!conversation) return;
-    
-    if (!window.confirm('Bạn có chắc chắn muốn xóa toàn bộ tin nhắn trong cuộc trò chuyện này?')) {
-      return;
-    }
+    if (!window.confirm('Xóa vĩnh viễn lịch sử trò chuyện này?')) return;
 
     try {
       await api.deleteAllMessages(conversation.id);
       setMessages([]);
-      if (selectedRecruiter) {
-        setLastMessages(prev => ({ ...prev, [selectedRecruiter.id]: '' }));
-      }
-      alert('Đã xóa toàn bộ tin nhắn');
+      if (selectedRecruiter) setLastMessages(prev => ({ ...prev, [selectedRecruiter.id]: '' }));
     } catch (error) {
       console.error('Error deleting messages:', error);
-      alert('Lỗi: ' + (error.response?.data?.error || 'Không thể xóa tin nhắn'));
     } finally {
       setShowMenu(false);
     }
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-4 h-[calc(100vh-120px)] flex flex-col">
-      <div className="card p-0 overflow-hidden flex-1 flex shadow-lg dark:bg-gray-900 dark:border-gray-800">
-        {/* Recruiters List - Left Side */}
-        <div className="w-1/3 border-r border-gray-200 dark:border-gray-800 flex flex-col bg-white dark:bg-gray-900">
-          {/* Header */}
-          <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-gray-800 dark:to-gray-800">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <i className="fas fa-comments text-indigo-600 dark:text-indigo-400"></i>
-              Nhắn tin với nhà tuyển dụng
-            </h2>
-          </div>
-
-          {/* Recruiters */}
-          <div className="flex-1 overflow-y-auto">
-            {loadingRecruiters ? (
-              <div className="p-4 text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-indigo-200 dark:border-gray-700 border-t-indigo-600 dark:border-t-indigo-500"></div>
-                <p className="mt-2 text-gray-600 dark:text-gray-300 text-sm">Đang tải...</p>
-              </div>
-            ) : recruiters.length === 0 ? (
-              <div className="p-8 text-center">
-                <i className="fas fa-users text-gray-400 dark:text-gray-500 text-5xl mb-3"></i>
-                <p className="text-gray-600 dark:text-gray-300 text-sm font-medium">Chưa có nhà tuyển dụng nào</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                {recruiters.map((recruiter) => {
-                  const isSelected = selectedRecruiter?.id === recruiter.id;
-                  const avatarUrl = getAvatarUrl(recruiter.avatarUrl);
-                  
-                  return (
-                    <button
-                      key={recruiter.id}
-                      onClick={() => handleRecruiterClick(recruiter)}
-                      className={`w-full p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all text-left relative ${
-                        isSelected ? 'bg-indigo-50 dark:bg-gray-800 border-l-4 border-indigo-600 dark:border-indigo-500' : ''
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="relative flex-shrink-0">
-                          {avatarUrl ? (
-                            <img
-                              src={avatarUrl}
-                              alt={recruiter.fullName}
-                              className="w-14 h-14 rounded-full object-cover shadow-md border-2 border-white dark:border-gray-700"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                                if (e.target.nextSibling) {
-                                  e.target.nextSibling.style.display = 'flex';
-                                }
-                              }}
-                            />
-                          ) : null}
-                          <div className={`w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold text-lg shadow-md ${avatarUrl ? 'hidden' : ''}`}>
-                            {recruiter.fullName?.charAt(0).toUpperCase() || 'R'}
-                          </div>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2 mb-1">
-                            <p className="font-semibold text-gray-900 dark:text-white truncate text-base">
-                              {recruiter.fullName || 'Nhà tuyển dụng'}
-                            </p>
-                          </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
-                            {lastMessages[recruiter.id] || 'Chưa có tin nhắn'}
-                          </p>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+    <div className="h-[calc(100vh-140px)] animate-fade-in flex gap-6 pb-6">
+      {/* Sidebar List */}
+      <div className="w-[380px] flex flex-col bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl rounded-[2.5rem] border border-white/50 dark:border-slate-800/50 shadow-2xl overflow-hidden shrink-0">
+        <div className="p-8 pb-4">
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+            <div className="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white text-sm">
+              <i className="fas fa-comment-dots"></i>
+            </div>
+            Hỗ trợ DN
+          </h2>
+          <div className="mt-6 relative group">
+            <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-xs transition-colors group-focus-within:text-indigo-500"></i>
+            <input
+              type="text"
+              placeholder="Tìm kiếm đối tác..."
+              className="w-full pl-12 pr-6 py-4 bg-slate-100 dark:bg-slate-800/50 border-2 border-transparent focus:border-indigo-500/30 rounded-[1.5rem] text-sm outline-none transition-all dark:text-white"
+            />
           </div>
         </div>
 
-        {/* Messages - Right Side */}
-        <div className="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900">
-          {!selectedRecruiter || !conversation ? (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center">
-                <i className="fas fa-comments text-gray-300 dark:text-gray-600 text-7xl mb-4"></i>
-                <p className="text-gray-500 dark:text-gray-300 text-lg font-medium">Chọn nhà tuyển dụng để bắt đầu</p>
-                <p className="text-gray-400 dark:text-gray-400 text-sm mt-2">Nhắn tin với nhà tuyển dụng ngay!</p>
-              </div>
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-2">
+          {loadingRecruiters && recruiters.length === 0 ? (
+            <div className="py-20 text-center">
+              <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Đang kết nối...</p>
             </div>
-          ) : (
-            <>
-              {/* Messages Header */}
-              <div className="border-b border-gray-200 dark:border-gray-800 p-4 bg-white dark:bg-gray-900 shadow-sm">
-                {(() => {
-                  const avatarUrl = getAvatarUrl(selectedRecruiter.avatarUrl);
-                  return (
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 flex-1">
-                        {avatarUrl ? (
-                          <img
-                            src={avatarUrl}
-                            alt={selectedRecruiter.fullName}
-                            className="w-12 h-12 rounded-full object-cover shadow-md border-2 border-white dark:border-gray-700"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              if (e.target.nextSibling) {
-                                e.target.nextSibling.style.display = 'flex';
-                              }
-                            }}
-                          />
-                        ) : null}
-                        <div className={`w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold shadow-md ${avatarUrl ? 'hidden' : ''}`}>
-                          {selectedRecruiter.fullName?.charAt(0).toUpperCase() || 'R'}
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-semibold text-gray-900 dark:text-white text-lg">
-                            {selectedRecruiter.fullName || 'Nhà tuyển dụng'}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">Nhà tuyển dụng</p>
-                        </div>
-                      </div>
-                      <div className="relative" ref={menuRef}>
-                        <button
-                          onClick={() => setShowMenu(!showMenu)}
-                          className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition"
-                        >
-                          <i className="fas fa-ellipsis-v"></i>
-                        </button>
-                        {showMenu && (
-                          <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10">
-                            <button
-                              onClick={handleViewProfile}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                            >
-                              <i className="fas fa-user"></i>
-                              <span>Xem thông tin nhà tuyển dụng</span>
-                            </button>
-                            <button
-                              onClick={handleDeleteMessages}
-                              className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                            >
-                              <i className="fas fa-trash"></i>
-                              <span>Xóa toàn bộ tin nhắn</span>
-                            </button>
-                          </div>
-                        )}
-                      </div>
+          ) : recruiters.map((recruiter) => (
+            <button
+              key={recruiter.id}
+              onClick={() => handleRecruiterClick(recruiter)}
+              className={`w-full p-6 rounded-[2rem] transition-all flex items-center gap-4 group ${selectedRecruiter?.id === recruiter.id
+                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl'
+                : 'hover:bg-indigo-50 dark:hover:bg-slate-800/50'
+                }`}
+            >
+              <div className="relative shrink-0">
+                <div className="w-14 h-14 rounded-2xl bg-slate-200 dark:bg-slate-700 overflow-hidden shadow-sm">
+                  {recruiter.avatarUrl ? (
+                    <img src={getAvatarUrl(recruiter.avatarUrl)} className="w-full h-full object-cover" alt="" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-xl font-black">
+                      {recruiter.fullName?.charAt(0).toUpperCase()}
                     </div>
-                  );
-                })()}
-              </div>
-
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3 dark:bg-gray-900">
-                {messages.length === 0 ? (
-                  <div className="text-center py-12">
-                    <i className="fas fa-comment-dots text-gray-300 dark:text-gray-600 text-4xl mb-3"></i>
-                    <p className="text-gray-500 dark:text-gray-300 text-sm">Chưa có tin nhắn nào</p>
-                    <p className="text-gray-400 dark:text-gray-400 text-xs mt-1">Bắt đầu cuộc trò chuyện ngay!</p>
-                  </div>
-                ) : (
-                  messages.map((msg) => {
-                    const isMyMessage = msg.sender?.id === user?.id;
-                    return (
-                      <div
-                        key={msg.id}
-                        className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'} items-end gap-2`}
-                      >
-                        {!isMyMessage && (
-                          <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-700 flex items-center justify-center text-white text-xs flex-shrink-0">
-                            {msg.sender?.fullName?.charAt(0).toUpperCase() || 'U'}
-                          </div>
-                        )}
-                        <div
-                          className={`max-w-[70%] rounded-2xl px-4 py-2.5 shadow-sm ${
-                            isMyMessage
-                              ? 'bg-indigo-600 dark:bg-indigo-700 text-white rounded-br-md'
-                              : 'bg-white dark:bg-gray-800 dark:text-white text-gray-900 border border-gray-200 dark:border-gray-700 rounded-bl-md'
-                          }`}
-                        >
-                          <div className="whitespace-pre-wrap text-sm leading-relaxed">{msg.content}</div>
-                          <div className={`text-xs mt-1.5 ${isMyMessage ? 'text-indigo-100 dark:text-indigo-200' : 'text-gray-500 dark:text-gray-400'}`}>
-                            {formatTime(msg.createdAt)}
-                          </div>
-                        </div>
-                        {isMyMessage && (
-                          <div className="w-8 h-8 rounded-full bg-indigo-600 dark:bg-indigo-700 flex items-center justify-center text-white text-xs flex-shrink-0">
-                            {user?.fullName?.charAt(0).toUpperCase() || 'A'}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
-                {loading && (
-                  <div className="flex justify-start items-end gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-700 flex items-center justify-center text-white text-xs flex-shrink-0"></div>
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-bl-md">
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"></div>
-                        <div
-                          className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"
-                          style={{ animationDelay: '0.1s' }}
-                        ></div>
-                        <div
-                          className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"
-                          style={{ animationDelay: '0.2s' }}
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* Input */}
-              <form onSubmit={handleSend} className="p-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder="Nhập tin nhắn..."
-                    className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-800 dark:text-white"
-                    disabled={loading}
-                  />
-                  <button
-                    type="submit"
-                    disabled={loading || !input.trim()}
-                    className="px-6 py-3 bg-indigo-600 dark:bg-indigo-500 text-white rounded-xl hover:bg-indigo-700 dark:hover:bg-indigo-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
-                  >
-                    {loading ? (
-                      <i className="fas fa-spinner fa-spin"></i>
-                    ) : (
-                      <>
-                        <i className="fas fa-paper-plane"></i>
-                        <span className="font-medium">Gửi</span>
-                      </>
-                    )}
-                  </button>
+                  )}
                 </div>
-              </form>
-            </>
-          )}
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-4 border-white dark:border-slate-900 bg-emerald-500"></div>
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <p className="font-black text-sm uppercase tracking-wider line-clamp-1">{recruiter.fullName}</p>
+                <p className={`text-[10px] font-bold mt-0.5 line-clamp-1 opacity-60`}>
+                  {lastMessages[recruiter.id] || 'Sẵn sàng hỗ trợ'}
+                </p>
+              </div>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* User Info Modal */}
-      {selectedRecruiter && (
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl rounded-[2.5rem] border border-white/50 dark:border-slate-800/50 shadow-2xl overflow-hidden relative">
+        {!selectedRecruiter ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-20 animate-fade-in text-center">
+            <div className="w-32 h-32 bg-indigo-100 dark:bg-indigo-900/30 rounded-[3rem] flex items-center justify-center text-indigo-600 text-4xl mb-8 animate-bounce transition-all duration-[3000ms]">
+              <i className="fas fa-satellite-dish"></i>
+            </div>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Trung tâm điều phối hỗ trợ</h3>
+            <p className="text-slate-500 font-medium max-w-sm">Chọn một đối tác doanh nghiệp từ danh sách bên trái để bắt đầu hỗ trợ hoặc trao đổi chuyên sâu.</p>
+          </div>
+        ) : (
+          <>
+            {/* Header */}
+            <div className="px-10 py-6 border-b border-white/20 dark:border-slate-800/50 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-5">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-slate-800 overflow-hidden shadow-sm">
+                  {selectedRecruiter.avatarUrl ? (
+                    <img src={getAvatarUrl(selectedRecruiter.avatarUrl)} className="w-full h-full object-cover" alt="" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center font-black text-indigo-600">
+                      {selectedRecruiter.fullName?.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs leading-none mb-1.5">{selectedRecruiter.fullName}</h3>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Trực tuyến</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowUserInfoModal(true)}
+                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-indigo-600 transition-colors"
+                >
+                  <i className="fas fa-info-circle"></i>
+                </button>
+                <button
+                  onClick={handleDeleteMessages}
+                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                >
+                  <i className="fas fa-trash-alt text-xs"></i>
+                </button>
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-10 space-y-6 bg-slate-50/50 dark:bg-slate-950/20">
+              {messages.map((msg, idx) => {
+                const isMe = msg.sender?.id === user?.id;
+                return (
+                  <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} animate-scale-in`} style={{ animationDelay: `${idx * 20}ms` }}>
+                    <div className={`max-w-[75%] space-y-2`}>
+                      <div className={`px-6 py-4 rounded-[2rem] shadow-sm text-sm font-medium ${isMe
+                        ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-tr-none'
+                        : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-white dark:border-slate-700 rounded-tl-none'
+                        }`}>
+                        {msg.content}
+                      </div>
+                      <div className={`text-[9px] font-black uppercase tracking-widest px-2 ${isMe ? 'text-right text-indigo-400' : 'text-slate-400'}`}>
+                        {formatTime(msg.createdAt)}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input Bar */}
+            <div className="p-8">
+              <form onSubmit={handleSend} className="relative flex items-center gap-4 bg-white dark:bg-slate-800 rounded-[2rem] border border-white/50 dark:border-slate-700/50 p-2 pl-4 shadow-xl focus-within:border-indigo-500/50 transition-all">
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Viết phản hồi hỗ trợ..."
+                  className="flex-1 bg-transparent py-4 text-sm font-medium outline-none dark:text-white"
+                />
+                <button
+                  type="submit"
+                  disabled={!input.trim() || loading}
+                  className="w-14 h-14 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[1.5rem] flex items-center justify-center text-lg shadow-xl shadow-slate-900/10 hover:shadow-indigo-500/20 active:scale-95 transition-all disabled:opacity-30"
+                >
+                  <i className={`fas ${loading ? 'fa-spinner fa-spin' : 'fa-paper-plane'}`}></i>
+                </button>
+              </form>
+            </div>
+          </>
+        )}
+      </div>
+
+      {showUserInfoModal && selectedRecruiter && (
         <UserInfoModal
           isOpen={showUserInfoModal}
           onClose={() => setShowUserInfoModal(false)}
@@ -474,3 +333,4 @@ export default function Messages() {
     </div>
   );
 }
+

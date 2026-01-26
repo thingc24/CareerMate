@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import vn.careermate.common.dto.UserDTO;
 
 @Data
 @Builder
@@ -16,6 +17,7 @@ import java.util.UUID;
 public class ArticleDTO {
     private UUID id;
     private UUID authorId;
+    private UserDTO author;
     private String title;
     private String content;
     private String excerpt;

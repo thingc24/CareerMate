@@ -19,7 +19,6 @@ import java.util.UUID;
 @RequestMapping("/students/roadmap")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('STUDENT') or hasRole('ADMIN')")
-@CrossOrigin(origins = "*")
 public class CareerRoadmapController {
 
     private final CareerRoadmapService roadmapService;

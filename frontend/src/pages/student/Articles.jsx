@@ -1,40 +1,27 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import ArticleCard from '../../components/ArticleCard';
 
 export default function Articles() {
+  const navigate = useNavigate();
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [debouncedKeyword, setDebouncedKeyword] = useState('');
   const debounceTimerRef = useRef(null);
-  const containerRef = useRef(null);
 
-  // Debounce search keyword
   useEffect(() => {
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-    
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     debounceTimerRef.current = setTimeout(() => {
       setDebouncedKeyword(searchKeyword);
-    }, 500); // 500ms debounce
-    
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
+    }, 500);
+    return () => clearTimeout(debounceTimerRef.current);
   }, [searchKeyword]);
 
   useEffect(() => {
-    const scrollPosition = window.scrollY;
-    loadArticles().then(() => {
-      // Restore scroll position after loading
-      window.scrollTo(0, scrollPosition);
-    });
+    loadArticles();
   }, [selectedCategory, debouncedKeyword]);
 
   const loadArticles = async () => {
@@ -51,95 +38,87 @@ export default function Articles() {
 
   const categories = [
     { value: '', label: 'Tất cả' },
-    { value: 'CAREER', label: 'Nghề nghiệp' },
+    { value: 'CAREER', label: 'Sự nghiệp' },
     { value: 'SKILLS', label: 'Kỹ năng' },
+    { value: 'TECHNOLOGY', label: 'Công nghệ' },
     { value: 'INTERVIEW', label: 'Phỏng vấn' },
-    { value: 'CV', label: 'CV & Resume' },
-    { value: 'JOB_SEARCH', label: 'Tìm việc' },
+    { value: 'CV', label: 'Hồ sơ CV' },
   ];
 
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 dark:border-gray-700 border-t-blue-600 dark:border-t-blue-500"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Đang tải bài viết...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-7xl mx-auto px-4 py-4">
-      {/* Enhanced Search and Filter */}
-      <div className="card p-6 mb-8 shadow-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-800 border-blue-200 dark:border-gray-700">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <i className="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500"></i>
+    <div className="min-h-screen bg-gray-100 dark:bg-black font-sans pb-12">
+      {/* Feed Header / Filter Bar - Transparent & Floating */}
+      <div className="sticky top-0 z-30 px-6 md:px-8 py-4 pointer-events-none">
+        <div className="max-w-2xl mx-auto flex items-center gap-4">
+          {/* Search Bar - Glass Effect */}
+          <div className="flex-1 bg-white/60 dark:bg-black/60 backdrop-blur-xl rounded-full px-5 py-2.5 flex items-center gap-3 border border-white/40 dark:border-white/10 shadow-lg pointer-events-auto transition-all focus-within:bg-white/80 dark:focus-within:bg-black/80 focus-within:shadow-xl focus-within:scale-[1.02]">
+            <i className="fas fa-search text-gray-500 dark:text-gray-400"></i>
             <input
               type="text"
-              placeholder="Tìm kiếm bài viết theo tiêu đề, nội dung, tên nhà tuyển dụng..."
+              placeholder="Tìm kiếm bài viết..."
+              className="bg-transparent border-none focus:ring-0 text-sm w-full text-gray-900 dark:text-white placeholder-gray-500 font-medium"
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
-              className="input-field flex-1 pl-12 pr-4 py-3 bg-white dark:bg-gray-900 dark:text-white border-2 border-blue-200 dark:border-gray-700 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800"
             />
           </div>
-          <div className="md:w-64">
-            <div className="relative">
-              <i className="fas fa-filter absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500"></i>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="input-field w-full pl-12 pr-4 py-3 bg-white dark:bg-gray-900 dark:text-white border-2 border-blue-200 dark:border-gray-700 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800"
-              >
-                {categories.map(cat => (
-                  <option key={cat.value} value={cat.value}>{cat.label}</option>
-                ))}
-              </select>
-            </div>
+
+          {/* Filter - Glass Effect */}
+          <div className="relative pointer-events-auto group">
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="appearance-none bg-white/60 dark:bg-black/60 backdrop-blur-xl border border-white/40 dark:border-white/10 rounded-full pl-5 pr-10 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 focus:ring-0 cursor-pointer shadow-lg hover:bg-white/80 dark:hover:bg-black/80 transition-all"
+            >
+              {categories.map(cat => (
+                <option key={cat.value} value={cat.value}>{cat.label}</option>
+              ))}
+            </select>
+            <i className="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none group-hover:text-blue-500 transition-colors"></i>
           </div>
         </div>
+        {/* Optional Gradient Fade at top to ensure text doesn't clash too harshly if it scrolls under immediately? 
+             Actually user asked for transparent, so leaving it clean. 
+         */}
       </div>
 
-      {/* Articles Feed (Facebook style) */}
-      {articles.length === 0 ? (
-        <div className="card p-16 text-center shadow-lg dark:bg-gray-900 dark:border-gray-800">
-          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-gray-800 dark:to-gray-800 mb-6">
-            <i className="fas fa-newspaper text-blue-500 dark:text-blue-400 text-5xl"></i>
+      {/* Main Feed Content */}
+      <div className="max-w-2xl mx-auto px-4 mt-2">
+        {loading ? (
+          <div className="space-y-6">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm animate-pulse space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-800"></div>
+                  <div className="space-y-2 flex-1">
+                    <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/3"></div>
+                    <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-1/4"></div>
+                  </div>
+                </div>
+                <div className="h-32 bg-gray-200 dark:bg-gray-800 rounded-xl"></div>
+              </div>
+            ))}
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Không tìm thấy bài viết nào</h3>
-          <p className="text-gray-600 dark:text-gray-400">Thử tìm kiếm với từ khóa khác hoặc chọn danh mục khác</p>
-        </div>
-      ) : (
-        <div ref={containerRef} className="max-w-2xl mx-auto space-y-4">
-          {articles.map((article, index) => (
-            <div
-              key={article.id}
-              className="animate-fade-in"
-              style={{ animationDelay: `${index * 0.05}s` }}
-            >
-              <ArticleCard
-                article={article}
-                onUpdate={async () => {
-                  const scrollPosition = window.scrollY;
-                  await loadArticles();
-                  window.scrollTo(0, scrollPosition);
-                }}
-              />
+        ) : articles.length === 0 ? (
+          <div className="text-center py-20 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-2xl border border-dashed border-gray-300 dark:border-gray-800">
+            <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i className="fas fa-newspaper text-3xl text-gray-400"></i>
             </div>
-          ))}
-        </div>
-      )}
+            <h2 className="text-xl font-bold text-gray-700 dark:text-gray-300">Không có bài viết nào</h2>
+            <p className="text-gray-500 text-sm">Hãy thử thay đổi bộ lọc hoặc tìm kiếm từ khóa khác.</p>
+          </div>
+        ) : (
+          <div className="space-y-6 pb-20">
+            {articles.map((article, index) => (
+              <div key={article.id} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                <ArticleCard
+                  article={article}
+                  onUpdate={loadArticles}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -53,7 +53,7 @@ public class MockInterviewService {
             "Công việc: %s\n" +
             "Mô tả: %s\n" +
             "Yêu cầu: %s",
-            job.getTitle(), job.getDescription(), job.getRequirements()
+            job.getTitle(), job.getDescription(), job.getDescription() != null ? job.getDescription() : ""
         );
 
         String response = callOpenRouterAPI(prompt);

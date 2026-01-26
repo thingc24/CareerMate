@@ -10,7 +10,7 @@ class CareerMateAPI {
   constructor() {
     this.baseURL = API_BASE_URL;
     this.loadTokens();
-    
+
     // Setup axios instance
     this.client = axios.create({
       baseURL: this.baseURL,
@@ -26,15 +26,18 @@ class CareerMateAPI {
         this.loadTokens();
         if (this.token) {
           config.headers.Authorization = `Bearer ${this.token}`;
-          // Log for profile endpoints
-          if (config.url && config.url.includes('/students/profile')) {
+          // Log for challenge endpoints
+          if (config.url && (config.url.includes('/challenges') || config.url.includes('/students/profile') || config.url.includes('/quiz'))) {
             console.log('API Request - URL:', config.url);
-            console.log('API Request - Token:', this.token.substring(0, 20) + '...');
+            console.log('API Request - Method:', config.method);
+            console.log('API Request - Token:', this.token ? this.token.substring(0, 20) + '...' : 'NO TOKEN');
+            console.log('API Request - Has Authorization header:', !!config.headers.Authorization);
+            console.log('API Request - Authorization header value:', config.headers.Authorization ? config.headers.Authorization.substring(0, 30) + '...' : 'NONE');
           }
         } else {
-          console.warn('No token found in localStorage');
-          if (config.url && config.url.includes('/students/profile')) {
-            console.error('API Request - Missing token for profile endpoint!');
+          console.warn('No token found in localStorage for URL:', config.url);
+          if (config.url && (config.url.includes('/challenges') || config.url.includes('/students/profile'))) {
+            console.error('API Request - Missing token! Please login again.');
           }
         }
         return config;
@@ -47,10 +50,10 @@ class CareerMateAPI {
       (response) => response,
       async (error) => {
         const originalRequest = error.config;
-        
+
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
-          
+
           try {
             const newToken = await this.refreshAccessToken();
             if (newToken) {
@@ -62,7 +65,7 @@ class CareerMateAPI {
             return Promise.reject(refreshError);
           }
         }
-        
+
         return Promise.reject(error);
       }
     );
@@ -78,7 +81,7 @@ class CareerMateAPI {
       const response = await axios.post(`${this.baseURL}/auth/refresh`, {
         refreshToken: this.refreshToken,
       });
-      
+
       // Backend returns 'accessToken', not 'token'
       const token = response.data.accessToken || response.data.token;
       if (token) {
@@ -140,18 +143,21 @@ class CareerMateAPI {
     if (location) params.append('location', location);
     params.append('page', page);
     params.append('size', size);
-    
-    const response = await this.client.get(`/students/jobs?${params}`);
+
+    // Updated: Use /api/jobs instead of /api/students/jobs (moved to job-service)
+    const response = await this.client.get(`/jobs?${params}`);
     return response.data;
   }
 
   async getJobById(jobId) {
-    const response = await this.client.get(`/students/jobs/${jobId}`);
+    // Updated: Use /api/jobs/{jobId} instead of /api/students/jobs/{jobId} (moved to job-service)
+    const response = await this.client.get(`/jobs/${jobId}`);
     return response.data;
   }
 
   async checkApplication(jobId) {
-    const response = await this.client.get(`/students/applications/check/${jobId}`);
+    // Updated: Use /api/applications/check/{jobId} instead of /api/students/applications/check/{jobId} (moved to job-service)
+    const response = await this.client.get(`/applications/check/${jobId}`);
     return response.data;
   }
 
@@ -160,13 +166,15 @@ class CareerMateAPI {
     params.append('jobId', jobId);
     if (cvId) params.append('cvId', cvId);
     if (coverLetter) params.append('coverLetter', coverLetter);
-    
-    const response = await this.client.post(`/students/applications?${params}`);
+
+    // Updated: Use /api/applications instead of /api/students/applications (moved to job-service)
+    const response = await this.client.post(`/applications?${params}`);
     return response.data;
   }
 
   async getApplications(page = 0, size = 10) {
-    const response = await this.client.get(`/students/applications?page=${page}&size=${size}`);
+    // Updated: Use /api/applications instead of /api/students/applications (moved to job-service)
+    const response = await this.client.get(`/applications?page=${page}&size=${size}`);
     return response.data;
   }
 
@@ -180,7 +188,7 @@ class CareerMateAPI {
         console.log('Getting student profile with token:', this.token.substring(0, 20) + '...');
       }
       // Add cache busting parameter if force refresh
-      const url = forceRefresh 
+      const url = forceRefresh
         ? `/students/profile?t=${Date.now()}`
         : '/students/profile';
       const response = await this.client.get(url);
@@ -196,18 +204,18 @@ class CareerMateAPI {
           major: response.data?.major
         });
       }
-      
+
       // Check if response has error
       if (response.data && response.data.error) {
         throw new Error(response.data.error);
       }
-      
+
       return response.data;
     } catch (error) {
       console.error('Error getting student profile:', error);
       console.error('Error response:', error.response?.data);
       console.error('Error status:', error.response?.status);
-      
+
       if (error.response?.status === 401) {
         // Try to refresh token
         try {
@@ -221,7 +229,7 @@ class CareerMateAPI {
           throw new Error('Session expired. Please login again.');
         }
       }
-      
+
       // Return error object with message
       const errorMessage = error.response?.data?.error || error.message || 'Unknown error';
       throw new Error(errorMessage);
@@ -233,18 +241,18 @@ class CareerMateAPI {
       console.log('Updating profile with data:', profileData);
       const response = await this.client.put('/students/profile', profileData);
       console.log('Update response:', response.data);
-      
+
       // Check if response has error
       if (response.data && response.data.error) {
         throw new Error(response.data.error);
       }
-      
+
       return response.data;
     } catch (error) {
       console.error('Error updating profile:', error);
       console.error('Error response:', error.response?.data);
       console.error('Error status:', error.response?.status);
-      
+
       const errorMessage = error.response?.data?.error || error.message || 'Unknown error';
       throw new Error(errorMessage);
     }
@@ -253,7 +261,7 @@ class CareerMateAPI {
   async uploadAvatar(file) {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     const response = await this.client.post('/students/profile/avatar', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -267,7 +275,7 @@ class CareerMateAPI {
     const params = new URLSearchParams();
     requiredSkills.forEach(skill => params.append('requiredSkills', skill));
     optionalSkills.forEach(skill => params.append('optionalSkills', skill));
-    
+
     const response = await this.client.post(`/recruiters/jobs?${params}`, jobData);
     return response.data;
   }
@@ -321,7 +329,7 @@ class CareerMateAPI {
   async uploadRecruiterAvatar(file) {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     const response = await this.client.post('/recruiters/profile/avatar', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -356,7 +364,7 @@ class CareerMateAPI {
   async uploadCompanyLogo(file) {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     const response = await this.client.post('/recruiters/company/logo', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -366,7 +374,8 @@ class CareerMateAPI {
   }
 
   async getRecruiterByUserId(userId) {
-    const response = await this.client.get(`/recruiters/by-user/${userId}`);
+    // UPDATED: Use DTO endpoint to avoid Entity serialization issues
+    const response = await this.client.get(`/recruiters/profile/user/${userId}`);
     return response.data;
   }
 
@@ -495,7 +504,7 @@ class CareerMateAPI {
   }
 
   async getPendingArticles(page = 0, size = 10) {
-    const response = await this.client.get(`/articles/pending?page=${page}&size=${size}`);
+    const response = await this.client.get(`/admin/articles/pending?page=${page}&size=${size}`);
     return response.data;
   }
 
@@ -504,17 +513,17 @@ class CareerMateAPI {
     if (status) params.append('status', status);
     params.append('page', page);
     params.append('size', size);
-    const response = await this.client.get(`/articles/all?${params.toString()}`);
+    const response = await this.client.get(`/admin/articles?${params.toString()}`);
     return response.data;
   }
 
   async approveArticle(articleId) {
-    const response = await this.client.post(`/articles/${articleId}/approve`);
+    const response = await this.client.post(`/admin/articles/${articleId}/approve`);
     return response.data;
   }
 
   async rejectArticle(articleId) {
-    const response = await this.client.post(`/articles/${articleId}/reject`);
+    const response = await this.client.post(`/admin/articles/${articleId}/reject`);
     return response.data;
   }
 
@@ -590,11 +599,13 @@ class CareerMateAPI {
   }
 
   async submitCompanyRating(companyId, rating) {
-    // Backend expects rating and reviewText as request params
-    const params = new URLSearchParams();
-    params.append('rating', rating.rating);
-    if (rating.comment) params.append('reviewText', rating.comment);
-    const response = await this.client.post(`/companies/${companyId}/ratings?${params.toString()}`);
+    // Backend expects rating and reviewText as JSON body
+    const payload = {
+      rating: rating.rating,
+      comment: rating.comment, // Controller maps 'comment' to 'reviewText'
+      reviewText: rating.comment // Sending both just in case
+    };
+    const response = await this.client.post(`/companies/${companyId}/ratings`, payload);
     return response.data;
   }
 
@@ -639,7 +650,7 @@ class CareerMateAPI {
     if (photoFile) {
       formData.append('photoFile', photoFile);
     }
-    
+
     const response = await this.client.post('/students/cv/from-template', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -819,6 +830,56 @@ class CareerMateAPI {
     return response.data;
   }
 
+  async deleteChallengeParticipation(challengeId) {
+    const response = await this.client.delete(`/challenges/${challengeId}/participation`);
+    return response.data;
+  }
+
+  // Course Quiz APIs
+  async getCourseQuizAttempts(courseId) {
+    try {
+      const response = await this.client.get(`/courses/${courseId}/quiz-attempts`);
+      return response.data;
+    } catch (error) {
+      console.error('Error getting course quiz attempts:', error);
+      return [];
+    }
+  }
+
+  async getCourseQuiz(courseId) {
+    try {
+      console.log('=== GET COURSE QUIZ ===');
+      console.log('Course ID:', courseId);
+      console.log('Token:', this.token ? this.token.substring(0, 20) + '...' : 'NO TOKEN');
+      console.log('URL:', `/courses/${courseId}/quiz`);
+      const response = await this.client.get(`/courses/${courseId}/quiz`);
+      console.log('Quiz response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error getting course quiz:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      console.error('Error headers:', error.response?.headers);
+      return null;
+    }
+  }
+
+  async submitCourseQuiz(courseId, answers) {
+    const response = await this.client.post(`/courses/${courseId}/quiz/submit`, answers);
+    return response.data;
+  }
+
+  // Lesson Progress APIs
+  async completeLesson(lessonId) {
+    const response = await this.client.post(`/course-content/lessons/${lessonId}/complete`);
+    return response.data;
+  }
+
+  async getLessonProgress(lessonId) {
+    const response = await this.client.get(`/course-content/lessons/${lessonId}/progress`);
+    return response.data;
+  }
+
   // Package APIs
   async getPackages() {
     const response = await this.client.get('/packages');
@@ -874,7 +935,7 @@ class CareerMateAPI {
   async uploadCV(file) {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     const response = await this.client.post('/students/cv/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -886,7 +947,7 @@ class CareerMateAPI {
   async uploadCV(file) {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     const response = await this.client.post('/students/cv/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',

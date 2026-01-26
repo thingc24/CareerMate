@@ -13,13 +13,17 @@ import java.util.UUID;
 @Repository
 public interface LessonProgressRepository extends JpaRepository<LessonProgress, UUID> {
     
-    Optional<LessonProgress> findByEnrollmentIdAndLessonId(UUID enrollmentId, UUID lessonId);
+    // Note: LessonProgress now uses studentId (UUID) directly, not enrollment entity
+    Optional<LessonProgress> findByStudentIdAndLessonId(UUID studentId, UUID lessonId);
     
-    List<LessonProgress> findByEnrollmentId(UUID enrollmentId);
+    List<LessonProgress> findByStudentId(UUID studentId);
     
-    @Query("SELECT COUNT(lp) FROM LessonProgress lp WHERE lp.enrollment.id = :enrollmentId AND lp.isCompleted = true")
-    Long countCompletedLessonsByEnrollmentId(@Param("enrollmentId") UUID enrollmentId);
+    // Note: Changed from enrollment.id to studentId
+    @Query("SELECT COUNT(lp) FROM LessonProgress lp WHERE lp.studentId = :studentId AND lp.isCompleted = true")
+    Long countCompletedLessonsByStudentId(@Param("studentId") UUID studentId);
     
-    @Query("SELECT COUNT(l) FROM Lesson l WHERE l.module.course.id = (SELECT e.course.id FROM CourseEnrollment e WHERE e.id = :enrollmentId)")
-    Long countTotalLessonsByEnrollmentId(@Param("enrollmentId") UUID enrollmentId);
+    // Note: This query needs CourseEnrollment to get courseId, but we can use studentId to find enrollment
+    // CourseEnrollment has course entity, not courseId
+    @Query("SELECT COUNT(l) FROM Lesson l WHERE l.module.course.id IN (SELECT e.course.id FROM CourseEnrollment e WHERE e.studentId = :studentId)")
+    Long countTotalLessonsByStudentId(@Param("studentId") UUID studentId);
 }

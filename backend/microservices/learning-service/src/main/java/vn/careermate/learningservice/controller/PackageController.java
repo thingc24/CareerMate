@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import vn.careermate.learningservice.model.Package;
 import vn.careermate.learningservice.model.Subscription;
 import vn.careermate.learningservice.service.PackageService;
-import vn.careermate.userservice.model.User;
-import vn.careermate.userservice.repository.UserRepository;
+import vn.careermate.common.client.UserServiceClient;
+import vn.careermate.common.dto.UserDTO;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,11 +22,10 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/packages")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class PackageController {
 
     private final PackageService packageService;
-    private final UserRepository userRepository;
+    private final UserServiceClient userServiceClient;
 
     @GetMapping
     public ResponseEntity<List<Package>> getAllPackages() {
@@ -85,9 +84,11 @@ public class PackageController {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             String email = auth.getName();
-            UUID adminId = userRepository.findByEmail(email)
-                    .map(User::getId)
-                    .orElseThrow(() -> new RuntimeException("Admin not found"));
+            UserDTO user = userServiceClient.getUserByEmail(email);
+            if (user == null) {
+                throw new RuntimeException("Admin not found");
+            }
+            UUID adminId = user.getId();
             
             return ResponseEntity.ok(packageService.approveSubscription(subscriptionId, adminId));
         } catch (RuntimeException e) {
@@ -101,9 +102,11 @@ public class PackageController {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             String email = auth.getName();
-            UUID adminId = userRepository.findByEmail(email)
-                    .map(User::getId)
-                    .orElseThrow(() -> new RuntimeException("Admin not found"));
+            UserDTO user = userServiceClient.getUserByEmail(email);
+            if (user == null) {
+                throw new RuntimeException("Admin not found");
+            }
+            UUID adminId = user.getId();
             
             return ResponseEntity.ok(packageService.rejectSubscription(subscriptionId, adminId));
         } catch (RuntimeException e) {
@@ -129,5 +132,17 @@ public class PackageController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         return ResponseEntity.ok(packageService.getAllSubscriptionsHistory(pageable));
+    }
+    
+    // Admin endpoint to fix package encoding
+    @PostMapping("/fix-encoding")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> fixPackageEncoding() {
+        try {
+            packageService.fixPackageEncoding();
+            return ResponseEntity.ok("Packages encoding fixed successfully");
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error fixing encoding: " + e.getMessage());
+        }
     }
 }

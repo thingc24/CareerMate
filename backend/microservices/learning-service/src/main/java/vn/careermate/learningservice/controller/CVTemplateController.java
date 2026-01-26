@@ -12,7 +12,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/cv-templates")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class CVTemplateController {
 
     private final CVTemplateService templateService;

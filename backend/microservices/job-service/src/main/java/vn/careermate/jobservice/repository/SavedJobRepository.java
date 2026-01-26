@@ -27,9 +27,11 @@ public interface SavedJobRepository extends JpaRepository<SavedJob, UUID> {
     
     long countByStudentId(UUID studentId);
     
-    @Query("SELECT sj FROM SavedJob sj WHERE sj.student.id = :studentId AND sj.job.id = :jobId")
+    // Note: SavedJob uses UUID references (studentId, jobId), not entity relationships
+    @Query("SELECT sj FROM SavedJob sj WHERE sj.studentId = :studentId AND sj.jobId = :jobId")
     Optional<SavedJob> findSavedJob(@Param("studentId") UUID studentId, @Param("jobId") UUID jobId);
     
-    @Query("SELECT sj FROM SavedJob sj WHERE sj.job.id = :jobId")
+    // Note: SavedJob uses UUID references (jobId), not entity relationships
+    @Query("SELECT sj FROM SavedJob sj WHERE sj.jobId = :jobId")
     List<SavedJob> findByJobId(@Param("jobId") UUID jobId);
 }

@@ -15,7 +15,8 @@ import vn.careermate.userservice.model.User;
 import vn.careermate.userservice.repository.ConversationRepository;
 import vn.careermate.userservice.repository.MessageRepository;
 import vn.careermate.userservice.repository.UserRepository;
-import vn.careermate.notificationservice.service.NotificationService;
+import vn.careermate.common.client.NotificationServiceClient;
+import vn.careermate.common.dto.NotificationRequest;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,7 +32,7 @@ public class MessagingService {
     private final ConversationRepository conversationRepository;
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
-    private final NotificationService notificationService;
+    private final NotificationServiceClient notificationServiceClient;
 
     @Transactional(readOnly = true)
     public User getCurrentUser() {
@@ -205,12 +206,14 @@ public class MessagingService {
         if (recipient != null && !recipient.getId().equals(currentUser.getId())) {
             try {
                 String preview = content.length() > 100 ? content.substring(0, 100) + "..." : content;
-                notificationService.notifyNewMessage(
-                    recipient.getId(),
-                    conversation.getId(),
-                    currentUser.getFullName(),
-                    preview
-                );
+                notificationServiceClient.createNotification(NotificationRequest.builder()
+                    .userId(recipient.getId())
+                    .type("MESSAGE")
+                    .title("New message from " + currentUser.getFullName())
+                    .message(preview)
+                    .relatedEntityId(conversation.getId())
+                    .relatedEntityType("CONVERSATION")
+                    .build());
             } catch (Exception e) {
                 log.error("Error sending message notification: {}", e.getMessage(), e);
             }

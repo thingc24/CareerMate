@@ -14,6 +14,8 @@ public interface CourseModuleRepository extends JpaRepository<CourseModule, UUID
     
     List<CourseModule> findByCourseIdOrderByOrderIndexAsc(UUID courseId);
     
+    long countByCourseId(UUID courseId);
+    
     @Query("SELECT DISTINCT m FROM CourseModule m LEFT JOIN FETCH m.lessons WHERE m.course.id = :courseId ORDER BY m.orderIndex ASC")
     List<CourseModule> findModulesWithLessonsByCourseId(@Param("courseId") UUID courseId);
 }

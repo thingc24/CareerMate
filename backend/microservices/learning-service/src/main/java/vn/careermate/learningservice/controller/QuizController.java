@@ -8,8 +8,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import vn.careermate.learningservice.model.Quiz;
 import vn.careermate.learningservice.model.QuizAttempt;
-import vn.careermate.userservice.repository.StudentProfileRepository;
-import vn.careermate.userservice.repository.UserRepository;
 import vn.careermate.learningservice.service.QuizService;
 
 import java.util.List;
@@ -20,12 +18,9 @@ import java.util.UUID;
 @RequestMapping("/students/quizzes")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('STUDENT') or hasRole('ADMIN')")
-@CrossOrigin(origins = "*")
 public class QuizController {
 
     private final QuizService quizService;
-    private final StudentProfileRepository studentProfileRepository;
-    private final UserRepository userRepository;
 
     @GetMapping
     public ResponseEntity<List<Quiz>> getAvailableQuizzes(
@@ -63,15 +58,9 @@ public class QuizController {
         return ResponseEntity.ok(quizService.getStudentAttempts(studentId));
     }
 
+    // TODO: This method should use UserServiceClient
+    // For now, throw exception as repositories are not available
     private UUID getCurrentStudentId() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
-        UUID userId = userRepository.findByEmail(email)
-                .map(user -> user.getId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        
-        return studentProfileRepository.findByUserId(userId)
-                .map(profile -> profile.getId())
-                .orElseThrow(() -> new RuntimeException("Student profile not found"));
+        throw new RuntimeException("getCurrentStudentId() needs to be implemented with UserServiceClient");
     }
 }

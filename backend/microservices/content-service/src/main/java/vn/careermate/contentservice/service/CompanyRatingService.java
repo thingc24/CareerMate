@@ -26,15 +26,11 @@ public class CompanyRatingService {
     private final CompanyRatingRepository ratingRepository;
     private final CompanyRepository companyRepository;
     private final UserServiceClient userServiceClient;
+    private final vn.careermate.common.client.NotificationServiceClient notificationServiceClient;
 
-    // TODO: Refactor to use UserServiceClient for fetching student details
-    // Currently returns ratings with studentId (UUID) - client should fetch student details separately
     @Transactional(readOnly = true)
     public List<CompanyRating> getCompanyRatings(UUID companyId) {
-        List<CompanyRating> ratings = ratingRepository.findByCompanyId(companyId);
-        // Note: Student info now fetched via Feign Client when needed
-        // No need to force load entity fields since we use UUID
-        return ratings;
+        return ratingRepository.findByCompanyId(companyId);
     }
 
     public Double getAverageRating(UUID companyId) {
@@ -46,9 +42,7 @@ public class CompanyRatingService {
     public CompanyRating getMyRating(UUID companyId) {
         try {
             UUID studentId = getCurrentStudentId();
-            CompanyRating rating = ratingRepository.findByCompanyIdAndStudentId(companyId, studentId);
-            // Note: Student info now fetched via Feign Client when needed
-            return rating;
+            return ratingRepository.findByCompanyIdAndStudentId(companyId, studentId);
         } catch (Exception e) {
             return null;
         }
@@ -69,10 +63,12 @@ public class CompanyRatingService {
                 .orElseThrow(() -> new RuntimeException("Company not found"));
         
         UUID studentId = getCurrentStudentId();
+        StudentProfileDTO studentProfile = null;
+        
         // Verify student exists via UserServiceClient
         try {
-            StudentProfileDTO student = userServiceClient.getStudentProfileById(studentId);
-            if (student == null) {
+            studentProfile = userServiceClient.getStudentProfileById(studentId);
+            if (studentProfile == null) {
                 throw new RuntimeException("Student not found");
             }
         } catch (Exception e) {
@@ -80,6 +76,9 @@ public class CompanyRatingService {
         }
 
         // Check if rating exists
+        CompanyRating ratingToSave;
+        boolean isNew = false;
+        
         CompanyRating existingRating = ratingRepository.findByCompanyId(companyId).stream()
                 .filter(r -> r.getStudentId().equals(studentId))
                 .findFirst()
@@ -88,15 +87,56 @@ public class CompanyRatingService {
         if (existingRating != null) {
             existingRating.setRating(rating);
             existingRating.setReviewText(reviewText);
-            return ratingRepository.save(existingRating);
+            ratingToSave = existingRating;
         } else {
+            isNew = true;
             CompanyRating newRating = new CompanyRating();
             newRating.setCompany(company);
             newRating.setStudentId(studentId);
             newRating.setRating(rating);
             newRating.setReviewText(reviewText);
-            return ratingRepository.save(newRating);
+            ratingToSave = newRating;
         }
+        
+        CompanyRating savedRating = ratingRepository.save(ratingToSave);
+        
+        // Notification Logic
+        try {
+            // Find recruiter who owns this company
+            vn.careermate.common.dto.RecruiterProfileDTO recruiter = userServiceClient.getRecruiterByCompanyId(companyId);
+            
+            if (recruiter != null && recruiter.getUserId() != null) {
+                // Determine user name
+                String studentName = "Sinh viên";
+                try {
+                     // Try to fetch user details for name
+                     vn.careermate.common.dto.UserDTO studentUser = userServiceClient.getUserById(studentProfile.getUserId());
+                     if (studentUser != null && studentUser.getFullName() != null) {
+                         studentName = studentUser.getFullName();
+                     }
+                } catch (Exception ignore) {}
+
+                String message = studentName + (isNew ? " đã đánh giá công ty bạn: " : " đã cập nhật đánh giá công ty bạn: ") + rating + " sao.";
+                
+                vn.careermate.common.dto.NotificationRequest notif = new vn.careermate.common.dto.NotificationRequest();
+                notif.setUserId(recruiter.getUserId());
+                notif.setTitle("Đánh giá mới");
+                notif.setMessage(message);
+                notif.setType("COMPANY_RATING");
+                notif.setRelatedId(companyId);
+                
+                notificationServiceClient.createNotification(notif);
+                // Simple logging for verification
+                System.out.println("LOG: Sent notification to Recruiter " + recruiter.getUserId() + " (" + message + ")");
+            } else {
+                System.out.println("LOG: No recruiter found for Company " + companyId);
+            }
+        } catch (Exception e) {
+            // Log error but don't fail transaction
+            System.err.println("LOG: Error sending notification: " + e.getMessage());
+        }
+        
+        return savedRating;
     }
 
     private UUID getCurrentStudentId() {

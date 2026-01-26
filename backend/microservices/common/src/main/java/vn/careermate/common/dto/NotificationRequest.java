@@ -16,6 +16,7 @@ public class NotificationRequest {
     private String type;
     private String title;
     private String message;
+    private java.util.UUID relatedId;
     private UUID relatedEntityId;
     private String relatedEntityType;
 }

@@ -18,6 +18,7 @@ import vn.careermate.common.dto.UserDTO;
 import vn.careermate.common.dto.NotificationRequest;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -319,6 +320,65 @@ public class PackageService {
         packageRepository.deleteById(packageId);
     }
 
+    @Transactional
+    public void fixPackageEncoding() {
+        log.info("Fixing package encoding with UTF-8 Vietnamese text...");
+        List<Package> packages = packageRepository.findAll();
+        for (Package pkg : packages) {
+            switch (pkg.getDurationDays()) {
+                case 30:
+                    pkg.setName("Gói Cơ bản");
+                    pkg.setDescription("Gói dịch vụ cơ bản, phù hợp cho sinh viên mới bắt đầu tìm kiếm việc làm");
+                    pkg.setFeatures(Arrays.asList(
+                        "Xem tất cả tin tuyển dụng",
+                        "Tạo CV từ mẫu",
+                        "Ứng tuyển 10 vị trí/tháng",
+                        "Xem bài viết hướng nghiệp"
+                    ));
+                    break;
+                case 90:
+                    pkg.setName("Gói Premium");
+                    pkg.setDescription("Gói dịch vụ cao cấp với nhiều tính năng ưu đãi, hỗ trợ tốt hơn cho công việc tìm kiếm");
+                    pkg.setFeatures(Arrays.asList(
+                        "Xem tất cả tin tuyển dụng",
+                        "Ứng tuyển không giới hạn",
+                        "Tạo CV không giới hạn",
+                        "Ưu tiên trong kết quả tìm kiếm",
+                        "Truy cập khóa học premium",
+                        "Tư vấn nghề nghiệp từ chuyên gia"
+                    ));
+                    break;
+                case 180:
+                    pkg.setName("Gói Sinh viên Pro");
+                    pkg.setDescription("Gói dành riêng cho sinh viên, hỗ trợ tối đa quá trình tìm việc và phát triển sự nghiệp");
+                    pkg.setFeatures(Arrays.asList(
+                        "Tất cả tính năng Premium",
+                        "Mock Interview không giới hạn",
+                        "Phân tích CV bằng AI",
+                        "Job recommendations cá nhân hóa",
+                        "Tham gia thử thách và nhận badge",
+                        "Truy cập toàn bộ khóa học"
+                    ));
+                    break;
+                case 365:
+                    pkg.setName("Gói Thăng tiến Sự nghiệp");
+                    pkg.setDescription("Gói dịch vụ cao cấp nhất, hỗ trợ toàn diện cho sự nghiệp của bạn");
+                    pkg.setFeatures(Arrays.asList(
+                        "Tất cả tính năng Student Pro",
+                        "Career roadmap cá nhân hóa",
+                        "Mentoring 1-1 từ chuyên gia",
+                        "Workshop và sự kiện độc quyền",
+                        "Hỗ trợ viết cover letter chuyên nghiệp",
+                        "Theo dõi tiến độ ứng tuyển chi tiết",
+                        "Nhận thông báo việc làm phù hợp đầu tiên"
+                    ));
+                    break;
+            }
+        }
+        packageRepository.saveAll(packages);
+        log.info("Fixed encoding for {} packages", packages.size());
+    }
+
     public List<Subscription> getAllSubscriptions() {
         return subscriptionRepository.findAll();
     }
@@ -354,7 +414,8 @@ public class PackageService {
     @Transactional(readOnly = true)
     public List<Subscription> getMySubscriptions() {
         UUID userId = getCurrentUserId();
-        return subscriptionRepository.findByUserId(userId);
+        // Use fetch join to avoid lazy loading issues
+        return subscriptionRepository.findByUserIdWithPackage(userId);
     }
     
     @Transactional(readOnly = true)
@@ -371,11 +432,7 @@ public class PackageService {
         
         // Force initialization of lazy-loaded fields before returning
         for (Subscription sub : pageContent) {
-            if (sub.getUser() != null) {
-                sub.getUser().getId();
-                sub.getUser().getFullName();
-                sub.getUser().getEmail();
-            }
+            // User is now UUID (userId), no need to force load
             if (sub.getPackageEntity() != null) {
                 sub.getPackageEntity().getId();
                 sub.getPackageEntity().getName();
@@ -409,11 +466,7 @@ public class PackageService {
         
         // Force initialization of lazy-loaded fields before returning
         for (Subscription sub : pageContent) {
-            if (sub.getUser() != null) {
-                sub.getUser().getId();
-                sub.getUser().getFullName();
-                sub.getUser().getEmail();
-            }
+            // User is now UUID (userId), no need to force load
             if (sub.getPackageEntity() != null) {
                 sub.getPackageEntity().getId();
                 sub.getPackageEntity().getName();

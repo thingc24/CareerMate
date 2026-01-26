@@ -84,6 +84,7 @@ export default function ChallengeDetail() {
           setEarnedBadge(badge);
           setShowBadgeModal(true);
           console.log('Modal should be visible now');
+          // User will manually click button to navigate to badges
         } else {
           console.log('No badge found, showing alert instead');
           alert(`Chúc mừng! Bạn đã hoàn thành thử thách với điểm số ${result.score}/100!`);
@@ -96,8 +97,9 @@ export default function ChallengeDetail() {
         console.log('Status is:', result.status);
         alert('Đã gửi bài làm thành công!');
       }
+      // Reload to update UI with new status and score
       loadParticipation();
-      loadChallenge(); // Reload to get updated info
+      loadChallenge();
     } catch (error) {
       console.error('=== SUBMIT ERROR ===');
       console.error('Error object:', error);
@@ -109,7 +111,13 @@ export default function ChallengeDetail() {
 
   const handleViewBadges = () => {
     setShowBadgeModal(false);
+    // Navigate immediately to badges tab
     navigate('/student/challenges?tab=badges');
+  };
+  
+  const handleCloseBadgeModal = () => {
+    setShowBadgeModal(false);
+    // Keep user on challenge page, don't navigate away
   };
 
   if (loading) {
@@ -293,15 +301,24 @@ export default function ChallengeDetail() {
             </div>
             
             <div className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg p-6 mb-6">
-              {earnedBadge.iconUrl && (
-                <img
-                  src={earnedBadge.iconUrl.startsWith('http') 
-                    ? earnedBadge.iconUrl 
-                    : `http://localhost:8080/api${earnedBadge.iconUrl}`}
-                  alt={earnedBadge.name}
-                  className="w-32 h-32 mx-auto mb-4"
-                />
-              )}
+              {(() => {
+                // Get badge emoji/sticker based on category or rarity
+                const getBadgeEmoji = (badge) => {
+                  if (badge.category === 'CV') return '📄';
+                  if (badge.category === 'INTERVIEW') return '🎤';
+                  if (badge.category === 'CAREER') return '🎯';
+                  if (badge.category === 'SKILL') return '💻';
+                  if (badge.rarity === 'LEGENDARY') return '🏆';
+                  if (badge.rarity === 'EPIC') return '⭐';
+                  if (badge.rarity === 'RARE') return '✨';
+                  return '🏅';
+                };
+                return (
+                  <div className="text-9xl mb-4 animate-bounce">
+                    {getBadgeEmoji(earnedBadge)}
+                  </div>
+                );
+              })()}
               <h3 className="text-2xl font-bold text-white mb-2">{earnedBadge.name}</h3>
               {earnedBadge.description && (
                 <p className="text-white text-sm opacity-90">{earnedBadge.description}</p>
@@ -310,10 +327,10 @@ export default function ChallengeDetail() {
 
             <div className="flex gap-4">
               <button
-                onClick={() => setShowBadgeModal(false)}
+                onClick={handleCloseBadgeModal}
                 className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition"
               >
-                Đóng
+                Ở lại trang này
               </button>
               <button
                 onClick={handleViewBadges}

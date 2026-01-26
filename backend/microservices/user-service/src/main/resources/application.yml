@@ -57,13 +57,15 @@ app:
   storage:
     type: local
     local:
-      path: ${STORAGE_PATH:./uploads}
+      # Use absolute path to match WebConfig serving path
+      path: ${STORAGE_PATH:C:/xampp/htdocs/CareerMate/backend/uploads}
 
 logging:
   level:
     root: INFO
     vn.careermate.userservice: DEBUG
     org.springframework.security: INFO
+    org.springframework.web.servlet.resource: DEBUG
     org.hibernate.SQL: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"

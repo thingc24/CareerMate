@@ -67,10 +67,18 @@ public class ChallengeService {
         try {
             Challenge challenge = challengeRepository.findById(challengeId)
                     .orElseThrow(() -> new RuntimeException("Challenge not found"));
-            // Ensure badge is loaded if exists
-            if (challenge.getBadge() != null) {
-                // Badge is already loaded with EAGER fetch, but ensure it's accessible
-                log.debug("Loaded challenge {} with badge {}", challengeId, challenge.getBadge().getId());
+            // Load badge entity if badgeId exists
+            if (challenge.getBadgeId() != null) {
+                try {
+                    Badge badge = badgeRepository.findById(challenge.getBadgeId()).orElse(null);
+                    if (badge != null) {
+                        challenge.setBadge(badge);
+                        log.debug("Loaded challenge {} with badge {}", challengeId, badge.getId());
+                    }
+                } catch (Exception e) {
+                    log.warn("Could not load badge {} for challenge {}: {}", 
+                            challenge.getBadgeId(), challengeId, e.getMessage());
+                }
             } else {
                 log.debug("Loaded challenge {} without badge", challengeId);
             }
@@ -143,14 +151,18 @@ public class ChallengeService {
         // Auto-grade the submission
         Integer score = autoGradeSubmission(answer, challenge);
         participation.setScore(score);
+        log.info("Submission scored: {} points for challenge {}", score, challengeId);
         
         // Get passing score (default 70 if not set)
         Integer passingScore = challenge.getPassingScore() != null ? challenge.getPassingScore() : 70;
+        log.info("Passing score required: {} for challenge {}", passingScore, challengeId);
+        log.info("Challenge badgeId: {} for challenge {}", challenge.getBadgeId(), challengeId);
         
         // If score meets passing requirement, automatically complete and award badge
         if (score >= passingScore) {
             participation.setStatus(ChallengeParticipation.ParticipationStatus.COMPLETED);
             participation.setCompletedAt(LocalDateTime.now());
+            log.info("Challenge completed! Score: {}, Passing: {}, Status set to COMPLETED", score, passingScore);
             
             // Award badge if challenge has one
             if (challenge.getBadgeId() != null) {
@@ -162,14 +174,17 @@ public class ChallengeService {
                     log.error("Error awarding badge: {}", e.getMessage(), e);
                     // Continue even if badge award fails
                 }
+            } else {
+                log.warn("Challenge {} has no badgeId - no badge will be awarded", challengeId);
             }
         } else {
             participation.setStatus(ChallengeParticipation.ParticipationStatus.FAILED);
+            log.info("Challenge failed! Score: {}, Passing: {}, Status set to FAILED", score, passingScore);
         }
         
         participation = participationRepository.save(participation);
         
-        // Force reload challenge with badge to ensure everything is loaded
+        // Load badge information if challenge has one and participation is completed
         try {
             // Reload challenge to ensure it's in persistence context
             Challenge reloadedChallenge = challengeRepository.findById(challengeId).orElse(null);
@@ -181,20 +196,39 @@ public class ChallengeService {
                 reloadedChallenge.getCategory();
                 reloadedChallenge.getDifficulty();
                 
-                // Load badge if exists
-                if (reloadedChallenge.getBadge() != null) {
-                    reloadedChallenge.getBadge().getId();
-                    reloadedChallenge.getBadge().getName();
-                    reloadedChallenge.getBadge().getDescription();
-                    reloadedChallenge.getBadge().getIconUrl();
-                    reloadedChallenge.getBadge().getCategory();
-                    reloadedChallenge.getBadge().getRarity();
+                // Load badge entity if badgeId exists and participation is completed
+                log.info("Checking badge for challenge {}: badgeId={}, status={}", 
+                        challengeId, reloadedChallenge.getBadgeId(), participation.getStatus());
+                if (reloadedChallenge.getBadgeId() != null && 
+                    participation.getStatus() == ChallengeParticipation.ParticipationStatus.COMPLETED) {
+                    try {
+                        Badge badge = badgeRepository.findById(reloadedChallenge.getBadgeId()).orElse(null);
+                        if (badge != null) {
+                            reloadedChallenge.setBadge(badge);
+                            log.info("Loaded badge {} ({}) for challenge {} in participation response", 
+                                    badge.getId(), badge.getName(), challengeId);
+                        } else {
+                            log.warn("Badge {} not found in repository for challenge {}", 
+                                    reloadedChallenge.getBadgeId(), challengeId);
+                        }
+                    } catch (Exception e) {
+                        log.error("Could not load badge {} for challenge {}: {}", 
+                                reloadedChallenge.getBadgeId(), challengeId, e.getMessage(), e);
+                    }
+                } else {
+                    if (reloadedChallenge.getBadgeId() == null) {
+                        log.warn("Challenge {} has no badgeId assigned", challengeId);
+                    }
+                    if (participation.getStatus() != ChallengeParticipation.ParticipationStatus.COMPLETED) {
+                        log.info("Participation status is {} (not COMPLETED), badge will not be loaded", 
+                                participation.getStatus());
+                    }
                 }
                 
                 // Set the reloaded challenge to participation
                 participation.setChallenge(reloadedChallenge);
-                log.info("Challenge and badge loaded for participation response. Badge: {}", 
-                        reloadedChallenge.getBadge() != null ? reloadedChallenge.getBadge().getName() : "none");
+                log.info("Challenge and badge loaded for participation response. Badge ID: {}", 
+                        reloadedChallenge.getBadgeId() != null ? reloadedChallenge.getBadgeId() : "none");
             }
         } catch (Exception e) {
             log.error("Error loading challenge/badge for participation response: {}", e.getMessage(), e);
@@ -217,15 +251,15 @@ public class ChallengeService {
         
         // If no expected keywords, give a default score based on answer length
         if (expectedKeywords == null || expectedKeywords.trim().isEmpty()) {
-            // Simple scoring: More lenient scoring for testing
-            // Base score of 60, then add points based on length
+            // Scoring based on answer length and quality
             int length = answer.trim().length();
-            if (length < 20) return 60; // Very short answers still get 60
-            if (length < 50) return 70; // Short answers get 70 (passing)
-            if (length < 100) return 75;
-            if (length < 200) return 80;
-            if (length < 500) return 85;
-            return 90; // Long answers get high score
+            if (length < 10) return 30; // Very short answers
+            if (length < 20) return 50; // Short answers
+            if (length < 50) return 65; // Medium answers
+            if (length < 100) return 75; // Good answers
+            if (length < 200) return 85; // Very good answers
+            if (length < 500) return 90; // Excellent answers
+            return 95; // Outstanding answers
         }
         
         // Keyword-based scoring
@@ -239,14 +273,50 @@ public class ChallengeService {
             }
         }
         
-        // Calculate score: base 60 + (matched keywords / total keywords) * 40
-        // More lenient - minimum 60 points
+        // Calculate score based on keyword matching
         int totalKeywords = keywords.length;
         if (totalKeywords == 0) {
-            return 70; // Default score if no keywords (passing)
+            // No keywords defined, use length-based scoring
+            int length = answer.trim().length();
+            if (length < 20) return 50;
+            if (length < 50) return 65;
+            if (length < 100) return 75;
+            if (length < 200) return 85;
+            return 90;
         }
         
-        int score = 60 + (matchedKeywords * 40 / totalKeywords);
+        // Score calculation with hybrid approach:
+        // - If keywords matched: use keyword-based scoring
+        // - If no keywords matched: use length-based scoring (more fair)
+        int length = answer.trim().length();
+        
+        if (matchedKeywords == 0) {
+            // No keywords matched - use length-based scoring instead of just 40
+            if (length < 10) return 30;
+            if (length < 20) return 50;
+            if (length < 50) return 60;
+            if (length < 100) return 70;
+            if (length < 200) return 75;
+            if (length < 500) return 80;
+            return 85; // Long answers even without keywords show effort
+        }
+        
+        // Keywords matched - use keyword-based scoring
+        // Base score: 50 (for attempting and matching at least one keyword)
+        // Keyword matching: (matched / total) * 50
+        // This gives range: 50-100 when keywords are matched
+        int baseScore = 50;
+        int keywordScore = (matchedKeywords * 50) / totalKeywords;
+        int score = baseScore + keywordScore;
+        
+        // Bonus for longer answers (shows effort)
+        if (length > 200) {
+            score = Math.min(100, score + 5); // +5 bonus for detailed answers
+        }
+        if (length > 500) {
+            score = Math.min(100, score + 5); // Additional +5 for very detailed answers
+        }
+        
         return Math.min(100, score); // Cap at 100
     }
 
@@ -301,16 +371,18 @@ public class ChallengeService {
 
         StudentBadge studentBadge = StudentBadge.builder()
                 .studentId(studentId) // Use UUID instead of entity
-                .badge(badge)
+                .badge(badge) // Badge is still an entity in learning-service
                 .build();
 
         studentBadgeRepository.save(studentBadge);
-        log.info("Awarded badge {} to student {}", badge.getName(), studentId);
+        log.info("Awarded badge {} to student {}", badge.getId(), studentId);
     }
 
+    @Transactional(readOnly = true)
     public List<ChallengeParticipation> getMyParticipations() {
         UUID studentId = getCurrentStudentId();
-        List<ChallengeParticipation> participations = participationRepository.findByStudentId(studentId);
+        // Use JOIN FETCH to eagerly load challenges
+        List<ChallengeParticipation> participations = participationRepository.findByStudentIdWithChallenge(studentId);
         
         // Filter out orphan participations (where challenge was deleted) and eagerly load remaining ones
         List<ChallengeParticipation> validParticipations = new java.util.ArrayList<>();
@@ -318,11 +390,11 @@ public class ChallengeService {
         for (ChallengeParticipation participation : participations) {
             try {
                 // Verify student exists via Feign Client (optional check)
-                UUID studentId = participation.getStudentId();
+                UUID participationStudentId = participation.getStudentId();
                 try {
-                    StudentProfileDTO student = userServiceClient.getStudentProfileById(studentId);
+                    StudentProfileDTO student = userServiceClient.getStudentProfileById(participationStudentId);
                     if (student == null) {
-                        log.warn("Skipping participation {} - student {} not found", participation.getId(), studentId);
+                        log.warn("Skipping participation {} - student {} not found", participation.getId(), participationStudentId);
                         continue;
                     }
                 } catch (Exception e) {
@@ -330,36 +402,46 @@ public class ChallengeService {
                     continue;
                 }
                 
-                // Try to load challenge - if it fails, the challenge was deleted
-                try {
-                    Challenge challenge = participation.getChallenge();
-                    if (challenge != null) {
-                        // Verify challenge still exists in database
-                        UUID challengeId = challenge.getId();
-                        if (challengeRepository.existsById(challengeId)) {
-                            // Load all challenge fields
-                            challenge.getTitle();
-                            challenge.getDescription();
-                            challenge.getCategory();
-                            challenge.getDifficulty();
-                            // Badge is now UUID, no need to load entity
-                            validParticipations.add(participation);
-                        } else {
-                            // Challenge was deleted, skip this participation
-                            log.warn("Skipping participation {} - challenge {} no longer exists", 
-                                    participation.getId(), challengeId);
+                // Challenge should already be loaded via JOIN FETCH
+                Challenge challenge = participation.getChallenge();
+                if (challenge != null) {
+                    // Verify challenge still exists in database
+                    UUID challengeId = challenge.getId();
+                    if (challengeRepository.existsById(challengeId)) {
+                        // Load all challenge fields to ensure they're initialized
+                        challenge.getTitle();
+                        challenge.getDescription();
+                        challenge.getCategory();
+                        challenge.getDifficulty();
+                        challenge.getPassingScore();
+                        challenge.getInstructions();
+                        challenge.getExpectedKeywords();
+                        
+                        // Load badge if badgeId exists
+                        if (challenge.getBadgeId() != null) {
+                            try {
+                                Badge badge = badgeRepository.findById(challenge.getBadgeId()).orElse(null);
+                                if (badge != null) {
+                                    challenge.setBadge(badge);
+                                    log.debug("Loaded badge {} for challenge {} in participation {}", 
+                                            badge.getId(), challengeId, participation.getId());
+                                }
+                            } catch (Exception e) {
+                                log.warn("Could not load badge {} for challenge {}: {}", 
+                                        challenge.getBadgeId(), challengeId, e.getMessage());
+                            }
                         }
+                        
+                        validParticipations.add(participation);
+                        log.debug("Added participation {} for challenge {} (status: {}, score: {})", 
+                                participation.getId(), challengeId, participation.getStatus(), participation.getScore());
                     } else {
-                        log.warn("Skipping participation {} - challenge is null", participation.getId());
+                        // Challenge was deleted, skip this participation
+                        log.warn("Skipping participation {} - challenge {} no longer exists", 
+                                participation.getId(), challengeId);
                     }
-                } catch (org.hibernate.LazyInitializationException e) {
-                    // Challenge was deleted, skip this participation
-                    log.warn("Skipping participation {} - challenge was deleted (lazy init failed)", 
-                            participation.getId());
-                } catch (Exception e) {
-                    log.warn("Error loading challenge for participation {}: {}", 
-                            participation.getId(), e.getMessage());
-                    // Skip this participation if we can't load it
+                } else {
+                    log.warn("Skipping participation {} - challenge is null", participation.getId());
                 }
             } catch (Exception e) {
                 log.warn("Error processing participation {}: {}", participation.getId(), e.getMessage());
@@ -398,5 +480,30 @@ public class ChallengeService {
             log.error("Error getting current student ID: {}", e.getMessage());
             throw new RuntimeException("Student profile not found");
         }
+    }
+
+    @Transactional
+    public void deleteParticipation(UUID challengeId) {
+        UUID studentId = getCurrentStudentId();
+        
+        // Find participation
+        ChallengeParticipation participation = participationRepository.findByStudentId(studentId).stream()
+                .filter(p -> p.getChallenge().getId().equals(challengeId))
+                .findFirst()
+                .orElse(null);
+        
+        if (participation == null) {
+            throw new RuntimeException("Participation not found for this challenge");
+        }
+        
+        // Verify this participation belongs to current student
+        if (!participation.getStudentId().equals(studentId)) {
+            throw new RuntimeException("This participation does not belong to current student");
+        }
+        
+        // Delete participation
+        participationRepository.delete(participation);
+        log.info("Deleted participation {} for challenge {} by student {}", 
+                participation.getId(), challengeId, studentId);
     }
 }

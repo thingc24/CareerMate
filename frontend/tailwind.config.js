@@ -8,7 +8,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['Inter', 'Outfit', 'sans-serif'],
+        display: ['Outfit', 'sans-serif'],
       },
     },
   },

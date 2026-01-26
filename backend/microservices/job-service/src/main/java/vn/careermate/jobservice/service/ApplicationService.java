@@ -24,6 +24,7 @@ import vn.careermate.jobservice.repository.SavedJobRepository;
 import vn.careermate.common.client.UserServiceClient;
 import vn.careermate.common.client.NotificationServiceClient;
 import vn.careermate.common.dto.UserDTO;
+import vn.careermate.common.dto.StudentProfileDTO;
 import vn.careermate.common.dto.NotificationRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -132,20 +133,8 @@ public class ApplicationService {
     @Transactional(readOnly = true)
     public Optional<Application> checkApplication(UUID jobId) {
         try {
-            StudentProfile student = getCurrentStudentProfile();
-            if (student == null || student.getId() == null) {
-                return Optional.empty();
-            }
-            
-            // Force load student to ensure it's in the session
-            UUID studentId = student.getId();
-            StudentProfile loadedStudent = studentProfileRepository.findById(studentId)
-                .orElse(null);
-            if (loadedStudent == null) {
-                return Optional.empty();
-            }
-            
-            Optional<Application> applicationOpt = applicationRepository.findByJobIdAndStudentId(jobId, loadedStudent.getId());
+            UUID studentId = getCurrentStudentProfileId();
+            Optional<Application> applicationOpt = applicationRepository.findByJobIdAndStudentId(jobId, studentId);
             
             // Force load fields to avoid lazy loading issues
             if (applicationOpt.isPresent()) {
@@ -168,20 +157,10 @@ public class ApplicationService {
             log.info("Getting applications for current student - page={}, size={}", 
                 pageable.getPageNumber(), pageable.getPageSize());
             
-            StudentProfile student = getCurrentStudentProfile();
-            if (student == null || student.getId() == null) {
-                log.warn("Student profile not found or ID is null");
-                return Page.empty(pageable);
-            }
+            UUID studentId = getCurrentStudentProfileId();
+            log.info("Found student profile ID: {}", studentId);
             
-            // Force load student to ensure it's in the session
-            UUID studentId = student.getId();
-            StudentProfile loadedStudent = studentProfileRepository.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("Student profile not found"));
-            
-            log.info("Found student profile: {}", loadedStudent.getId());
-            
-            Page<Application> applications = applicationRepository.findByStudentId(loadedStudent.getId(), pageable);
+            Page<Application> applications = applicationRepository.findByStudentId(studentId, pageable);
             
             log.info("Found {} applications (total: {})", 
                 applications.getContent().size(), applications.getTotalElements());
@@ -203,22 +182,12 @@ public class ApplicationService {
                             app.getJob().getJobType(); // Force load job type
                             app.getJob().getExperienceLevel(); // Force load experience level
                             app.getJob().getDescription(); // Force load description
-                            if (app.getJob().getCompany() != null) {
-                                app.getJob().getCompany().getId(); // Force load company
-                                app.getJob().getCompany().getName(); // Force load company name
-                                app.getJob().getCompany().getLogoUrl(); // Force load logo
-                            }
+                            // Company is now UUID (companyId), no need to force load entity
+                            app.getJob().getCompanyId(); // Force load company ID
                         }
-                        // Force load student to avoid lazy loading
-                        if (app.getStudent() != null) {
-                            app.getStudent().getId();
-                        }
-                        // Force load CV to avoid lazy loading
-                        if (app.getCv() != null) {
-                            app.getCv().getId();
-                            app.getCv().getFileName();
-                            app.getCv().getFileUrl();
-                        }
+                        // Student and CV are now UUIDs (studentId, cvId), no need to force load entities
+                        app.getStudentId(); // Force load student ID
+                        app.getCvId(); // Force load CV ID
                     } catch (Exception e) {
                         log.error("Error force loading application fields for app {}: {}", 
                             app != null ? app.getId() : "null", e.getMessage(), e);
@@ -255,17 +224,13 @@ public class ApplicationService {
                         app.getJob().getId();
                         app.getJob().getTitle();
                         app.getJob().getLocation();
-                        if (app.getJob().getCompany() != null) {
-                            app.getJob().getCompany().getId();
-                            app.getJob().getCompany().getName();
-                        }
+                        // Company is now UUID (companyId), no need to force load entity
+                        app.getJob().getCompanyId();
                     }
-                    if (app.getStudent() != null) {
-                        app.getStudent().getId();
-                    }
-                    if (app.getCv() != null) {
-                        app.getCv().getId();
-                        app.getCv().getFileName();
+                    // Student and CV are now UUIDs, no need to force load entities
+                    app.getStudentId();
+                    if (app.getCvId() != null) {
+                        app.getCvId(); // Force load CV ID
                     }
                 } catch (Exception e) {
                     // Log but continue
@@ -296,7 +261,7 @@ public class ApplicationService {
                     .application(application)
                     .status(status.name())
                     .notes(notes)
-                    .changedBy(getCurrentUser())
+                    .changedById(getCurrentUserId())
                     .build();
             applicationHistoryRepository.save(history);
         } catch (Exception e) {
@@ -305,15 +270,21 @@ public class ApplicationService {
 
         // Send notification to student
         try {
-            if (application.getStudent() != null && application.getStudent().getUser() != null) {
-                UUID studentUserId = application.getStudent().getUser().getId();
-                String statusText = getStatusText(status);
-                notificationService.notifyApplicationStatusChanged(
-                    studentUserId, 
-                    application.getId(), 
-                    application.getJob().getTitle(), 
-                    statusText
-                );
+            if (application.getStudentId() != null) {
+                // Get user ID via UserServiceClient
+                StudentProfileDTO studentProfile = userServiceClient.getStudentProfileById(application.getStudentId());
+                if (studentProfile != null && studentProfile.getUserId() != null) {
+                    UUID studentUserId = studentProfile.getUserId();
+                    String statusText = getStatusText(status);
+                    notificationServiceClient.createNotification(NotificationRequest.builder()
+                        .userId(studentUserId)
+                        .type("APPLICATION_STATUS_CHANGED")
+                        .title("Application Status Updated")
+                        .message(String.format("Your application for %s has been %s", application.getJob().getTitle(), statusText))
+                        .relatedEntityId(application.getId())
+                        .relatedEntityType("APPLICATION")
+                        .build());
+                }
             }
         } catch (Exception e) {
             log.warn("Error sending notification for application status change: {}", e.getMessage());
@@ -348,15 +319,23 @@ public class ApplicationService {
 
         // Send notification to student
         try {
-            if (application.getStudent() != null && application.getStudent().getUser() != null) {
-                UUID studentUserId = application.getStudent().getUser().getId();
+            if (application.getStudentId() != null) {
+                // Get user ID via UserServiceClient
+                StudentProfileDTO studentProfile = userServiceClient.getStudentProfileById(application.getStudentId());
+                UUID studentUserId = studentProfile != null ? studentProfile.getUserId() : null;
+                if (studentUserId == null) {
+                    log.warn("Could not find user for student {}", application.getStudentId());
+                    return application;
+                }
                 String interviewTimeStr = interviewTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
-                notificationService.notifyInterviewScheduled(
-                    studentUserId, 
-                    application.getId(), 
-                    application.getJob().getTitle(), 
-                    interviewTimeStr
-                );
+                notificationServiceClient.createNotification(NotificationRequest.builder()
+                    .userId(studentUserId)
+                    .type("INTERVIEW_SCHEDULED")
+                    .title("Interview Scheduled")
+                    .message(String.format("Interview scheduled for %s at %s", application.getJob().getTitle(), interviewTimeStr))
+                    .relatedEntityId(application.getId())
+                    .relatedEntityType("APPLICATION")
+                    .build());
             }
         } catch (Exception e) {
             log.warn("Error sending notification for interview scheduled: {}", e.getMessage());
@@ -368,12 +347,12 @@ public class ApplicationService {
     // ========== SAVED JOBS ==========
     @Transactional
     public SavedJob saveJob(UUID jobId, String notes) {
-        StudentProfile student = getCurrentStudentProfile();
+        UUID studentId = getCurrentStudentProfileId();
         Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new RuntimeException("Job not found"));
         
         // Check if already saved
-        Optional<SavedJob> existing = savedJobRepository.findByStudentIdAndJobId(student.getId(), jobId);
+        Optional<SavedJob> existing = savedJobRepository.findByStudentIdAndJobId(studentId, jobId);
         if (existing.isPresent()) {
             SavedJob saved = existing.get();
             if (notes != null) {
@@ -383,8 +362,8 @@ public class ApplicationService {
         }
         
         SavedJob savedJob = SavedJob.builder()
-                .student(student)
-                .job(job)
+                .studentId(studentId)
+                .jobId(jobId)
                 .notes(notes)
                 .build();
         
@@ -393,26 +372,26 @@ public class ApplicationService {
 
     @Transactional(readOnly = true)
     public Page<SavedJob> getSavedJobs(Pageable pageable) {
-        StudentProfile student = getCurrentStudentProfile();
-        if (student == null || student.getId() == null) {
+        UUID studentId = getCurrentStudentProfileId();
+        if (studentId == null) {
             return Page.empty(pageable);
         }
-        return savedJobRepository.findByStudentIdOrderBySavedAtDesc(student.getId(), pageable);
+        return savedJobRepository.findByStudentIdOrderBySavedAtDesc(studentId, pageable);
     }
 
     @Transactional
     public void deleteSavedJob(UUID jobId) {
-        StudentProfile student = getCurrentStudentProfile();
-        savedJobRepository.deleteByStudentIdAndJobId(student.getId(), jobId);
+        UUID studentId = getCurrentStudentProfileId();
+        savedJobRepository.deleteByStudentIdAndJobId(studentId, jobId);
     }
 
     @Transactional(readOnly = true)
     public boolean isJobSaved(UUID jobId) {
-        StudentProfile student = getCurrentStudentProfile();
-        if (student == null || student.getId() == null) {
+        UUID studentId = getCurrentStudentProfileId();
+        if (studentId == null) {
             return false;
         }
-        return savedJobRepository.existsByStudentIdAndJobId(student.getId(), jobId);
+        return savedJobRepository.existsByStudentIdAndJobId(studentId, jobId);
     }
 
     // ========== HELPER METHODS ==========
@@ -430,9 +409,17 @@ public class ApplicationService {
             throw new RuntimeException("User not found: " + email + ". Please register first.");
         }
         
-        // TODO: Get student profile ID from UserServiceClient
-        // For now, throw exception
-        throw new RuntimeException("getCurrentStudentProfileId() needs to be implemented with UserServiceClient");
+        // Get student profile ID from UserServiceClient
+        try {
+            StudentProfileDTO studentProfile = userServiceClient.getStudentProfileByUserId(user.getId());
+            if (studentProfile == null) {
+                throw new RuntimeException("Student profile not found for user: " + user.getId());
+            }
+            return studentProfile.getId();
+        } catch (Exception e) {
+            log.error("Error getting student profile: {}", e.getMessage());
+            throw new RuntimeException("Failed to get student profile: " + e.getMessage());
+        }
         
         /* OLD CODE - COMMENTED OUT
         User user = userRepository.findByEmail(email)
@@ -442,5 +429,21 @@ public class ApplicationService {
                 .orElseThrow(() -> new RuntimeException("Student profile not found"));
         return profile.getId();
         */
+    }
+    
+    // Get current user ID using UserServiceClient
+    private UUID getCurrentUserId() {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String email = auth.getName();
+            UserDTO user = userServiceClient.getUserByEmail(email);
+            if (user == null) {
+                throw new RuntimeException("User not found: " + email);
+            }
+            return user.getId();
+        } catch (Exception e) {
+            log.error("Error getting current user ID: {}", e.getMessage());
+            throw new RuntimeException("Failed to get current user: " + e.getMessage());
+        }
     }
 }

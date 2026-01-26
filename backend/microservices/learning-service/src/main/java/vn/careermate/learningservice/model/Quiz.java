@@ -1,5 +1,8 @@
 package vn.careermate.learningservice.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,6 +23,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Quiz {
 
     @Id
@@ -34,6 +38,9 @@ public class Quiz {
 
     @Column(nullable = false)
     private String category; // CAREER_ORIENTATION, SKILLS_ASSESSMENT, etc.
+
+    @Column(name = "course_id")
+    private UUID courseId; // Link quiz to a specific course (optional)
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -59,7 +66,9 @@ public class Quiz {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JsonProperty("questions")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<QuizQuestion> questions;
 
     public enum QuizType {

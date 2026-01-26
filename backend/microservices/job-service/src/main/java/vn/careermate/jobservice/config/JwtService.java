@@ -2,6 +2,7 @@ package vn.careermate.jobservice.config;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -21,7 +22,17 @@ public class JwtService {
     private Long expiration;
 
     private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        // Match user-service implementation: try BASE64 decode first, then use string directly
+        try {
+            byte[] keyBytes = Decoders.BASE64.decode(secret);
+            return Keys.hmacShaKeyFor(keyBytes);
+        } catch (IllegalArgumentException e) {
+            // If not base64, use the string directly (must be at least 32 characters for HS256)
+            if (secret.length() < 32) {
+                throw new IllegalArgumentException("JWT secret must be at least 32 characters long");
+            }
+            return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        }
     }
 
     public String extractUsername(String token) {

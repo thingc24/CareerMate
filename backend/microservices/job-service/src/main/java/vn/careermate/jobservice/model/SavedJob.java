@@ -33,10 +33,8 @@ public class SavedJob {
     @Column(name = "student_id", nullable = false)
     private UUID studentId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "job_id", nullable = false)
-    @JsonIgnore
-    private Job job;
+    @Column(name = "job_id", nullable = false)
+    private UUID jobId;
 
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes; // Student's notes about this job

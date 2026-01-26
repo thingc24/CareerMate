@@ -50,7 +50,6 @@ export default function PackagesManagement() {
     try {
       setLoading(true);
       const data = await api.getPendingSubscriptions(0, 100);
-      // Handle both array and page response
       if (data.content) {
         setSubscriptions(data.content);
       } else if (Array.isArray(data)) {
@@ -106,14 +105,11 @@ export default function PackagesManagement() {
 
   const handleApprove = async (subscriptionId) => {
     if (!window.confirm('Bạn có chắc muốn duyệt đăng ký này?')) return;
-    
     try {
       await api.approveSubscription(subscriptionId);
       alert('Đã duyệt đăng ký thành công!');
       loadSubscriptions();
-      if (subscriptionTab === 'approved') {
-        loadApprovedSubscriptions();
-      }
+      if (subscriptionTab === 'approved') loadApprovedSubscriptions();
     } catch (error) {
       console.error('Error approving subscription:', error);
       alert('Lỗi: ' + (error.response?.data?.error || 'Không thể duyệt đăng ký'));
@@ -122,14 +118,11 @@ export default function PackagesManagement() {
 
   const handleReject = async (subscriptionId) => {
     if (!window.confirm('Bạn có chắc muốn từ chối đăng ký này?')) return;
-    
     try {
       await api.rejectSubscription(subscriptionId);
       alert('Đã từ chối đăng ký!');
       loadSubscriptions();
-      if (subscriptionTab === 'history') {
-        loadSubscriptionsHistory();
-      }
+      if (subscriptionTab === 'history') loadSubscriptionsHistory();
     } catch (error) {
       console.error('Error rejecting subscription:', error);
       alert('Lỗi: ' + (error.response?.data?.error || 'Không thể từ chối đăng ký'));
@@ -145,7 +138,7 @@ export default function PackagesManagement() {
         durationDays: parseInt(formData.durationDays),
         features: formData.features.split(',').map(f => f.trim()).filter(f => f)
       };
-      
+
       if (editingPackage) {
         await api.updatePackage(editingPackage.id, packageData);
         alert('Cập nhật gói thành công!');
@@ -174,11 +167,11 @@ export default function PackagesManagement() {
       isActive: pkg.isActive !== undefined ? pkg.isActive : true
     });
     setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDelete = async (packageId) => {
     if (!confirm('Bạn có chắc chắn muốn xóa gói này?')) return;
-    
     try {
       await api.deletePackage(packageId);
       alert('Xóa gói thành công!');
@@ -201,502 +194,274 @@ export default function PackagesManagement() {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('vi-VN', {
+      year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
     });
-  };
-
-  const getStatusBadge = (status) => {
-    const badges = {
-      PENDING: 'bg-yellow-100 text-yellow-800',
-      APPROVED: 'bg-green-100 text-green-800',
-      REJECTED: 'bg-red-100 text-red-800',
-      ACTIVE: 'bg-blue-100 text-blue-800',
-      EXPIRED: 'bg-gray-100 text-gray-800',
-      CANCELLED: 'bg-gray-100 text-gray-800'
-    };
-    return badges[status] || 'bg-gray-100 text-gray-800';
-  };
-
-  const getStatusText = (status) => {
-    const texts = {
-      PENDING: 'Đang chờ duyệt',
-      APPROVED: 'Đã duyệt',
-      REJECTED: 'Đã từ chối',
-      ACTIVE: 'Đang hoạt động',
-      EXPIRED: 'Hết hạn',
-      CANCELLED: 'Đã hủy'
-    };
-    return texts[status] || status;
   };
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 dark:border-gray-700 border-t-blue-600 dark:border-t-blue-500"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Đang tải dữ liệu...</p>
+      <div className="h-[60vh] flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <div className="w-16 h-16 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
+          <p className="text-slate-400 font-black uppercase tracking-widest text-xs animate-pulse">Đang đồng bộ dữ liệu dịch vụ...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Quản lý Gói Dịch Vụ</h1>
-        <p className="text-lg text-gray-600 dark:text-gray-300">Quản lý các gói dịch vụ và đăng ký</p>
-      </div>
-
-      {/* Tabs */}
-      <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex gap-4">
+    <div className="space-y-10 animate-fade-in pb-20">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white mb-2">Quản lý Gói Dịch Vụ</h1>
+          <p className="text-slate-500 dark:text-slate-400 font-medium">Đối soát doanh thu và tối ưu hóa các tầng giá trị</p>
+        </div>
+        <div className="flex p-2 bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl rounded-[1.5rem] border border-white dark:border-slate-800 shadow-sm">
           <button
             onClick={() => setActiveTab('packages')}
-            className={`px-4 py-2 font-medium border-b-2 transition ${
-              activeTab === 'packages'
-                ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
-                : 'border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white'
-            }`}
+            className={`px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'packages'
+              ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl'
+              : 'text-slate-500 hover:text-indigo-600'
+              }`}
           >
-            Gói Dịch Vụ
+            Quản lý Gói
           </button>
           <button
-            onClick={() => {
-              setActiveTab('subscriptions');
-              setSubscriptionTab('pending');
-            }}
-            className={`px-4 py-2 font-medium border-b-2 transition ${
-              activeTab === 'subscriptions'
-                ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
-                : 'border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white'
-            }`}
+            onClick={() => { setActiveTab('subscriptions'); setSubscriptionTab('pending'); }}
+            className={`px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'subscriptions'
+              ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl'
+              : 'text-slate-500 hover:text-indigo-600'
+              }`}
           >
-            Đăng Ký
+            Duyệt Đăng Ký
           </button>
         </div>
       </div>
 
-      {/* Packages Tab */}
       {activeTab === 'packages' && (
-        <>
-          <div className="mb-6 flex justify-end">
+        <div className="space-y-10">
+          <div className="flex justify-end">
             <button
-              onClick={() => {
-                setShowForm(true);
-                setEditingPackage(null);
-                resetForm();
-              }}
-              className="btn-primary dark:bg-blue-700 dark:hover:bg-blue-800"
+              onClick={() => { setShowForm(!showForm); setEditingPackage(null); resetForm(); }}
+              className={`flex items-center gap-3 px-8 py-4 ${showForm ? 'bg-slate-200 text-slate-600' : 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white'} rounded-[1.5rem] font-black uppercase tracking-widest text-xs shadow-xl transition-all hover:-translate-y-1`}
             >
-              <i className="fas fa-plus mr-2"></i>
-              Tạo gói mới
+              <i className={`fas ${showForm ? 'fa-times' : 'fa-plus-circle'}`}></i>
+              <span>{showForm ? 'Hủy bỏ thiết lập' : 'Khởi tạo gói mới'}</span>
             </button>
           </div>
 
-          {/* Form */}
           {showForm && (
-            <div className="card p-6 mb-6 dark:bg-gray-900 dark:border-gray-800">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                {editingPackage ? 'Chỉnh sửa gói' : 'Tạo gói mới'}
-              </h2>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tên gói *</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Giá (VND) *</label>
-                    <input
-                      type="number"
-                      required
-                      min="0"
-                      step="1000"
-                      value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                      className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
-                    />
-                  </div>
+            <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl rounded-[2.5rem] border border-white/50 dark:border-slate-800/50 p-10 shadow-2xl animate-slide-up">
+              <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-10 flex items-center gap-4">
+                <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600">
+                  <i className="fas fa-box-open"></i>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mô tả</label>
+                {editingPackage ? 'Cấu hình gói dịch vụ' : 'Định nghĩa gói sản phẩm'}
+              </h2>
+              <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block ml-2">Tên gọi thương mại</label>
+                  <input
+                    type="text" required value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-6 py-4 bg-slate-100 dark:bg-slate-800 border-2 border-transparent focus:border-indigo-500/30 rounded-2xl outline-none transition-all font-bold dark:text-white"
+                  />
+                </div>
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block ml-2">Đơn giá (VND)</label>
+                  <input
+                    type="number" required min="0" step="1000" value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    className="w-full px-6 py-4 bg-slate-100 dark:bg-slate-800 border-2 border-transparent focus:border-indigo-500/30 rounded-2xl outline-none transition-all font-black text-indigo-600 dark:text-indigo-400"
+                  />
+                </div>
+                <div className="md:col-span-2 space-y-4">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block ml-2">Mô tả giá trị</label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
-                    rows="3"
+                    className="w-full px-6 py-4 bg-slate-100 dark:bg-slate-800 border-2 border-transparent focus:border-indigo-500/30 rounded-2xl outline-none transition-all font-medium dark:text-white min-h-[100px]"
                   />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Thời hạn (ngày) *</label>
-                    <input
-                      type="number"
-                      required
-                      min="1"
-                      value={formData.durationDays}
-                      onChange={(e) => setFormData({ ...formData, durationDays: e.target.value })}
-                      className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
-                    />
-                  </div>
-                  <div className="flex items-center">
-                    <label className="flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.isActive}
-                        onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                        className="mr-2"
-                      />
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Kích hoạt</span>
-                    </label>
-                  </div>
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block ml-2">Kỳ hạn (Số ngày hiệu lực)</label>
+                  <input
+                    type="number" required min="1" value={formData.durationDays}
+                    onChange={(e) => setFormData({ ...formData, durationDays: e.target.value })}
+                    className="w-full px-6 py-4 bg-slate-100 dark:bg-slate-800 border-2 border-transparent focus:border-indigo-500/30 rounded-2xl outline-none transition-all font-bold dark:text-white"
+                  />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tính năng (phân cách bằng dấu phẩy)</label>
+                <div className="flex items-center gap-4 bg-slate-100 dark:bg-slate-800/50 p-6 rounded-2xl">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox" checked={formData.isActive}
+                      onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                      className="sr-only peer"
+                    />
+                    <div className="w-14 h-7 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-500"></div>
+                  </label>
+                  <span className="text-xs font-black text-slate-700 dark:text-white uppercase tracking-widest">Kích hoạt gói</span>
+                </div>
+                <div className="md:col-span-2 space-y-4">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block ml-2">Danh sách tính năng (phân cách dấu phẩy)</label>
                   <textarea
                     value={formData.features}
                     onChange={(e) => setFormData({ ...formData, features: e.target.value })}
-                    className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
-                    rows="3"
-                    placeholder="Tính năng 1, Tính năng 2, Tính năng 3..."
+                    className="w-full px-6 py-4 bg-slate-100 dark:bg-slate-800 border-2 border-transparent focus:border-indigo-500/30 rounded-2xl outline-none transition-all font-medium dark:text-white min-h-[100px]"
+                    placeholder="Premium Support, Unlimited CV, Priority Listing..."
                   />
                 </div>
-                <div className="flex gap-2">
-                  <button type="submit" className="btn-primary dark:bg-blue-700 dark:hover:bg-blue-800">
-                    {editingPackage ? 'Cập nhật' : 'Tạo mới'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowForm(false);
-                      setEditingPackage(null);
-                      resetForm();
-                    }}
-                    className="btn-secondary dark:bg-gray-800 dark:text-white dark:border-gray-700 dark:hover:bg-gray-700"
-                  >
-                    Hủy
+                <div className="md:col-span-2 flex gap-4 pt-6">
+                  <button type="submit" className="flex-1 px-10 py-5 bg-indigo-600 text-white rounded-3xl font-black uppercase tracking-widest text-xs shadow-xl shadow-indigo-500/30 transition-all hover:brightness-110">
+                    {editingPackage ? 'Cập nhật sản phẩm' : 'Lưu sản phẩm mới'}
                   </button>
                 </div>
               </form>
             </div>
           )}
 
-          {/* Packages List */}
-          {packages.length === 0 ? (
-            <div className="card p-12 text-center dark:bg-gray-900 dark:border-gray-800">
-              <i className="fas fa-box text-gray-400 dark:text-gray-500 text-6xl mb-4"></i>
-              <p className="text-gray-600 dark:text-gray-300 text-lg">Không có gói nào</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {packages.map((pkg) => (
-                <div key={pkg.id} className="card p-6 dark:bg-gray-900 dark:border-gray-800">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">{pkg.name}</h3>
-                    {!pkg.isActive && (
-                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100">
-                        Không hoạt động
-                      </span>
-                    )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {packages.map((pkg) => (
+              <div key={pkg.id} className="group relative bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl rounded-[2.5rem] border border-white/50 dark:border-slate-800/50 p-8 shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden flex flex-col">
+                <div className="flex items-start justify-between mb-8">
+                  <div className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg shadow-indigo-500/20">
+                    <i className="fas fa-gem"></i>
                   </div>
-                  <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
-                    {pkg.price?.toLocaleString('vi-VN')} VND
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Thời hạn: {pkg.durationDays} ngày</p>
-                  {pkg.description && (
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">{pkg.description}</p>
-                  )}
-                  {pkg.features && pkg.features.length > 0 && (
-                    <ul className="text-sm text-gray-600 dark:text-gray-300 mb-4 space-y-1">
-                      {pkg.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-center gap-2">
-                          <i className="fas fa-check text-green-500 dark:text-green-400"></i>
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleEdit(pkg)}
-                      className="flex-1 btn-secondary text-sm dark:bg-gray-800 dark:text-white dark:border-gray-700 dark:hover:bg-gray-700"
-                    >
-                      <i className="fas fa-edit mr-2"></i>Chỉnh sửa
-                    </button>
-                    <button
-                      onClick={() => handleDelete(pkg.id)}
-                      className="px-4 py-2 bg-red-600 dark:bg-red-700 text-white rounded-lg hover:bg-red-700 dark:hover:bg-red-800 transition text-sm"
-                    >
-                      <i className="fas fa-trash"></i>
-                    </button>
-                  </div>
+                  {!pkg.isActive && <span className="px-4 py-1.5 bg-red-100 text-red-600 text-[10px] font-black uppercase tracking-widest rounded-full">Ngưng hỗ trợ</span>}
                 </div>
-              ))}
-            </div>
-          )}
-        </>
+
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-2 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{pkg.name}</h3>
+                <div className="flex items-baseline gap-1 mb-6">
+                  <span className="text-4xl font-black text-indigo-600 dark:text-indigo-400 tracking-tighter">{pkg.price?.toLocaleString('vi-VN')}</span>
+                  <span className="text-xs font-black text-slate-400 uppercase tracking-widest">VND / {pkg.durationDays} Ngày</span>
+                </div>
+
+                <div className="flex-1 space-y-4 mb-10">
+                  <p className="text-sm font-medium text-slate-500 leading-relaxed">{pkg.description}</p>
+                  <div className="h-px bg-slate-100 dark:bg-slate-800"></div>
+                  <ul className="space-y-3">
+                    {pkg.features?.map((feature, idx) => (
+                      <li key={idx} className="flex items-center gap-3 text-xs font-bold text-slate-600 dark:text-slate-300">
+                        <i className="fas fa-check-circle text-emerald-500 text-sm"></i>
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="flex gap-3">
+                  <button onClick={() => handleEdit(pkg)} className="flex-1 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:-translate-y-1 transition-all">
+                    Chỉnh sửa
+                  </button>
+                  <button onClick={() => handleDelete(pkg.id)} className="w-14 h-14 flex items-center justify-center bg-red-50 dark:bg-red-900/20 text-red-600 rounded-2xl hover:bg-red-600 hover:text-white transition-all">
+                    <i className="fas fa-trash-alt"></i>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
-      {/* Subscriptions Tab */}
       {activeTab === 'subscriptions' && (
-        <>
-          {/* Sub-tabs for subscriptions */}
-          <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex gap-4">
+        <div className="space-y-8">
+          <div className="flex gap-4 p-2 bg-slate-100 dark:bg-slate-800/50 rounded-2xl w-fit">
+            {[
+              { id: 'pending', label: 'Chờ duyệt', icon: 'fa-clock' },
+              { id: 'approved', label: 'Đang hoạt động', icon: 'fa-check-circle' },
+              { id: 'history', label: 'Lịch sử', icon: 'fa-history' }
+            ].map((tab) => (
               <button
-                onClick={() => setSubscriptionTab('pending')}
-                className={`px-4 py-2 font-medium border-b-2 transition ${
-                  subscriptionTab === 'pending'
-                    ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white'
-                }`}
+                key={tab.id}
+                onClick={() => setSubscriptionTab(tab.id)}
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${subscriptionTab === tab.id
+                  ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-md'
+                  : 'text-slate-500 hover:bg-white/50 dark:hover:bg-slate-800'
+                  }`}
               >
-                Đang chờ duyệt
+                <i className={`fas ${tab.icon}`}></i>
+                {tab.label}
               </button>
-              <button
-                onClick={() => setSubscriptionTab('approved')}
-                className={`px-4 py-2 font-medium border-b-2 transition ${
-                  subscriptionTab === 'approved'
-                    ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white'
-                }`}
-              >
-                Đã duyệt
-              </button>
-              <button
-                onClick={() => setSubscriptionTab('history')}
-                className={`px-4 py-2 font-medium border-b-2 transition ${
-                  subscriptionTab === 'history'
-                    ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white'
-                }`}
-              >
-                Lịch sử duyệt
-              </button>
-            </div>
+            ))}
           </div>
 
-          {/* Pending Subscriptions */}
-          {subscriptionTab === 'pending' && (
-            <>
-              {subscriptions.length === 0 ? (
-                <div className="card p-12 text-center dark:bg-gray-900 dark:border-gray-800">
-                  <i className="fas fa-inbox text-gray-400 dark:text-gray-500 text-6xl mb-4"></i>
-                  <p className="text-gray-600 dark:text-gray-300 text-lg">Không có yêu cầu đăng ký đang chờ duyệt</p>
-                </div>
-              ) : (
-            <div className="card overflow-hidden dark:bg-gray-900 dark:border-gray-800">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 dark:bg-gray-800">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Người dùng</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Email</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Gói</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Trạng thái</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Ngày yêu cầu</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Thao tác</th>
+          <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl rounded-[2.5rem] border border-white/50 dark:border-slate-800/50 shadow-2xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-slate-800">
+                    <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Khách hàng</th>
+                    <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Gói dịch vụ</th>
+                    <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Trạng thái</th>
+                    <th className="px-8 py-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Thời điểm</th>
+                    {subscriptionTab === 'pending' && <th className="px-8 py-6 text-right text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Điều phối</th>}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
+                  {((subscriptionTab === 'pending' ? subscriptions : subscriptionTab === 'approved' ? approvedSubscriptions : subscriptionsHistory)).map((sub) => (
+                    <tr key={sub.id} className="group hover:bg-indigo-50/30 dark:hover:bg-indigo-900/10 transition-colors">
+                      <td className="px-8 py-6">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-black text-slate-500 uppercase text-xs">
+                            {sub.user?.fullName?.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{sub.user?.fullName}</p>
+                            <p className="text-[10px] font-bold text-slate-400">{sub.user?.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-6">
+                        <span className="px-4 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase tracking-widest rounded-lg border border-indigo-100 dark:border-indigo-900/30">
+                          {sub.packageEntity?.name}
+                        </span>
+                      </td>
+                      <td className="px-8 py-6">
+                        <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.1em] ${sub.status === 'APPROVED' || sub.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-600' :
+                          sub.status === 'PENDING' ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-500'
+                          }`}>
+                          {sub.status === 'PENDING' ? 'Chờ kiểm duyệt' : sub.status === 'APPROVED' ? 'Đã kích hoạt' : 'Hết hạn/Khác'}
+                        </span>
+                      </td>
+                      <td className="px-8 py-6">
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-black text-slate-800 dark:text-white uppercase tracking-tighter">Từ: {formatDate(sub.startDate) || '---'}</p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter text-opacity-60">Đến: {formatDate(sub.endDate) || '---'}</p>
+                        </div>
+                      </td>
+                      {subscriptionTab === 'pending' && (
+                        <td className="px-8 py-6 text-right">
+                          <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => handleApprove(sub.id)} className="w-10 h-10 flex items-center justify-center bg-emerald-500 text-white rounded-xl shadow-lg shadow-emerald-500/20 hover:scale-110 transition-transform">
+                              <i className="fas fa-check"></i>
+                            </button>
+                            <button onClick={() => handleReject(sub.id)} className="w-10 h-10 flex items-center justify-center bg-red-500 text-white rounded-xl shadow-lg shadow-red-500/20 hover:scale-110 transition-transform">
+                              <i className="fas fa-times"></i>
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
-                  </thead>
-                  <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
-                    {subscriptions.map((sub) => (
-                      <tr key={sub.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {sub.user?.fullName || 'N/A'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-600 dark:text-gray-300">
-                            {sub.user?.email || 'N/A'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900 dark:text-white">{sub.packageEntity?.name || 'N/A'}</div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(sub.status)} dark:bg-yellow-800 dark:text-yellow-100 dark:bg-green-800 dark:text-green-100 dark:bg-red-800 dark:text-red-100 dark:bg-blue-800 dark:text-blue-100 dark:bg-gray-800 dark:text-gray-100`}>
-                            {getStatusText(sub.status)}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                          {formatDate(sub.createdAt)}
-                        </td>
-                        <td className="px-6 py-4">
-                          {sub.status === 'PENDING' && (
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => handleApprove(sub.id)}
-                                className="px-3 py-1 bg-green-600 dark:bg-green-700 text-white rounded hover:bg-green-700 dark:hover:bg-green-800 transition text-sm"
-                                title="Duyệt"
-                              >
-                                <i className="fas fa-check mr-1"></i>
-                                Duyệt
-                              </button>
-                              <button
-                                onClick={() => handleReject(sub.id)}
-                                className="px-3 py-1 bg-red-600 dark:bg-red-700 text-white rounded hover:bg-red-700 dark:hover:bg-red-800 transition text-sm"
-                                title="Từ chối"
-                              >
-                                <i className="fas fa-times mr-1"></i>
-                                Từ chối
-                              </button>
-                            </div>
-                          )}
-                          {sub.status !== 'PENDING' && (
-                            <span className="text-xs text-gray-500 dark:text-gray-400">Đã xử lý</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                  {((subscriptionTab === 'pending' ? subscriptions : subscriptionTab === 'approved' ? approvedSubscriptions : subscriptionsHistory)).length === 0 && (
+                    <tr>
+                      <td colSpan="5" className="px-8 py-32 text-center">
+                        <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800/50 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
+                          <i className="fas fa-inbox text-slate-200 text-3xl"></i>
+                        </div>
+                        <p className="text-sm font-black text-slate-400 uppercase tracking-widest">Không tìm thấy dữ liệu đối soát</p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
-              )}
-            </>
-          )}
-
-          {/* Approved Subscriptions */}
-          {subscriptionTab === 'approved' && (
-            <>
-              {approvedSubscriptions.length === 0 ? (
-                <div className="card p-12 text-center dark:bg-gray-900 dark:border-gray-800">
-                  <i className="fas fa-check-circle text-gray-400 dark:text-gray-500 text-6xl mb-4"></i>
-                  <p className="text-gray-600 dark:text-gray-300 text-lg">Không có gói dịch vụ nào đã được duyệt</p>
-                </div>
-              ) : (
-                <div className="card overflow-hidden dark:bg-gray-900 dark:border-gray-800">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-gray-50 dark:bg-gray-800">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Người dùng</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Email</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Gói</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Trạng thái</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Bắt đầu</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Kết thúc</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Ngày duyệt</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
-                        {approvedSubscriptions.map((sub) => (
-                          <tr key={sub.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                            <td className="px-6 py-4">
-                              <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                {sub.user?.fullName || 'N/A'}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="text-sm text-gray-600 dark:text-gray-300">
-                                {sub.user?.email || 'N/A'}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="text-sm text-gray-900 dark:text-white">{sub.packageEntity?.name || 'N/A'}</div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(sub.status)} dark:bg-yellow-800 dark:text-yellow-100 dark:bg-green-800 dark:text-green-100 dark:bg-red-800 dark:text-red-100 dark:bg-blue-800 dark:text-blue-100 dark:bg-gray-800 dark:text-gray-100`}>
-                                {getStatusText(sub.status)}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                              {formatDate(sub.startDate)}
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                              {formatDate(sub.endDate)}
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                              {formatDate(sub.createdAt)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* Subscriptions History */}
-          {subscriptionTab === 'history' && (
-            <>
-              {subscriptionsHistory.length === 0 ? (
-                <div className="card p-12 text-center dark:bg-gray-900 dark:border-gray-800">
-                  <i className="fas fa-history text-gray-400 dark:text-gray-500 text-6xl mb-4"></i>
-                  <p className="text-gray-600 dark:text-gray-300 text-lg">Chưa có lịch sử đăng ký</p>
-                </div>
-              ) : (
-                <div className="card overflow-hidden dark:bg-gray-900 dark:border-gray-800">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-gray-50 dark:bg-gray-800">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Người dùng</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Email</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Gói</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Trạng thái</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Bắt đầu</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Kết thúc</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Ngày yêu cầu</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
-                        {subscriptionsHistory.map((sub) => (
-                          <tr key={sub.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                            <td className="px-6 py-4">
-                              <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                {sub.user?.fullName || 'N/A'}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="text-sm text-gray-600 dark:text-gray-300">
-                                {sub.user?.email || 'N/A'}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="text-sm text-gray-900 dark:text-white">{sub.packageEntity?.name || 'N/A'}</div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(sub.status)} dark:bg-yellow-800 dark:text-yellow-100 dark:bg-green-800 dark:text-green-100 dark:bg-red-800 dark:text-red-100 dark:bg-blue-800 dark:text-blue-100 dark:bg-gray-800 dark:text-gray-100`}>
-                                {getStatusText(sub.status)}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                              {formatDate(sub.startDate)}
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                              {formatDate(sub.endDate)}
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                              {formatDate(sub.createdAt)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </>
+          </div>
+        </div>
       )}
     </div>
   );
 }
+

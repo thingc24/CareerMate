@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import vn.careermate.contentservice.model.ArticleComment;
+import vn.careermate.common.dto.UserDTO;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,21 +36,16 @@ public class ArticleCommentDTO {
                 .updatedAt(comment.getUpdatedAt())
                 .build();
 
-        // Map user - Note: User info should be fetched via Feign Client when needed
-        // For now, just set userId if available
-        // TODO: Fetch user details via UserServiceClient if needed
+        // Map user - Note: User info needs to be fetched separately via Service
+        // We set a placeholder with ID here
         if (comment.getUserId() != null) {
-            // Placeholder - user details should be fetched from user-service
             dto.setUser(UserDTO.builder()
                     .id(comment.getUserId())
-                    .fullName("User") // Placeholder - fetch from UserServiceClient
-                    .email("") // Placeholder - fetch from UserServiceClient
-                    .avatarUrl(null) // Placeholder - fetch from UserServiceClient
+                    .fullName("Loading...")
                     .build());
         }
 
         // Map replies recursively (support unlimited nested levels)
-        // We don't map parentComment to avoid circular reference
         if (comment.getReplies() != null && !comment.getReplies().isEmpty()) {
             dto.setReplies(comment.getReplies().stream()
                     .map(ArticleCommentDTO::fromEntity) // Recursive mapping for nested replies
@@ -59,16 +55,5 @@ public class ArticleCommentDTO {
         }
 
         return dto;
-    }
-
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class UserDTO {
-        private UUID id;
-        private String fullName;
-        private String email;
-        private String avatarUrl;
     }
 }

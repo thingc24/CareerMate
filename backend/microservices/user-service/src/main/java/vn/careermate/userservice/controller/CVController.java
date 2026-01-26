@@ -18,7 +18,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/students/cv")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class CVController {
 
     private final CVService cvService;

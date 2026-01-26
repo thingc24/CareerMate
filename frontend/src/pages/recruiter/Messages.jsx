@@ -25,7 +25,7 @@ export default function Messages() {
   useEffect(() => {
     loadConversations();
     loadUnreadCount();
-    
+
     // Poll for new messages every 5 seconds
     pollingIntervalRef.current = setInterval(() => {
       if (selectedConversation) {
@@ -83,7 +83,7 @@ export default function Messages() {
       setLoadingConversations(true);
       const data = await api.getMyConversations();
       setConversations(data || []);
-      
+
       // Load last message for each conversation to show preview
       const lastMsgs = {};
       const counts = {};
@@ -95,13 +95,13 @@ export default function Messages() {
             // Get the last message (most recent)
             const lastMsg = messages[messages.length - 1];
             if (lastMsg && lastMsg.content) {
-              const preview = lastMsg.content.length > 50 
-                ? lastMsg.content.substring(0, 50) + '...' 
+              const preview = lastMsg.content.length > 50
+                ? lastMsg.content.substring(0, 50) + '...'
                 : lastMsg.content;
               lastMsgs[conv.id] = preview;
             }
           }
-          
+
           // Load unread count
           const unread = await api.getUnreadCountForConversation?.(conv.id) || 0;
           counts[conv.id] = unread;
@@ -123,18 +123,18 @@ export default function Messages() {
     try {
       const data = await api.getMessages(conversationId, 0, 100);
       setMessages(data || []);
-      
+
       // Update last message preview if there are messages
       if (data && data.length > 0) {
         const lastMsg = data[data.length - 1];
         if (lastMsg && lastMsg.content) {
-          const preview = lastMsg.content.length > 50 
-            ? lastMsg.content.substring(0, 50) + '...' 
+          const preview = lastMsg.content.length > 50
+            ? lastMsg.content.substring(0, 50) + '...'
             : lastMsg.content;
           setLastMessages(prev => ({ ...prev, [conversationId]: preview }));
         }
       }
-      
+
       // Mark as read
       try {
         await api.markConversationAsRead(conversationId);
@@ -173,11 +173,11 @@ export default function Messages() {
     try {
       await api.sendMessage(selectedConversation.id, content);
       await loadMessages(selectedConversation.id);
-      
+
       // Update last message preview immediately
       const preview = content.length > 50 ? content.substring(0, 50) + '...' : content;
       setLastMessages(prev => ({ ...prev, [selectedConversation.id]: preview }));
-      
+
       await loadConversations();
     } catch (error) {
       console.error('Error sending message:', error);
@@ -231,7 +231,7 @@ export default function Messages() {
 
   const handleDeleteMessages = async () => {
     if (!selectedConversation) return;
-    
+
     if (!window.confirm('Bạn có chắc chắn muốn xóa toàn bộ tin nhắn trong cuộc trò chuyện này?')) {
       return;
     }
@@ -250,236 +250,277 @@ export default function Messages() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-4 h-[calc(100vh-120px)] flex flex-col">
-      <div className="card p-0 overflow-hidden flex-1 flex shadow-lg">
+    <div className="max-w-[1600px] mx-auto px-4 py-6 h-[calc(100vh-80px)] flex flex-col animate-fade-in">
+      {/* Glass Container */}
+      <div className="flex-1 bg-white/60 dark:bg-gray-800/40 backdrop-blur-2xl rounded-3xl shadow-2xl overflow-hidden border border-white/20 dark:border-white/5 flex flex-col md:flex-row">
+
         {/* Conversations List - Left Side */}
-        <div className="w-1/3 border-r border-gray-200 dark:border-gray-800 flex flex-col bg-white dark:bg-gray-900">
+        <div className="w-full md:w-[350px] lg:w-[400px] border-r border-gray-100 dark:border-gray-700/50 flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
           {/* Header */}
-          <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-gray-800 dark:to-gray-800">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <i className="fas fa-comments text-emerald-600 dark:text-emerald-400"></i>
+          <div className="p-6 border-b border-gray-100 dark:border-gray-700/50 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-gray-800 dark:to-gray-800">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-3">
+              <i className="fas fa-comments text-blue-500"></i>
               Tin nhắn
             </h2>
             {unreadCount > 0 && (
-              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-gray-800 text-emerald-800 dark:text-emerald-300">
-                  {unreadCount} tin nhắn chưa đọc
-                </span>
-              </p>
+              <div className="mt-3 inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 animate-pulse">
+                {unreadCount} tin nhắn mới
+              </div>
             )}
           </div>
 
           {/* Conversations */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
             {loadingConversations ? (
-              <div className="p-4 text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-200 border-t-emerald-600"></div>
-                <p className="mt-2 text-gray-600 text-sm">Đang tải...</p>
+              <div className="p-8 text-center space-y-3">
+                <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin mx-auto"></div>
+                <p className="text-sm text-gray-500 font-medium">Đang tải cuộc trò chuyện...</p>
               </div>
             ) : conversations.length === 0 ? (
-              <div className="p-8 text-center">
-                <i className="fas fa-comments text-gray-400 dark:text-gray-500 text-5xl mb-3"></i>
-                <p className="text-gray-600 dark:text-gray-300 text-sm font-medium">Chưa có cuộc trò chuyện nào</p>
-                <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">Bắt đầu trò chuyện với sinh viên ngay!</p>
+              <div className="flex flex-col items-center justify-center h-full p-8 text-center opacity-60">
+                <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                  <i className="fas fa-comment-slash text-3xl text-gray-400"></i>
+                </div>
+                <p className="text-gray-900 dark:text-white font-medium">Chưa có tin nhắn</p>
+                <p className="text-sm text-gray-500">Hộp thư của bạn đang trống</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                {conversations.map((conversation) => {
-                  const otherUser = getOtherUser(conversation);
-                  if (!otherUser) return null;
-                  const isSelected = selectedConversation?.id === conversation.id;
-                  const unreadCount = conversationUnreadCounts[conversation.id] || 0;
-                  const avatarUrl = getAvatarUrl(otherUser.avatarUrl);
-                  
-                  return (
-                    <button
-                      key={conversation.id}
-                      onClick={() => handleConversationClick(conversation)}
-                      className={`w-full p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all text-left relative ${
-                        isSelected ? 'bg-emerald-50 dark:bg-gray-800 border-l-4 border-emerald-600 dark:border-emerald-400' : ''
+              conversations.map((conversation) => {
+                const otherUser = getOtherUser(conversation);
+                if (!otherUser) return null;
+                const isSelected = selectedConversation?.id === conversation.id;
+                const unreadCount = conversationUnreadCounts[conversation.id] || 0;
+                const avatarUrl = getAvatarUrl(otherUser.avatarUrl);
+
+                return (
+                  <button
+                    key={conversation.id}
+                    onClick={() => handleConversationClick(conversation)}
+                    className={`w-full p-4 rounded-2xl transition-all duration-200 group relative overflow-hidden text-left ${isSelected
+                        ? 'bg-blue-600 shadow-lg shadow-blue-500/30'
+                        : 'hover:bg-white/80 dark:hover:bg-gray-800/80 hover:shadow-md'
                       }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="relative flex-shrink-0">
-                          {avatarUrl ? (
-                            <img
-                              src={avatarUrl}
-                              alt={otherUser.fullName}
-                              className="w-14 h-14 rounded-full object-cover shadow-md border-2 border-white dark:border-gray-800"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                                if (e.target.nextSibling) {
-                                  e.target.nextSibling.style.display = 'flex';
-                                }
-                              }}
-                            />
-                          ) : null}
-                          <div className={`w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-semibold text-lg shadow-md ${avatarUrl ? 'hidden' : ''}`}>
-                            {otherUser.fullName?.charAt(0).toUpperCase() || 'U'}
-                          </div>
-                          {unreadCount > 0 && (
-                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                              {unreadCount > 9 ? '9+' : unreadCount}
+                  >
+                    {/* Background decoration for selected */}
+                    {isSelected && (
+                      <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-indigo-600"></div>
+                    )}
+
+                    <div className="flex items-center gap-4 relative z-10">
+                      <div className="relative flex-shrink-0">
+                        {avatarUrl ? (
+                          <img
+                            src={avatarUrl}
+                            alt={otherUser.fullName}
+                            className={`w-12 h-12 rounded-full object-cover border-2 shadow-sm ${isSelected ? 'border-blue-300' : 'border-white dark:border-gray-700'}`}
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold border-2 shadow-sm ${avatarUrl ? 'hidden' : ''
+                          } ${isSelected
+                            ? 'bg-white/20 text-white border-blue-400'
+                            : 'bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 text-gray-500 dark:text-gray-300 border-white dark:border-gray-600'
+                          }`}>
+                          {otherUser.fullName?.charAt(0).toUpperCase() || 'U'}
+                        </div>
+
+                        {unreadCount > 0 && !isSelected && (
+                          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-gray-900">
+                            {unreadCount > 9 ? '9+' : unreadCount}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <h3 className={`font-bold text-sm truncate ${isSelected ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
+                            {otherUser.fullName || 'Người dùng'}
+                          </h3>
+                          {conversation.lastMessageAt && (
+                            <span className={`text-[10px] ${isSelected ? 'text-blue-200' : 'text-gray-400 dark:text-gray-500'}`}>
+                              {formatDate(conversation.lastMessageAt)}
                             </span>
                           )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2 mb-1">
-                            <p className="font-semibold text-gray-900 dark:text-white truncate text-base">
-                              {otherUser.fullName || 'Người dùng'}
-                            </p>
-                            {conversation.lastMessageAt && (
-                              <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                                {formatDate(conversation.lastMessageAt)}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
-                            {lastMessages[conversation.id] || 'Chưa có tin nhắn'}
-                          </p>
-                        </div>
+                        <p className={`text-xs truncate font-medium ${isSelected ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300'}`}>
+                          {lastMessages[conversation.id] || 'Bắt đầu cuộc trò chuyện...'}
+                        </p>
                       </div>
-                    </button>
-                  );
-                })}
-              </div>
+                    </div>
+                  </button>
+                );
+              })
             )}
           </div>
         </div>
 
         {/* Messages - Right Side */}
-        <div className="flex-1 flex flex-col bg-gray-50 dark:bg-black">
+        <div className="flex-1 flex flex-col bg-white/30 dark:bg-gray-900/30 backdrop-blur-xl relative">
+          {/* Decorative background */}
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 pointer-events-none"></div>
+
           {!selectedConversation ? (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center">
-                <i className="fas fa-comments text-gray-300 dark:text-gray-600 text-7xl mb-4"></i>
-                <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">Chọn cuộc trò chuyện để bắt đầu</p>
-                <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">Nhắn tin với sinh viên ngay!</p>
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+              <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-full flex items-center justify-center mb-6 shadow-inner animate-pulse">
+                <i className="fas fa-paper-plane text-4xl text-blue-500"></i>
               </div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Xin chào, {user?.fullName}!</h2>
+              <p className="text-gray-500 dark:text-gray-400 max-w-md">
+                Chọn một cuộc trò chuyện từ danh sách bên trái để bắt đầu nhắn tin với ứng viên.
+              </p>
             </div>
           ) : (
             <>
               {/* Messages Header */}
-              <div className="border-b border-gray-200 dark:border-gray-800 p-4 bg-white dark:bg-gray-900 shadow-sm">
+              <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700/50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md flex items-center justify-between sticky top-0 z-20">
                 {(() => {
                   const otherUser = getOtherUser(selectedConversation);
                   if (!otherUser) return null;
                   const avatarUrl = getAvatarUrl(otherUser.avatarUrl);
                   return (
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 flex-1">
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
                         {avatarUrl ? (
                           <img
                             src={avatarUrl}
                             alt={otherUser.fullName}
-                            className="w-12 h-12 rounded-full object-cover shadow-md border-2 border-white dark:border-gray-800"
+                            className="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow-md cursor-pointer hover:scale-105 transition-transform"
+                            onClick={handleViewProfile}
                             onError={(e) => {
                               e.target.style.display = 'none';
-                              if (e.target.nextSibling) {
-                                e.target.nextSibling.style.display = 'flex';
-                              }
+                              e.target.nextSibling.style.display = 'flex';
                             }}
                           />
                         ) : null}
-                        <div className={`w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-semibold shadow-md ${avatarUrl ? 'hidden' : ''}`}>
+                        <div
+                          className={`w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-md cursor-pointer hover:scale-105 transition-transform ${avatarUrl ? 'hidden' : ''}`}
+                          onClick={handleViewProfile}
+                        >
                           {otherUser.fullName?.charAt(0).toUpperCase() || 'U'}
                         </div>
-                        <div className="flex-1">
-                          <p className="font-semibold text-gray-900 dark:text-white text-lg">
-                            {otherUser.fullName || 'Người dùng'}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {otherUser.role === 'STUDENT' ? 'Sinh viên' : 'Nhà tuyển dụng'}
-                          </p>
-                        </div>
+                        <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-gray-900 rounded-full"></div>
                       </div>
-                      <div className="relative" ref={menuRef}>
-                        <button
-                          onClick={() => setShowMenu(!showMenu)}
-                          className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition"
-                        >
-                          <i className="fas fa-ellipsis-v"></i>
-                        </button>
-                        {showMenu && (
-                          <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 z-10">
-                            <button
-                              onClick={handleViewProfile}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
-                            >
-                              <i className="fas fa-user"></i>
-                              <span>Xem thông tin cá nhân</span>
-                            </button>
-                            <button
-                              onClick={handleDeleteMessages}
-                              className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                            >
-                              <i className="fas fa-trash"></i>
-                              <span>Xóa toàn bộ tin nhắn</span>
-                            </button>
-                          </div>
-                        )}
+
+                      <div>
+                        <h3 className="font-bold text-gray-900 dark:text-white text-lg leading-tight hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors" onClick={handleViewProfile}>
+                          {otherUser.fullName}
+                        </h3>
+                        <div className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400">
+                          <span className="bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-gray-600 dark:text-gray-300">
+                            {otherUser.role === 'STUDENT' ? 'Sinh viên' : 'Nhà tuyển dụng'}
+                          </span>
+                          {selectedConversation.jobTitle && (
+                            <>
+                              <span>•</span>
+                              <span className="text-blue-600 dark:text-blue-400">{selectedConversation.jobTitle}</span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
                 })()}
+
+                <div className="relative" ref={menuRef}>
+                  <button
+                    onClick={() => setShowMenu(!showMenu)}
+                    className="w-10 h-10 rounded-full bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-white hover:shadow-md hover:text-blue-600 transition-all flex items-center justify-center"
+                  >
+                    <i className="fas fa-ellipsis-v"></i>
+                  </button>
+                  {showMenu && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden transform origin-top-right transition-all animation-scale-in z-50">
+                      <div className="p-1">
+                        <button
+                          onClick={handleViewProfile}
+                          className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl flex items-center gap-3 transition-colors"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center">
+                            <i className="fas fa-user text-xs"></i>
+                          </div>
+                          Xem hồ sơ
+                        </button>
+                        <div className="my-1 border-b border-gray-100 dark:border-gray-800"></div>
+                        <button
+                          onClick={handleDeleteMessages}
+                          className="w-full text-left px-4 py-3 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl flex items-center gap-3 transition-colors"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-red-50 dark:bg-red-900/20 text-red-600 flex items-center justify-center">
+                            <i className="fas fa-trash-alt text-xs"></i>
+                          </div>
+                          Xóa cuộc trò chuyện
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {/* Messages Area */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-white/50 dark:bg-gray-900/50">
                 {messages.length === 0 ? (
-                  <div className="text-center py-12">
-                    <i className="fas fa-comment-dots text-gray-300 dark:text-gray-600 text-4xl mb-3"></i>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm">Chưa có tin nhắn nào</p>
-                    <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Bắt đầu cuộc trò chuyện ngay!</p>
+                  <div className="text-center py-20 opacity-60">
+                    <div className="w-24 h-24 bg-blue-50 dark:bg-blue-900/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <i className="fas fa-hand-sparkles text-4xl text-blue-400"></i>
+                    </div>
+                    <p className="text-gray-900 dark:text-white font-medium text-lg">Bắt đầu cuộc trò chuyện</p>
+                    <p className="text-gray-500">Gửi lời chào để bắt đầu kết nối!</p>
                   </div>
                 ) : (
-                  messages.map((msg) => {
+                  messages.map((msg, index) => {
                     const isMyMessage = msg.sender?.id === user?.id;
+                    const showAvatar = !isMyMessage && (index === 0 || messages[index - 1].sender?.id !== msg.sender?.id);
+
                     return (
                       <div
                         key={msg.id}
-                        className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'} items-end gap-2`}
+                        className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'} items-end gap-3 group`}
                       >
                         {!isMyMessage && (
-                          <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-700 flex items-center justify-center text-white text-xs flex-shrink-0">
-                            {msg.sender?.fullName?.charAt(0).toUpperCase() || 'U'}
+                          <div className="w-8 flex-shrink-0">
+                            {showAvatar && (
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                                {msg.sender?.fullName?.charAt(0).toUpperCase()}
+                              </div>
+                            )}
                           </div>
                         )}
+
                         <div
-                          className={`max-w-[70%] rounded-2xl px-4 py-2.5 shadow-sm ${
-                            isMyMessage
-                              ? 'bg-emerald-600 text-white rounded-br-md'
-                              : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-bl-md'
-                          }`}
+                          className={`max-w-[70%] relative px-5 py-3 shadow-sm text-sm leading-relaxed transition-all hover:shadow-md ${isMyMessage
+                              ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-2xl rounded-tr-sm'
+                              : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-gray-700 rounded-2xl rounded-tl-sm'
+                            }`}
                         >
-                          <div className="whitespace-pre-wrap text-sm leading-relaxed">{msg.content}</div>
-                          <div className={`text-xs mt-1.5 ${isMyMessage ? 'text-emerald-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                          <div className="whitespace-pre-wrap break-words">{msg.content}</div>
+                          <div className={`text-[10px] mt-1 font-medium flex items-center justify-end gap-1 ${isMyMessage ? 'text-blue-100' : 'text-gray-400'}`}>
                             {formatTime(msg.createdAt)}
+                            {isMyMessage && <i className="fas fa-check-double text-[9px] opacity-70"></i>}
                           </div>
                         </div>
-                        {isMyMessage && (
-                          <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white text-xs flex-shrink-0">
-                            {user?.fullName?.charAt(0).toUpperCase() || 'U'}
-                          </div>
-                        )}
+
+                        {/* Actions (visible on hover) */}
+                        <div className={`opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 ${isMyMessage ? 'order-first' : ''}`}>
+                          {/* Placeholder for future actions like reply/react */}
+                        </div>
                       </div>
                     );
                   })
                 )}
+
                 {loading && (
-                  <div className="flex justify-start items-end gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-700 flex items-center justify-center text-white text-xs flex-shrink-0"></div>
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-bl-md">
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"></div>
-                        <div
-                          className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"
-                          style={{ animationDelay: '0.1s' }}
-                        ></div>
-                        <div
-                          className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"
-                          style={{ animationDelay: '0.2s' }}
-                        ></div>
+                  <div className="flex justify-start items-end gap-3">
+                    <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                      <i className="fas fa-ellipsis-h text-gray-400 text-xs"></i>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-4 py-3 rounded-2xl rounded-tl-sm shadow-sm">
+                      <div className="flex gap-1.5">
+                        <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                        <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                       </div>
                     </div>
                   </div>
@@ -487,33 +528,56 @@ export default function Messages() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Input */}
-              <form onSubmit={handleSend} className="p-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
+              {/* Input Area */}
+              <div className="p-4 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-700/50">
+                <form onSubmit={handleSend} className="relative flex items-end gap-2 bg-gray-50 dark:bg-gray-800/50 p-2 rounded-3xl border border-gray-200 dark:border-gray-700 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
+                  <button
+                    type="button"
+                    className="w-10 h-10 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center flex-shrink-0"
+                    title="Đính kèm file (Demo)"
+                  >
+                    <i className="fas fa-paperclip"></i>
+                  </button>
+
+                  <textarea
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSend(e);
+                      }
+                    }}
                     placeholder="Nhập tin nhắn..."
-                    className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-gray-800 dark:text-white"
+                    className="flex-1 bg-transparent border-none focus:ring-0 py-3 px-2 text-gray-800 dark:text-white placeholder-gray-400 resize-none max-h-32 min-h-[44px]"
+                    rows={1}
                     disabled={loading}
+                    style={{ height: 'auto', minHeight: '44px' }}
                   />
-                  <button
-                    type="submit"
-                    disabled={loading || !input.trim()}
-                    className="px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
-                  >
-                    {loading ? (
-                      <i className="fas fa-spinner fa-spin"></i>
-                    ) : (
-                      <>
-                        <i className="fas fa-paper-plane"></i>
-                        <span className="font-medium">Gửi</span>
-                      </>
-                    )}
-                  </button>
+
+                  <div className="flex items-center gap-1 pb-1">
+                    <button
+                      type="button"
+                      className="w-9 h-9 rounded-full text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
+                    >
+                      <i className="far fa-smile"></i>
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={loading || !input.trim()}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md transition-all transform hover:scale-105 active:scale-95 ${!input.trim()
+                          ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-blue-500/30'
+                        }`}
+                    >
+                      {loading ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-paper-plane"></i>}
+                    </button>
+                  </div>
+                </form>
+                <div className="text-center mt-2">
+                  <p className="text-[10px] text-gray-400">Nhấn Enter để gửi, Shift + Enter để xuống dòng</p>
                 </div>
-              </form>
+              </div>
             </>
           )}
         </div>

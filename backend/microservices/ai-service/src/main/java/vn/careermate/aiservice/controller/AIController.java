@@ -10,8 +10,6 @@ import vn.careermate.aiservice.service.VectorDBService;
 import vn.careermate.common.client.UserServiceClient;
 import vn.careermate.common.client.JobServiceClient;
 import vn.careermate.common.dto.JobDTO;
-import vn.careermate.util.DOCXExtractor;
-import vn.careermate.util.PDFExtractor;
 
 import java.util.List;
 import java.util.Map;

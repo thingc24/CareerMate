@@ -10,7 +10,6 @@ import vn.careermate.notificationservice.service.NotificationService;
 @RestController
 @RequestMapping("/notifications")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class NotificationApiController {
     
     private final NotificationService notificationService;

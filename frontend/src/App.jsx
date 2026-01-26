@@ -70,31 +70,31 @@ import { DarkModeProvider } from './contexts/DarkModeContext';
 // Protected Route Component
 function ProtectedRoute({ children, allowedRoles = [] }) {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
-  
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
-  
+
   if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
     return <Navigate to="/" replace />;
   }
-  
+
   return children;
 }
 
 function AppRoutes() {
   const { user } = useAuth();
-  
+
   return (
     <Routes>
       {/* Public Routes */}
       <Route path="/login" element={!user ? <Login /> : <Navigate to="/" replace />} />
       <Route path="/register" element={!user ? <Register /> : <Navigate to="/" replace />} />
-      
+
       {/* Student Routes */}
       <Route
         path="/student/*"
@@ -120,7 +120,7 @@ function AppRoutes() {
                 <Route path="cv-templates/:id" element={<CVTemplateEditor />} />
                 <Route path="courses" element={<Courses />} />
                 <Route path="courses/:id" element={<CourseDetail />} />
-                <Route path="courses/:courseId/learn/:enrollmentId/:lessonId" element={<CoursePlayer />} />
+                <Route path="courses/:courseId/learn/:enrollmentId/:lessonId?" element={<CoursePlayer />} />
                 <Route path="challenges" element={<Challenges />} />
                 <Route path="challenges/:id" element={<ChallengeDetail />} />
                 <Route path="packages" element={<Packages />} />
@@ -133,7 +133,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      
+
       {/* Recruiter Routes */}
       <Route
         path="/recruiter/*"
@@ -151,6 +151,7 @@ function AppRoutes() {
                 <Route path="profile" element={<RecruiterProfile />} />
                 <Route path="articles/create" element={<RecruiterCreateArticle />} />
                 <Route path="articles" element={<MyArticles />} />
+                <Route path="articles/:id" element={<ArticleDetail />} />
                 <Route path="messages" element={<RecruiterMessages />} />
                 <Route path="" element={<Navigate to="dashboard" replace />} />
               </Routes>
@@ -158,7 +159,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      
+
       {/* Admin Routes */}
       <Route
         path="/admin/*"
@@ -170,6 +171,7 @@ function AppRoutes() {
                 <Route path="users" element={<UserManagement />} />
                 <Route path="jobs" element={<JobManagement />} />
                 <Route path="articles" element={<ArticleManagement />} />
+                <Route path="articles/:id" element={<ArticleDetail />} />
                 <Route path="articles/create" element={<AdminCreateArticle />} />
                 <Route path="cv-templates" element={<CVTemplatesManagement />} />
                 <Route path="packages" element={<PackagesManagement />} />
@@ -181,7 +183,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      
+
       {/* Shared Routes - Notifications (accessible by all authenticated users) */}
       <Route
         path="/notifications"
@@ -205,7 +207,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      
+
       {/* Default Route */}
       <Route
         path="/"

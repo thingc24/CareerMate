@@ -198,19 +198,47 @@ public class StudentProfileService {
         // Save file using FileStorageService
         String filePath = fileStorageService.storeFile(file, "avatars");
 
-        // Update profile with avatar URL
+        // Get current user and profile
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
         StudentProfile profile = getCurrentStudentProfile();
-        // Delete old avatar if exists
+        
+        // Delete old avatars if exist
         if (profile.getAvatarUrl() != null && !profile.getAvatarUrl().isEmpty()) {
             try {
                 fileStorageService.deleteFile(profile.getAvatarUrl());
             } catch (Exception e) {
-                log.warn("Could not delete old avatar: {}", e.getMessage());
+                log.warn("Could not delete old profile avatar: {}", e.getMessage());
             }
         }
+        if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {
+            try {
+                fileStorageService.deleteFile(user.getAvatarUrl());
+            } catch (Exception e) {
+                log.warn("Could not delete old user avatar: {}", e.getMessage());
+            }
+        }
+        
+        // Update both User and StudentProfile with avatar URL
         profile.setAvatarUrl(filePath);
+        user.setAvatarUrl(filePath);
+        
         studentProfileRepository.save(profile);
+        userRepository.save(user);
+        
+        log.info("Avatar uploaded and synced to both User and StudentProfile: {}", filePath);
 
         return filePath;
+    }
+
+    public StudentProfile getStudentProfileById(UUID studentId) {
+        return studentProfileRepository.findById(studentId).orElse(null);
+    }
+
+    public StudentProfile getStudentProfileByUserId(UUID userId) {
+        return studentProfileRepository.findByUserId(userId).orElse(null);
     }
 }

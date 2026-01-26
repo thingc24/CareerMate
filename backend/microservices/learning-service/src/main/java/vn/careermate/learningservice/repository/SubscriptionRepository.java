@@ -16,15 +16,18 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
     List<Subscription> findByUserIdAndStatus(UUID userId, Subscription.SubscriptionStatus status);
     List<Subscription> findByUserId(UUID userId);
     
+    @Query("SELECT s FROM Subscription s LEFT JOIN FETCH s.packageEntity WHERE s.userId = :userId")
+    List<Subscription> findByUserIdWithPackage(@Param("userId") UUID userId);
+    
+    // Note: Subscription now uses userId (UUID) directly, not user entity
     @Query("SELECT DISTINCT s FROM Subscription s " +
-           "LEFT JOIN FETCH s.user " +
            "LEFT JOIN FETCH s.packageEntity " +
            "WHERE s.status = :status " +
            "ORDER BY s.createdAt DESC")
     List<Subscription> findByStatusWithDetails(@Param("status") Subscription.SubscriptionStatus status);
     
+    // Note: Removed JOIN with user entity (now using userId UUID)
     @Query("SELECT DISTINCT s FROM Subscription s " +
-           "LEFT JOIN FETCH s.user " +
            "LEFT JOIN FETCH s.packageEntity " +
            "ORDER BY s.createdAt DESC")
     List<Subscription> findAllWithDetails();

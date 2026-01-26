@@ -121,4 +121,51 @@ public class CompanyService {
             return 0L;
         }
     }
+
+    @Transactional
+    public Company createOrUpdateCompany(Company company) {
+        log.info("Processing createOrUpdateCompany request. ID: {}, Name: {}", company.getId(), company.getName());
+        
+        if (company.getId() != null) {
+            // Update existing
+            return companyRepository.findById(company.getId())
+                    .map(existing -> {
+                        log.info("Found existing company {}. Updating fields.", existing.getId());
+                        if (company.getName() != null) existing.setName(company.getName());
+                        if (company.getDescription() != null) existing.setDescription(company.getDescription());
+                        if (company.getWebsiteUrl() != null) existing.setWebsiteUrl(company.getWebsiteUrl());
+                        if (company.getLogoUrl() != null) existing.setLogoUrl(company.getLogoUrl());
+                        if (company.getIndustry() != null) existing.setIndustry(company.getIndustry());
+                        if (company.getCompanySize() != null) existing.setCompanySize(company.getCompanySize());
+                        if (company.getFoundedYear() != null) existing.setFoundedYear(company.getFoundedYear());
+                        if (company.getHeadquarters() != null) existing.setHeadquarters(company.getHeadquarters());
+                        
+                        Company saved = companyRepository.save(existing);
+                        log.info("Company {} updated successfully.", saved.getId());
+                        return saved;
+                    })
+                    .orElseGet(() -> {
+                        log.warn("Company ID {} provided but not found. Creating new company.", company.getId());
+                        Company saved = companyRepository.save(company);
+                        log.info("New company created with ID: {}", saved.getId());
+                        return saved;
+                    });
+        } else {
+            // Create new
+            log.info("No ID provided. Creating new company.");
+            Company saved = companyRepository.save(company);
+            log.info("New company created with ID: {}", saved.getId());
+            return saved;
+        }
+    }
+    @Transactional(readOnly = true)
+    public long getCompanyCount() {
+        return companyRepository.count();
+    }
+
+    @Transactional
+    public void deleteAllCompanies() {
+        log.warn("DELETING ALL COMPANIES (Cleanup Action)");
+        companyRepository.deleteAll();
+    }
 }

@@ -8,8 +8,16 @@ export default function ChatWidget({ role = 'STUDENT' }) {
   const [loading, setLoading] = useState(false);
   const [uploadingCV, setUploadingCV] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+
+  // Draggable state
+  const [position, setPosition] = useState({ bottom: 24, right: 24 }); // Initial position in px from edge
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [hasMoved, setHasMoved] = useState(false);
+
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const buttonRef = useRef(null);
 
   useEffect(() => {
     // Initialize with welcome message based on role
@@ -32,6 +40,68 @@ export default function ChatWidget({ role = 'STUDENT' }) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isOpen]);
+
+  // Handle global move/up events for smoother dragging
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isDragging) return;
+      e.preventDefault(); // Prevent text selection
+
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      const deltaX = dragStart.x - clientX;
+      const deltaY = dragStart.y - clientY;
+
+      if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) {
+        setHasMoved(true);
+      }
+
+      setPosition(prev => ({
+        bottom: prev.bottom + deltaY,
+        right: prev.right + deltaX
+      }));
+
+      setDragStart({ x: clientX, y: clientY });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('touchmove', handleMouseMove, { passive: false });
+      window.addEventListener('touchend', handleMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleMouseMove);
+      window.removeEventListener('touchend', handleMouseUp);
+    };
+  }, [isDragging, dragStart]);
+
+
+  const handleMouseDown = (e) => {
+    // Only drag if left click
+    if (e.type === 'mousedown' && e.button !== 0) return;
+
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+    setIsDragging(true);
+    setDragStart({ x: clientX, y: clientY });
+    setHasMoved(false);
+  };
+
+  const handleButtonClick = (e) => {
+    if (!hasMoved) {
+      setIsOpen(!isOpen);
+    }
+  };
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -60,13 +130,9 @@ export default function ChatWidget({ role = 'STUDENT' }) {
       };
       setMessages((prev) => [...prev, userMessage]);
 
-      // Upload CV
       const cv = await api.uploadCV(selectedFile);
-      
-      // Analyze CV
       const analysis = await api.analyzeCV(cv.id);
-      
-      // Check if analysis has error
+
       if (analysis.error) {
         const errorMessage = {
           role: 'assistant',
@@ -77,38 +143,24 @@ export default function ChatWidget({ role = 'STUDENT' }) {
         const score = analysis.score || analysis.overallScore;
         const summary = analysis.summary || 'CV của bạn có tiềm năng nhưng cần cải thiện một số điểm.';
         const suggestions = analysis.suggestions || [];
-        
+
         let content = `✅ Đã phân tích CV của bạn!\n\n`;
-        if (score !== null && score !== undefined) {
-          content += `📊 Điểm số: ${score}/100\n\n`;
-        } else {
-          content += `📊 Điểm số: Đang xử lý...\n\n`;
-        }
+        content += score !== undefined ? `📊 Điểm số: ${score}/100\n\n` : `📊 Điểm số: Đang xử lý...\n\n`;
         content += `${summary}\n\n`;
-        
         if (suggestions.length > 0) {
           content += `💡 Gợi ý:\n${suggestions.slice(0, 3).map((s, i) => `${i + 1}. ${s}`).join('\n')}\n\n`;
         }
-        
         content += `Xem chi tiết tại trang CV của bạn.`;
-        
-        const assistantMessage = {
-          role: 'assistant',
-          content: content,
-        };
-        
-        setMessages((prev) => [...prev, assistantMessage]);
+
+        setMessages((prev) => [...prev, { role: 'assistant', content }]);
       }
       setSelectedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (error) {
-      const errorMessage = {
+      setMessages((prev) => [...prev, {
         role: 'assistant',
         content: '❌ Lỗi: ' + (error.response?.data?.message || 'Không thể phân tích CV. Vui lòng thử lại.'),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      }]);
     } finally {
       setUploadingCV(false);
     }
@@ -124,58 +176,34 @@ export default function ChatWidget({ role = 'STUDENT' }) {
     setLoading(true);
 
     try {
-      // Use api service to ensure token is properly handled
       const token = localStorage.getItem('token');
-      if (!token) {
-        const userStr = localStorage.getItem('user');
-        if (!userStr) {
-          throw new Error('Chưa đăng nhập. Vui lòng đăng nhập lại.');
-        }
-        throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-      }
+      if (!token) throw new Error('Chưa đăng nhập. Vui lòng đăng nhập lại.');
 
-      // Use api.client to ensure proper headers and interceptors
       const response = await api.client.post('/ai/chat', {
         message: userMessage.content,
         context: role.toLowerCase(),
         role: role,
       });
 
-      // Response is already parsed by axios
       const data = response.data;
       const aiResponse = data.response || data.message || 'Xin lỗi, tôi không thể trả lời ngay bây giờ.';
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: aiResponse,
-        },
-      ]);
+      setMessages((prev) => [...prev, { role: 'assistant', content: aiResponse }]);
     } catch (error) {
       console.error('Error calling AI chat:', error);
-      
-      // Get error message
       let errorMessage = error.message || 'Không thể kết nối với server';
-      if (error.response?.data?.error) {
-        errorMessage = error.response.data.error;
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      }
-      
-      // Fallback response based on role
+      if (error.response?.data?.error) errorMessage = error.response.data.error;
+      else if (error.response?.data?.message) errorMessage = error.response.data.message;
+
       const fallbackMessages = {
-        STUDENT: 'Cảm ơn bạn đã hỏi! Hiện tại dịch vụ AI đang gặp sự cố. Bạn có thể:\n\n• Upload CV để phân tích\n• Hỏi về kỹ năng cần phát triển\n• Hỏi về lộ trình nghề nghiệp\n\nVui lòng thử lại sau.',
-        RECRUITER: 'Cảm ơn bạn đã hỏi! Hiện tại dịch vụ AI đang gặp sự cố. Tôi có thể giúp bạn tìm ứng viên phù hợp hoặc phân tích CV. Vui lòng thử lại sau.',
-        ADMIN: 'Cảm ơn bạn đã hỏi! Hiện tại dịch vụ AI đang gặp sự cố. Tôi có thể hỗ trợ bạn quản lý hệ thống và phân tích dữ liệu. Vui lòng thử lại sau.',
+        STUDENT: 'Cảm ơn bạn đã hỏi! Hiện tại dịch vụ AI đang gặp sự cố. Bạn có thể:\n\n• Upload CV để phân tích\n• Hỏi về kỹ năng cần phát triển\n• Hỏi về lộ trình nghề nghiệp',
+        RECRUITER: 'Cảm ơn bạn đã hỏi! Hiện tại dịch vụ AI đang gặp sự cố. Tôi có thể giúp bạn tìm ứng viên phù hợp hoặc phân tích CV.',
+        ADMIN: 'Cảm ơn bạn đã hỏi! Hiện tại dịch vụ AI đang gặp sự cố. Tôi có thể hỗ trợ bạn quản lý hệ thống và phân tích dữ liệu.',
       };
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: fallbackMessages[role] || `Xin lỗi, có lỗi xảy ra: ${errorMessage}. Vui lòng thử lại sau.`,
-        },
-      ]);
+      setMessages((prev) => [...prev, {
+        role: 'assistant',
+        content: fallbackMessages[role] || `Xin lỗi, có lỗi xảy ra: ${errorMessage}. Vui lòng thử lại sau.`,
+      }]);
     } finally {
       setLoading(false);
     }
@@ -201,89 +229,111 @@ export default function ChatWidget({ role = 'STUDENT' }) {
 
   return (
     <>
-      {/* Chat Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg hover:shadow-xl transition-all hover:scale-110 flex items-center justify-center"
-        aria-label="Mở chat AI"
-        title="Chat AI"
+      {/* Draggable Chat Button */}
+      <div
+        style={{
+          position: 'fixed',
+          bottom: `${position.bottom}px`,
+          right: `${position.right}px`,
+          touchAction: 'none', // Prevent scrolling on mobile while dragging
+          zIndex: 50 // High z-index but below modal
+        }}
+        className={`${isDragging ? 'cursor-grabbing scale-105' : 'cursor-pointer hover:scale-110'} transition-transform duration-200`}
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleMouseDown}
       >
-        {isOpen ? (
-          <>
+        <button
+          ref={buttonRef}
+          onClick={handleButtonClick}
+          // Remove onClick from here and handle in onMouseUp logic? 
+          // Better: use handleButtonClick which checks 'hasMoved'
+          className="h-14 w-14 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg flex items-center justify-center hover:shadow-xl active:shadow-md"
+          aria-label="Mở chat AI"
+          title="Chat AI (Nhấn giữ để di chuyển)"
+        >
+          {isOpen ? (
             <i className="fas fa-times text-xl"></i>
-            <span className="sr-only">Đóng chat</span>
-          </>
-        ) : (
-          <>
+          ) : (
             <i className="fas fa-robot text-xl"></i>
-            <span className="sr-only">Mở chat AI</span>
-          </>
-        )}
-      </button>
+          )}
+        </button>
+      </div>
 
-      {/* Chat Window */}
+      {/* Chat Window - Anchored to button or fixed bottom right? 
+          User asked to move button. Window usually stays fixed or follows button?
+          If button moves up, window should open near it.
+          Let's make window follow button but keep inside viewport.
+      */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-96 h-[600px] bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col">
+        <div
+          style={{
+            position: 'fixed',
+            bottom: `${position.bottom + 70}px`, // Open above button
+            right: `${position.right}px`,
+            zIndex: 50
+          }}
+          className="w-96 h-[500px] md:h-[600px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden animate-scale-in origin-bottom-right"
+        >
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-t-lg flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 flex items-center justify-between shadow-md">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
                 <i className="fas fa-robot text-sm"></i>
               </div>
               <div>
-                <h3 className="font-semibold">
-                  {role === 'STUDENT' && 'Career AI Coach'}
-                  {role === 'RECRUITER' && 'Recruiter AI Assistant'}
-                  {role === 'ADMIN' && 'Admin AI Assistant'}
-                </h3>
-                <p className="text-xs text-white/80">Đang hoạt động</p>
+                <h3 className="font-bold text-sm">Career AI Coach</h3>
+                <p className="text-[10px] text-white/80 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+                  Online
+                </p>
               </div>
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="text-white hover:text-gray-200"
+              className="text-white/80 hover:text-white p-1 hover:bg-white/10 rounded transition"
             >
               <i className="fas fa-times"></i>
             </button>
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 custom-scrollbar">
             {messages.map((msg, idx) => (
               <div
                 key={idx}
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
+                {msg.role !== 'user' && (
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white text-[10px] mr-2 mt-1 flex-shrink-0">
+                    <i className="fas fa-robot"></i>
+                  </div>
+                )}
                 <div
-                  className={`max-w-[80%] rounded-lg p-3 ${
-                    msg.role === 'user'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-gray-900 border border-gray-200'
-                  }`}
+                  className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm shadow-sm ${msg.role === 'user'
+                      ? 'bg-blue-600 text-white rounded-br-sm'
+                      : 'bg-white text-gray-800 border border-gray-100 rounded-bl-sm'
+                    }`}
                 >
                   {msg.file && (
-                    <div className="mb-2 text-xs opacity-80">
-                      <i className="fas fa-file-pdf mr-1"></i>
-                      {msg.file}
+                    <div className="mb-2 pb-2 border-b border-white/20 flex items-center gap-2">
+                      <i className="fas fa-file-pdf"></i>
+                      <span className="font-medium truncate">{msg.file}</span>
                     </div>
                   )}
-                  <div className="whitespace-pre-wrap text-sm">{msg.content}</div>
+                  <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>
                 </div>
               </div>
             ))}
             {loading && (
               <div className="flex justify-start">
-                <div className="bg-white rounded-lg p-3 border border-gray-200">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white text-[10px] mr-2 mt-1 flex-shrink-0">
+                  <i className="fas fa-robot"></i>
+                </div>
+                <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm rounded-bl-sm">
                   <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                      style={{ animationDelay: '0.1s' }}
-                    ></div>
-                    <div
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                      style={{ animationDelay: '0.2s' }}
-                    ></div>
+                    <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce"></div>
+                    <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce delay-75"></div>
+                    <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce delay-150"></div>
                   </div>
                 </div>
               </div>
@@ -291,113 +341,90 @@ export default function ChatWidget({ role = 'STUDENT' }) {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* CV Upload (Student only) */}
-          {role === 'STUDENT' && (
-            <div className="px-4 pt-2 border-t border-gray-200">
-              {selectedFile ? (
-                <div className="mb-2 p-2 bg-blue-50 rounded border border-blue-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <i className="fas fa-file-pdf text-red-600"></i>
-                      <span className="text-xs text-gray-700 truncate">{selectedFile.name}</span>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setSelectedFile(null);
-                        if (fileInputRef.current) fileInputRef.current.value = '';
-                      }}
-                      className="text-gray-500 hover:text-gray-700 ml-2"
-                    >
-                      <i className="fas fa-times text-xs"></i>
-                    </button>
-                  </div>
-                  <button
-                    onClick={handleUploadCV}
-                    disabled={uploadingCV}
-                    className="w-full mt-2 px-3 py-1.5 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition disabled:opacity-50"
-                  >
-                    {uploadingCV ? (
-                      <>
-                        <i className="fas fa-spinner fa-spin mr-1"></i>Đang phân tích...
-                      </>
-                    ) : (
-                      <>
-                        <i className="fas fa-upload mr-1"></i>Phân tích CV
-                      </>
-                    )}
-                  </button>
-                </div>
-              ) : (
-                <label className="block">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".pdf"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full px-3 py-2 bg-gray-100 text-gray-700 text-xs rounded hover:bg-gray-200 transition flex items-center justify-center gap-2"
-                  >
-                    <i className="fas fa-file-pdf text-red-600"></i>
-                    Upload CV PDF để phân tích
-                  </button>
-                </label>
-              )}
-            </div>
-          )}
-
-          {/* Quick Questions */}
-          {messages.length === 1 && (
-            <div className="px-4 pb-2">
-              <p className="text-xs text-gray-500 mb-2">Câu hỏi nhanh:</p>
-              <div className="flex flex-col gap-1">
+          {/* Actions Area */}
+          <div className="p-3 bg-white border-t border-gray-100">
+            {/* Quick Questions (Horizontal Scroll) */}
+            {messages.length === 1 && (
+              <div className="flex gap-2 mb-3 overflow-x-auto pb-1 custom-scrollbar hide-scrollbar">
                 {(quickQuestions[role] || []).map((q, idx) => (
                   <button
                     key={idx}
                     onClick={() => setInput(q)}
-                    className="text-left px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded hover:bg-gray-200 transition"
+                    className="whitespace-nowrap px-3 py-1.5 bg-blue-50 text-blue-700 text-xs rounded-full hover:bg-blue-100 transition border border-blue-100 flex-shrink-0"
                   >
                     {q}
                   </button>
                 ))}
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Input */}
-          <form onSubmit={handleSend} className="p-4 border-t border-gray-200 bg-white rounded-b-lg">
-            <div className="flex gap-2">
+            {/* Upload CV - Compact */}
+            {role === 'STUDENT' && !selectedFile && (
+              <label className="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition mb-2 border border-dashed border-gray-200">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-500">
+                  <i className="fas fa-file-pdf"></i>
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-semibold text-gray-700">Phân tích CV</p>
+                  <p className="text-[10px] text-gray-500">Tải lên PDF để AI chấm điểm</p>
+                </div>
+                <i className="fas fa-arrow-right text-gray-400 text-xs"></i>
+              </label>
+            )}
+
+            {/* Selected File Preview */}
+            {selectedFile && (
+              <div className="flex items-center justify-between p-2 bg-blue-50 rounded-lg border border-blue-100 mb-2">
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <i className="fas fa-file-pdf text-red-500"></i>
+                  <span className="text-xs font-medium truncate max-w-[150px]">{selectedFile.name}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={handleUploadCV}
+                    disabled={uploadingCV}
+                    className="bg-blue-600 text-white text-xs px-2 py-1 rounded hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {uploadingCV ? <i className="fas fa-spinner fa-spin"></i> : 'Gửi'}
+                  </button>
+                  <button
+                    onClick={() => setSelectedFile(null)}
+                    className="text-gray-400 hover:text-red-500 p-1"
+                  >
+                    <i className="fas fa-times"></i>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Input */}
+            <form onSubmit={handleSend} className="relative">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Nhập câu hỏi..."
-                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Nhập tin nhắn..."
+                className="w-full pl-4 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-sm transition-all"
                 disabled={loading}
               />
               <button
                 type="submit"
                 disabled={loading || !input.trim()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[44px]"
-                title="Gửi tin nhắn"
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:bg-gray-300"
               >
-                {loading ? (
-                  <i className="fas fa-spinner fa-spin"></i>
-                ) : (
-                  <>
-                    <i className="fas fa-paper-plane"></i>
-                    <span className="sr-only">Gửi</span>
-                  </>
-                )}
+                {loading ? <i className="fas fa-spinner fa-spin text-xs"></i> : <i className="fas fa-paper-plane text-xs"></i>}
               </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       )}
     </>
   );
 }
-

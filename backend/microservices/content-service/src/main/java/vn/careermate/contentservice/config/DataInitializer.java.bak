@@ -1,0 +1,135 @@
+package vn.careermate.contentservice.config;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
+import vn.careermate.contentservice.model.Article;
+import vn.careermate.contentservice.model.Company;
+import vn.careermate.contentservice.repository.ArticleRepository;
+import vn.careermate.contentservice.repository.CompanyRepository;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+@Component
+@RequiredArgsConstructor
+@Slf4j
+public class DataInitializer implements CommandLineRunner {
+
+    private final ArticleRepository articleRepository;
+    private final CompanyRepository companyRepository;
+
+    @Override
+    public void run(String... args) throws Exception {
+        try {
+            if (articleRepository.count() == 0) {
+                log.info("Start seeding default articles...");
+                seedArticles();
+                log.info("Seeding articles completed.");
+            }
+
+            if (companyRepository.count() == 0) {
+                log.info("Start seeding default companies...");
+                seedCompanies();
+                log.info("Seeding companies completed.");
+            }
+        } catch (Exception e) {
+            log.error("Error seeding data: {}", e.getMessage(), e);
+        }
+    }
+
+    private void seedArticles() {
+        UUID authorId = UUID.randomUUID(); // Placeholder author ID
+
+        Article article1 = Article.builder()
+                .title("Top 10 Kỹ năng mềm cần thiết cho sinh viên mới ra trường")
+                .excerpt("Khám phá những kỹ năng quan trọng giúp bạn hòa nhập nhanh chóng và thành công trong môi trường công sở.")
+                .content("<p>Sinh viên mới ra trường thường gặp nhiều bỡ ngỡ...</p><h3>1. Kỹ năng giao tiếp</h3><p>Đây là kỹ năng quan trọng nhất...</p>")
+                .category("SKILLS")
+                .authorId(authorId)
+                .status(Article.ArticleStatus.PUBLISHED)
+                .viewsCount(150)
+                .thumbnailUrl("https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2940&auto=format&fit=crop")
+                .publishedAt(LocalDateTime.now().minusDays(2))
+                .createdAt(LocalDateTime.now().minusDays(5))
+                .build();
+
+        Article article2 = Article.builder()
+                .title("Cách viết CV ấn tượng với nhà tuyển dụng")
+                .excerpt("Hướng dẫn chi tiết cách trình bày CV chuyên nghiệp, làm nổi bật thế mạnh của bản thân.")
+                .content("<p>CV là cầu nối đầu tiên giữa bạn và nhà tuyển dụng...</p><h3>Cấu trúc CV chuẩn</h3><p>...</p>")
+                .category("CV")
+                .authorId(authorId)
+                .status(Article.ArticleStatus.PUBLISHED)
+                .viewsCount(320)
+                .thumbnailUrl("https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=2940&auto=format&fit=crop")
+                .publishedAt(LocalDateTime.now().minusDays(1))
+                .createdAt(LocalDateTime.now().minusDays(3))
+                .build();
+
+        Article article3 = Article.builder()
+                .title("Bí quyết phỏng vấn thành công tại các tập đoàn lớn")
+                .excerpt("Những câu hỏi thường gặp và cách trả lời thông minh để ghi điểm tuyệt đối.")
+                .content("<p>Phỏng vấn không chỉ là hỏi và đáp...</p><h3>STAR Method</h3><p>Sử dụng phương pháp STAR để trả lời...</p>")
+                .category("INTERVIEW")
+                .authorId(authorId)
+                .status(Article.ArticleStatus.PUBLISHED)
+                .viewsCount(500)
+                .thumbnailUrl("https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=2869&auto=format&fit=crop")
+                .publishedAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now().minusDays(1))
+                .build();
+
+        articleRepository.saveAll(List.of(article1, article2, article3));
+    }
+
+    private void seedCompanies() {
+        Company comp1 = new Company();
+        comp1.setName("FPT Software");
+        comp1.setDescription("Công ty phần mềm lớn nhất Việt Nam, cung cấp dịch vụ CNTT toàn cầu.");
+        comp1.setWebsiteUrl("https://fpt-software.com");
+        comp1.setLogoUrl("https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/FPT_logo_2010.svg/1200px-FPT_logo_2010.svg.png");
+        comp1.setIndustry("Information Technology");
+        comp1.setCompanySize("ENTERPRISE");
+        comp1.setFoundedYear(1999);
+        comp1.setHeadquarters("Hà Nội, Việt Nam");
+        comp1.setCreatedAt(LocalDateTime.now());
+
+        Company comp2 = new Company();
+        comp2.setName("VNG Corporation");
+        comp2.setDescription("Kỳ lân công nghệ đầu tiên của Việt Nam, sở hữu Zalo, Zing, VNGGames.");
+        comp2.setWebsiteUrl("https://vng.com.vn");
+        comp2.setLogoUrl("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/VNG_Corp_Logo_2024.svg/2560px-VNG_Corp_Logo_2024.svg.png");
+        comp2.setIndustry("Technology & Entertainment");
+        comp2.setCompanySize("ENTERPRISE");
+        comp2.setFoundedYear(2004);
+        comp2.setHeadquarters("TP. Hồ Chí Minh, Việt Nam");
+        comp2.setCreatedAt(LocalDateTime.now());
+
+        Company comp3 = new Company();
+        comp3.setName("Viettel Group");
+        comp3.setDescription("Tập đoàn Viễn thông và Công nghệ thông tin lớn nhất Việt Nam.");
+        comp3.setWebsiteUrl("https://viettel.com.vn");
+        comp3.setLogoUrl("https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Viettel_logo_2021.svg/2560px-Viettel_logo_2021.svg.png");
+        comp3.setIndustry("Telecommunications");
+        comp3.setCompanySize("ENTERPRISE");
+        comp3.setFoundedYear(1989);
+        comp3.setHeadquarters("Hà Nội, Việt Nam");
+        comp3.setCreatedAt(LocalDateTime.now());
+
+        Company comp4 = new Company();
+        comp4.setName("Momo");
+        comp4.setDescription("Siêu ứng dụng thanh toán hàng đầu Việt Nam.");
+        comp4.setWebsiteUrl("https://momo.vn");
+        comp4.setLogoUrl("https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png");
+        comp4.setIndustry("Fintech");
+        comp4.setCompanySize("LARGE");
+        comp4.setFoundedYear(2007);
+        comp4.setHeadquarters("TP. Hồ Chí Minh, Việt Nam");
+        comp4.setCreatedAt(LocalDateTime.now());
+
+        companyRepository.saveAll(List.of(comp1, comp2, comp3, comp4));
+    }
+}

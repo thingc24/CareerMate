@@ -18,7 +18,6 @@ import java.util.UUID;
 @RequestMapping("/recruiters")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "*")
 public class RecruiterController {
 
     // TODO: Job and Application endpoints have been moved to job-service

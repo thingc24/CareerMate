@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/companies")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class CompanyRatingController {
 
     private final CompanyRatingService ratingService;
@@ -55,7 +54,7 @@ public class CompanyRatingController {
     }
 
     @GetMapping("/{companyId}/ratings/my")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Object>> getMyRating(@PathVariable UUID companyId) {
         CompanyRating rating = ratingService.getMyRating(companyId);
         if (rating == null) {
@@ -81,17 +80,24 @@ public class CompanyRatingController {
     }
 
     @PostMapping("/{companyId}/ratings")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CompanyRating> createOrUpdateRating(
             @PathVariable UUID companyId,
-            @RequestParam Integer rating,
-            @RequestParam(required = false) String reviewText
+            @RequestBody Map<String, Object> payload
     ) {
+        Integer rating = (Integer) payload.get("rating");
+        String reviewText = (String) payload.get("comment"); // Frontend sends 'comment'
+        
+        // Handle case where frontend might send 'reviewText' instead
+        if (reviewText == null && payload.containsKey("reviewText")) {
+            reviewText = (String) payload.get("reviewText");
+        }
+        
         return ResponseEntity.ok(ratingService.createOrUpdateRating(companyId, rating, reviewText));
     }
     
     @DeleteMapping("/{companyId}/ratings")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, String>> deleteMyRating(@PathVariable UUID companyId) {
         ratingService.deleteMyRating(companyId);
         return ResponseEntity.ok(Map.of("message", "Rating deleted successfully"));

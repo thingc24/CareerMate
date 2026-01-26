@@ -16,7 +16,7 @@
     <artifactId>learning-service</artifactId>
     <version>1.0.0</version>
     <name>Learning Service</name>
-    <description>Course & Challenge Management Microservice</description>
+    <description>Course &amp; Challenge Management Microservice</description>
     
     <properties>
         <java.version>17</java.version>

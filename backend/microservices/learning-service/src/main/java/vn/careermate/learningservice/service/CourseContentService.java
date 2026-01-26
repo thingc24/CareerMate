@@ -62,15 +62,18 @@ public class CourseContentService {
 
         // Verify enrollment belongs to current user
         UUID currentStudentId = getCurrentStudentId();
-        // Force initialize student to avoid lazy loading issues
-        UUID enrollmentStudentId = enrollment.getStudent().getId();
+        // Student is now UUID (studentId)
+        UUID enrollmentStudentId = enrollment.getStudentId();
         if (!enrollmentStudentId.equals(currentStudentId)) {
             throw new RuntimeException("Unauthorized access to enrollment");
         }
 
         Lesson lesson = getLessonById(lessonId);
         
-        Optional<LessonProgress> existingProgress = progressRepository.findByEnrollmentIdAndLessonId(enrollmentId, lessonId);
+        // Use studentId from enrollment already loaded above
+        UUID studentId = enrollment.getStudentId();
+        
+        Optional<LessonProgress> existingProgress = progressRepository.findByStudentIdAndLessonId(studentId, lessonId);
         
         LessonProgress progress;
         if (existingProgress.isPresent()) {
@@ -93,7 +96,7 @@ public class CourseContentService {
                 (lesson.getDurationMinutes() != null ? lesson.getDurationMinutes() * 60 : 0);
             
             progress = LessonProgress.builder()
-                    .enrollment(enrollment)
+                    .studentId(currentStudentId)
                     .lesson(lesson)
                     .watchTimeSeconds(watchTime)
                     .lastPositionSeconds(watchTime)
@@ -127,7 +130,7 @@ public class CourseContentService {
                     .orElseThrow(() -> new RuntimeException("Enrollment not found"));
             
             UUID currentStudentId = getCurrentStudentId();
-            UUID enrollmentStudentId = enrollment.getStudent().getId();
+            UUID enrollmentStudentId = enrollment.getStudentId();
             if (!enrollmentStudentId.equals(currentStudentId)) {
                 throw new RuntimeException("Unauthorized access to enrollment");
             }
@@ -155,17 +158,55 @@ public class CourseContentService {
         }
     }
 
+    @Transactional
+    public LessonProgress completeLessonByLessonId(UUID lessonId) {
+        UUID studentId = getCurrentStudentId();
+        Optional<LessonProgress> existing = progressRepository.findByStudentIdAndLessonId(studentId, lessonId);
+        
+        if (existing.isPresent()) {
+            LessonProgress progress = existing.get();
+            if (!progress.getIsCompleted()) {
+                progress.setIsCompleted(true);
+                progress.setCompletedAt(LocalDateTime.now());
+                progress = progressRepository.save(progress);
+                updateEnrollmentProgress(studentId, lessonId);
+            }
+            return progress;
+        } else {
+            LessonProgress progress = LessonProgress.builder()
+                    .studentId(studentId)
+                    .lesson(lessonRepository.findById(lessonId)
+                            .orElseThrow(() -> new RuntimeException("Lesson not found")))
+                    .isCompleted(true)
+                    .completedAt(LocalDateTime.now())
+                    .build();
+            progress = progressRepository.save(progress);
+            updateEnrollmentProgress(studentId, lessonId);
+            return progress;
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public LessonProgress getLessonProgressByLessonId(UUID lessonId) {
+        UUID studentId = getCurrentStudentId();
+        Optional<LessonProgress> progress = progressRepository.findByStudentIdAndLessonId(studentId, lessonId);
+        return progress.orElse(null);
+    }
+
     @Transactional(readOnly = true)
     public List<LessonProgress> getEnrollmentProgress(UUID enrollmentId) {
         UUID currentStudentId = getCurrentStudentId();
         CourseEnrollment enrollment = enrollmentRepository.findById(enrollmentId)
                 .orElseThrow(() -> new RuntimeException("Enrollment not found"));
         
-        if (!enrollment.getStudent().getId().equals(currentStudentId)) {
+        if (!enrollment.getStudentId().equals(currentStudentId)) {
             throw new RuntimeException("Unauthorized access to enrollment");
         }
         
-        List<LessonProgress> progressList = progressRepository.findByEnrollmentId(enrollmentId);
+        // Use studentId from enrollment already loaded above
+        UUID studentId = enrollment.getStudentId();
+        
+        List<LessonProgress> progressList = progressRepository.findByStudentId(studentId);
         
         // Force initialize basic fields to avoid lazy loading issues
         progressList.forEach(progress -> {
@@ -181,28 +222,38 @@ public class CourseContentService {
     }
 
     public LessonProgress getLessonProgress(UUID enrollmentId, UUID lessonId) {
-        return progressRepository.findByEnrollmentIdAndLessonId(enrollmentId, lessonId)
+        // Get studentId from enrollment
+        CourseEnrollment enrollment = enrollmentRepository.findById(enrollmentId)
+                .orElse(null);
+        if (enrollment == null) {
+            return null;
+        }
+        UUID studentId = enrollment.getStudentId();
+        return progressRepository.findByStudentIdAndLessonId(studentId, lessonId)
                 .orElse(null);
     }
 
     @Transactional
     public LessonProgress getOrCreateLessonProgress(UUID enrollmentId, UUID lessonId) {
-        Optional<LessonProgress> existing = progressRepository.findByEnrollmentIdAndLessonId(enrollmentId, lessonId);
+        CourseEnrollment enrollment = enrollmentRepository.findById(enrollmentId)
+                .orElseThrow(() -> new RuntimeException("Enrollment not found"));
+        UUID studentId = enrollment.getStudentId();
+        
+        Optional<LessonProgress> existing = progressRepository.findByStudentIdAndLessonId(studentId, lessonId);
         if (existing.isPresent()) {
             return existing.get();
         }
         
-        CourseEnrollment enrollment = enrollmentRepository.findById(enrollmentId)
-                .orElseThrow(() -> new RuntimeException("Enrollment not found"));
-        Lesson lesson = getLessonById(lessonId);
-        
+        // Verify enrollment belongs to current user
         UUID currentStudentId = getCurrentStudentId();
-        if (!enrollment.getStudent().getId().equals(currentStudentId)) {
+        if (!enrollment.getStudentId().equals(currentStudentId)) {
             throw new RuntimeException("Unauthorized access to enrollment");
         }
         
+        Lesson lesson = getLessonById(lessonId);
+        
         LessonProgress progress = LessonProgress.builder()
-                .enrollment(enrollment)
+                .studentId(currentStudentId)
                 .lesson(lesson)
                 .watchTimeSeconds(0)
                 .lastPositionSeconds(0)
@@ -217,8 +268,9 @@ public class CourseContentService {
         CourseEnrollment enrollment = enrollmentRepository.findById(enrollmentId)
                 .orElseThrow(() -> new RuntimeException("Enrollment not found"));
 
-        Long completedLessons = progressRepository.countCompletedLessonsByEnrollmentId(enrollmentId);
-        Long totalLessons = progressRepository.countTotalLessonsByEnrollmentId(enrollmentId);
+        UUID studentId = enrollment.getStudentId();
+        Long completedLessons = progressRepository.countCompletedLessonsByStudentId(studentId);
+        Long totalLessons = progressRepository.countTotalLessonsByStudentId(studentId);
 
         if (totalLessons > 0) {
             BigDecimal progress = new BigDecimal(completedLessons)
@@ -238,6 +290,24 @@ public class CourseContentService {
         } else {
             enrollment.setProgressPercentage(BigDecimal.ZERO);
             enrollmentRepository.save(enrollment);
+        }
+    }
+
+    @Transactional
+    private void updateEnrollmentProgress(UUID studentId, UUID lessonId) {
+        // Find the course for this lesson
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new RuntimeException("Lesson not found"));
+        UUID courseId = lesson.getModule().getCourse().getId();
+        
+        // Find enrollment for this course and student
+        List<CourseEnrollment> enrollments = enrollmentRepository.findByStudentId(studentId);
+        Optional<CourseEnrollment> enrollment = enrollments.stream()
+                .filter(e -> e.getCourse().getId().equals(courseId))
+                .findFirst();
+        
+        if (enrollment.isPresent()) {
+            updateCourseEnrollmentProgress(enrollment.get().getId());
         }
     }
 

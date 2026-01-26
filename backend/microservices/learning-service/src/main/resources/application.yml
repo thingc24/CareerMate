@@ -1,15 +1,22 @@
 server:
-  port: 8084
+  port: 8085
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
 
 spring:
   application:
     name: learning-service
   
   datasource:
-    url: jdbc:postgresql://localhost:5432/learning_service_db
+    url: jdbc:postgresql://localhost:5432/learning_service_db?characterEncoding=UTF-8&useUnicode=true&stringtype=unspecified
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:Aa1234}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-init-sql: SET client_encoding TO 'UTF8'
   
   jpa:
     hibernate:
@@ -19,6 +26,11 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         default_schema: learningservice
+        connection:
+          characterEncoding: UTF-8
+          useUnicode: true
+        hbm2ddl:
+          charset: UTF-8
     open-in-view: false
 
 eureka:

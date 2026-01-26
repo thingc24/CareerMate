@@ -20,9 +20,8 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/applications")
+@RequestMapping("/applications")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class ApplicationController {
 
     private final ApplicationService applicationService;
@@ -84,36 +83,8 @@ public class ApplicationController {
             log.info("Applications retrieved: {} total, {} in page", 
                 applications.getTotalElements(), applications.getContent().size());
             
-            // Detach lazy-loaded relations and ensure all fields are loaded
-            if (applications != null && applications.getContent() != null) {
-                applications.getContent().forEach(app -> {
-                    try {
-                        if (app != null) {
-                            // Force access all fields to ensure they're loaded
-                            app.getId();
-                            app.getStatus();
-                            app.getAppliedAt();
-                            
-                            if (app.getJob() != null) {
-                                app.getJob().getId();
-                                app.getJob().getTitle();
-                                app.getJob().setRecruiter(null);
-                            }
-                            if (app.getStudent() != null) {
-                                app.getStudent().getId();
-                                app.getStudent().setUser(null);
-                            }
-                            if (app.getCv() != null) {
-                                app.getCv().getId();
-                                app.getCv().getFileName();
-                                app.getCv().setStudent(null);
-                            }
-                        }
-                    } catch (Exception e) {
-                        log.warn("Error processing application: {}", e.getMessage());
-                    }
-                });
-            }
+            // TODO: Map to DTOs to avoid entity exposure
+            // Applications now use UUID references, no lazy-loading issues
             
             log.info("Returning applications successfully");
             return ResponseEntity.ok(applications);
@@ -144,31 +115,8 @@ public class ApplicationController {
             log.info("Found {} applicants (total: {})", 
                 applications.getContent().size(), applications.getTotalElements());
             
-            // Detach lazy-loaded relations
-            if (applications != null && applications.getContent() != null) {
-                applications.getContent().forEach(app -> {
-                    try {
-                        if (app != null) {
-                            app.getId();
-                            app.getStatus();
-                            if (app.getJob() != null) {
-                                app.getJob().getId();
-                                app.getJob().setRecruiter(null);
-                            }
-                            if (app.getStudent() != null) {
-                                app.getStudent().getId();
-                                app.getStudent().setUser(null);
-                            }
-                            if (app.getCv() != null) {
-                                app.getCv().getId();
-                                app.getCv().setStudent(null);
-                            }
-                        }
-                    } catch (Exception e) {
-                        log.warn("Error processing application: {}", e.getMessage());
-                    }
-                });
-            }
+            // TODO: Map to DTOs to avoid entity exposure
+            // Applications now use UUID references, no lazy-loading issues
             
             return ResponseEntity.ok(applications);
         } catch (Exception e) {
@@ -203,10 +151,8 @@ public class ApplicationController {
     public ResponseEntity<?> saveJob(@RequestParam UUID jobId, @RequestParam(required = false) String notes) {
         try {
             SavedJob savedJob = applicationService.saveJob(jobId, notes);
-            // Detach lazy-loaded relations
-            if (savedJob.getJob() != null) {
-                savedJob.getJob().setRecruiter(null);
-            }
+            // TODO: Map to DTO to avoid entity exposure
+            // SavedJob now uses UUID references, no lazy-loading issues
             return ResponseEntity.ok(savedJob);
         } catch (RuntimeException e) {
             log.error("Error saving job: {}", e.getMessage());
@@ -228,12 +174,8 @@ public class ApplicationController {
         try {
             Pageable pageable = PageRequest.of(page, size);
             Page<SavedJob> savedJobs = applicationService.getSavedJobs(pageable);
-            // Detach lazy-loaded relations
-            savedJobs.getContent().forEach(savedJob -> {
-                if (savedJob.getJob() != null) {
-                    savedJob.getJob().setRecruiter(null);
-                }
-            });
+            // TODO: Map to DTOs to avoid entity exposure
+            // SavedJob now uses UUID references, no lazy-loading issues
             return ResponseEntity.ok(savedJobs);
         } catch (Exception e) {
             log.error("Error getting saved jobs", e);

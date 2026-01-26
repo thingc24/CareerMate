@@ -15,8 +15,14 @@ import java.sql.Statement;
  * Component để tự động chạy database migration khi ứng dụng khởi động
  * Chạy migration để thêm các cột hidden vào bảng jobs và articles
  */
+/**
+ * DEPRECATED: This component is disabled because we've migrated to microservices architecture.
+ * Database migrations should now be handled by each microservice individually.
+ * 
+ * This backend (monolithic) is no longer actively used.
+ */
 @Slf4j
-@Component
+// @Component  // DISABLED - Backend cũ không còn sử dụng
 @Order(1) // Chạy sớm nhất có thể
 public class DatabaseMigrationRunner implements CommandLineRunner {
 

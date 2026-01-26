@@ -23,21 +23,35 @@ export default function Applicants() {
   useEffect(() => {
     if (selectedJobId) {
       loadApplicants(selectedJobId);
+    } else if (jobs.length > 0) {
+      // Clear applicants if no job selected (though we auto-select usually)
     }
   }, [selectedJobId]);
 
   const loadJobs = async () => {
     try {
+      setLoading(true);
       const data = await api.getMyJobs(0, 100);
       const jobsList = data.content || data || [];
       setJobs(jobsList);
-      if (jobsList.length > 0) {
-        setSelectedJobId(jobsList[0].id);
+
+      // Auto toggle to first job if not selected
+      if (jobsList.length > 0 && !selectedJobId) {
+        // Only set if we don't have one from URL
+        if (!searchParams.get('jobId')) {
+          setSelectedJobId(jobsList[0].id);
+        }
       }
     } catch (error) {
-      console.error('Error loading jobs:', error);
+      if (error.response?.status === 410) {
+        console.warn('No company found (410). Empty jobs list.');
+        setJobs([]);
+      } else {
+        console.error('Error loading jobs:', error);
+      }
     } finally {
-      setLoading(false);
+      if (!selectedJobId) setLoading(false);
+      // If we selected a job, the other effect will trigger and handle loading state
     }
   };
 
@@ -67,148 +81,98 @@ export default function Applicants() {
     return new Date(dateStr).toLocaleDateString('vi-VN');
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      PENDING: 'bg-gray-100 text-gray-700',
-      VIEWED: 'bg-blue-100 text-blue-700',
-      INTERVIEW: 'bg-purple-100 text-purple-700',
-      OFFERED: 'bg-green-100 text-green-700',
-      ACCEPTED: 'bg-green-100 text-green-700',
-      REJECTED: 'bg-red-100 text-red-700',
-    };
-    return colors[status] || 'bg-gray-100 text-gray-700';
-  };
-
-  const getStatusText = (status) => {
-    const texts = {
-      PENDING: 'Mới ứng tuyển',
-      VIEWED: 'Đã xem',
-      INTERVIEW: 'Phỏng vấn',
-      OFFERED: 'Đã Offer',
-      ACCEPTED: 'Đã chấp nhận',
-      REJECTED: 'Từ chối',
-    };
-    return texts[status] || status;
-  };
-
   const columns = {
     new: applicants.filter(a => a.status === 'PENDING'),
     viewed: applicants.filter(a => a.status === 'VIEWED'),
     interview: applicants.filter(a => a.status === 'INTERVIEW'),
-    offered: applicants.filter(a => a.status === 'OFFERED' || a.status === 'ACCEPTED'),
+    offered: applicants.filter(a => ['OFFERED', 'ACCEPTED', 'REJECTED'].includes(a.status)),
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-4">
-      <div className="flex items-center justify-between mb-6">
-        <select
-          className="px-4 py-2 bg-white dark:bg-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 rounded-lg"
-          value={selectedJobId}
-          onChange={(e) => setSelectedJobId(e.target.value)}
-        >
-          <option value="">Chọn tin tuyển dụng</option>
-          {jobs.map(job => (
-            <option key={job.id} value={job.id}>{job.title}</option>
-          ))}
-        </select>
+    <div className="h-[calc(100vh-80px)] flex flex-col p-6 animate-fade-in max-w-[1920px] mx-auto overflow-hidden">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8 shrink-0">
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            Quản lý ứng viên
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Theo dõi và quản lý quy trình tuyển dụng theo thời gian thực</p>
+        </div>
+
+        <div className="relative min-w-[320px]">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <i className="fas fa-briefcase text-blue-500"></i>
+          </div>
+          <select
+            className="w-full pl-11 pr-10 py-3.5 bg-white dark:bg-gray-800 border-none ring-1 ring-gray-200 dark:ring-gray-700 rounded-xl shadow-lg shadow-blue-500/5 focus:ring-2 focus:ring-blue-500 transition-all font-bold text-gray-700 dark:text-gray-200 appearance-none cursor-pointer"
+            value={selectedJobId}
+            onChange={(e) => setSelectedJobId(e.target.value)}
+          >
+            <option value="">-- Chọn tin tuyển dụng --</option>
+            {jobs.map(job => (
+              <option key={job.id} value={job.id}>{job.title}</option>
+            ))}
+          </select>
+          <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
+            <i className="fas fa-chevron-down text-sm"></i>
+          </div>
+        </div>
       </div>
 
+      {/* Kanban Board */}
       {loading ? (
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="flex-1 flex flex-col items-center justify-center bg-white/40 dark:bg-gray-800/40 backdrop-blur-md rounded-3xl border border-white/20">
+          <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+          <p className="text-blue-600 font-bold text-lg">Đang tải dữ liệu hồ sơ...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {/* New Applicants */}
-          <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-4">
-              Mới ứng tuyển <span className="bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs px-2 py-1 rounded-full ml-1">
-                {columns.new.length}
-              </span>
-            </h3>
-            <div className="space-y-3">
-              {columns.new.map(app => (
-                <ApplicantCard
-                  key={app.id}
-                  applicant={app}
-                  onStatusChange={(status) => updateStatus(app.id, status)}
-                  formatDate={formatDate}
-                  getStatusColor={getStatusColor}
-                />
-              ))}
-              {columns.new.length === 0 && (
-                <p className="text-center text-gray-400 dark:text-gray-500 text-sm py-4">Chưa có ứng viên</p>
-              )}
-            </div>
-          </div>
+        <div className="flex-1 overflow-x-auto overflow-y-hidden pb-4">
+          <div className="h-full flex gap-8 min-w-max px-2">
 
-          {/* Viewed */}
-          <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-4">
-            <h3 className="font-semibold text-blue-700 dark:text-blue-400 mb-4">
-              Đã xem <span className="bg-blue-100 dark:bg-gray-800 text-blue-700 dark:text-blue-300 text-xs px-2 py-1 rounded-full ml-1">
-                {columns.viewed.length}
-              </span>
-            </h3>
-            <div className="space-y-3">
-              {columns.viewed.map(app => (
-                <ApplicantCard
-                  key={app.id}
-                  applicant={app}
-                  onStatusChange={(status) => updateStatus(app.id, status)}
-                  formatDate={formatDate}
-                  getStatusColor={getStatusColor}
-                />
-              ))}
-              {columns.viewed.length === 0 && (
-                <p className="text-center text-gray-400 dark:text-gray-500 text-sm py-4">Chưa có ứng viên</p>
-              )}
-            </div>
-          </div>
+            {/* Column: New */}
+            <KanbanColumn
+              title="Mới ứng tuyển"
+              count={columns.new.length}
+              icon="fa-bell"
+              color="blue"
+              applicants={columns.new}
+              onStatusChange={updateStatus}
+              formatDate={formatDate}
+            />
 
-          {/* Interview */}
-          <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-4">
-            <h3 className="font-semibold text-purple-700 dark:text-purple-400 mb-4">
-              Phỏng vấn <span className="bg-purple-100 dark:bg-gray-800 text-purple-700 dark:text-purple-300 text-xs px-2 py-1 rounded-full ml-1">
-                {columns.interview.length}
-              </span>
-            </h3>
-            <div className="space-y-3">
-              {columns.interview.map(app => (
-                <ApplicantCard
-                  key={app.id}
-                  applicant={app}
-                  onStatusChange={(status) => updateStatus(app.id, status)}
-                  formatDate={formatDate}
-                  getStatusColor={getStatusColor}
-                />
-              ))}
-              {columns.interview.length === 0 && (
-                <p className="text-center text-gray-400 dark:text-gray-500 text-sm py-4">Chưa có ứng viên</p>
-              )}
-            </div>
-          </div>
+            {/* Column: Viewed */}
+            <KanbanColumn
+              title="Đã xem hồ sơ"
+              count={columns.viewed.length}
+              icon="fa-eye"
+              color="indigo"
+              applicants={columns.viewed}
+              onStatusChange={updateStatus}
+              formatDate={formatDate}
+            />
 
-          {/* Offered */}
-          <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-4">
-            <h3 className="font-semibold text-green-700 dark:text-green-400 mb-4">
-              Đã Offer <span className="bg-green-100 dark:bg-gray-800 text-green-700 dark:text-green-300 text-xs px-2 py-1 rounded-full ml-1">
-                {columns.offered.length}
-              </span>
-            </h3>
-            <div className="space-y-3">
-              {columns.offered.map(app => (
-                <ApplicantCard
-                  key={app.id}
-                  applicant={app}
-                  onStatusChange={(status) => updateStatus(app.id, status)}
-                  formatDate={formatDate}
-                  getStatusColor={getStatusColor}
-                />
-              ))}
-              {columns.offered.length === 0 && (
-                <p className="text-center text-gray-400 text-sm py-4">Chưa có ứng viên</p>
-              )}
-            </div>
+            {/* Column: Interview */}
+            <KanbanColumn
+              title="Phỏng vấn"
+              count={columns.interview.length}
+              icon="fa-comments"
+              color="amber"
+              applicants={columns.interview}
+              onStatusChange={updateStatus}
+              formatDate={formatDate}
+            />
+
+            {/* Column: Done (Offered/Rejected) */}
+            <KanbanColumn
+              title="Đã xử lý"
+              count={columns.offered.length}
+              icon="fa-check-circle"
+              color="emerald"
+              applicants={columns.offered}
+              onStatusChange={updateStatus}
+              formatDate={formatDate}
+            />
+
           </div>
         </div>
       )}
@@ -216,52 +180,116 @@ export default function Applicants() {
   );
 }
 
-function ApplicantCard({ applicant, onStatusChange, formatDate, getStatusColor }) {
+function KanbanColumn({ title, count, icon, color, applicants, onStatusChange, formatDate }) {
+  const colorStyles = {
+    blue: 'from-blue-500 to-blue-600 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 shadow-blue-500/10',
+    indigo: 'from-indigo-500 to-purple-600 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300 shadow-indigo-500/10',
+    amber: 'from-amber-400 to-orange-500 bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300 shadow-amber-500/10',
+    emerald: 'from-emerald-400 to-teal-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300 shadow-emerald-500/10',
+  };
+
+  const headerGradient = colorStyles[color].split(' ')[0] + ' ' + colorStyles[color].split(' ')[1];
+  const bgBadge = colorStyles[color].split(' ').slice(2, 5).join(' '); // Extract bg and text color parts roughly
+
+  return (
+    <div className="w-[380px] flex flex-col h-full bg-gray-50/60 dark:bg-gray-900/40 backdrop-blur-2xl rounded-[2rem] border border-white/50 dark:border-white/5 shadow-2xl flex-shrink-0">
+      {/* Column Header */}
+      <div className={`p-6 rounded-t-[2rem] border-b border-gray-100 dark:border-gray-700/50 bg-white/40 dark:bg-gray-800/40 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between`}>
+        <div className="flex items-center gap-4">
+          <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${headerGradient} flex items-center justify-center text-white shadow-lg transform transition-transform hover:scale-110`}>
+            <i className={`fas ${icon} text-lg`}></i>
+          </div>
+          <h3 className="font-extrabold text-gray-800 dark:text-white text-xl tracking-tight">{title}</h3>
+        </div>
+        <span className={`px-3 py-1.5 rounded-xl text-sm font-bold bg-white dark:bg-gray-800/50 shadow-sm border border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-300`}>
+          {count}
+        </span>
+      </div>
+
+      {/* List */}
+      <div className="flex-1 overflow-y-auto p-5 space-y-5 custom-scrollbar">
+        {applicants.length === 0 ? (
+          <div className="h-48 border-2 border-dashed border-gray-200 dark:border-gray-700/50 rounded-3xl flex flex-col items-center justify-center text-gray-400 opacity-60 m-2">
+            <i className="fas fa-inbox text-4xl mb-3"></i>
+            <span className="font-semibold">Chưa có ứng viên</span>
+          </div>
+        ) : (
+          applicants.map(app => (
+            <ApplicantCard
+              key={app.id}
+              applicant={app}
+              onStatusChange={onStatusChange}
+              formatDate={formatDate}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+function ApplicantCard({ applicant, onStatusChange, formatDate }) {
   const [showDetails, setShowDetails] = useState(false);
   const studentName = applicant.student?.fullName || applicant.studentName || 'Ứng viên';
-  const initials = studentName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
   const matchScore = applicant.matchScore ? parseFloat(applicant.matchScore) : 0;
-  const scoreColor = matchScore >= 80 ? 'green' : matchScore >= 60 ? 'yellow' : 'gray';
 
-  const getScoreBadgeClass = () => {
-    if (matchScore >= 80) return 'bg-green-100 text-green-700 border-green-300';
-    if (matchScore >= 60) return 'bg-yellow-100 text-yellow-700 border-yellow-300';
-    return 'bg-gray-100 text-gray-700 border-gray-300';
+  const getScoreColor = () => {
+    if (matchScore >= 80) return 'text-emerald-500';
+    if (matchScore >= 60) return 'text-amber-500';
+    return 'text-gray-400';
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-      <div className="flex justify-between items-start mb-2">
-        <div className="flex-1">
-          <h4 className="font-semibold text-gray-900 text-sm">{studentName}</h4>
-          {applicant.student?.user?.email && (
-            <p className="text-xs text-gray-500">{applicant.student.user.email}</p>
-          )}
+    <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-700/50 transition-all duration-300 group hover:-translate-y-1">
+      {/* Header */}
+      <div className="flex justify-between items-start mb-3">
+        <div>
+          <h4 className="font-bold text-gray-900 dark:text-white text-lg group-hover:text-blue-600 transition-colors cursor-pointer" onClick={() => setShowDetails(!showDetails)}>
+            {studentName}
+          </h4>
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1.5">
+            <i className="far fa-clock"></i> {formatDate(applicant.appliedAt)}
+          </p>
         </div>
         {matchScore > 0 && (
-          <div className={`text-xs font-bold px-2 py-1 rounded border ${getScoreBadgeClass()}`}>
-            {matchScore.toFixed(0)}%
+          <div className="relative w-11 h-11 flex items-center justify-center shrink-0">
+            <svg className="w-full h-full transform -rotate-90">
+              <circle cx="22" cy="22" r="18" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-gray-100 dark:text-gray-700" />
+              <circle cx="22" cy="22" r="18" stroke="currentColor" strokeWidth="4" fill="transparent" strokeDasharray={113} strokeDashoffset={113 - (matchScore / 100 * 113)} className={getScoreColor()} />
+            </svg>
+            <span className={`absolute text-[11px] font-bold ${getScoreColor()}`}>{matchScore.toFixed(0)}</span>
           </div>
         )}
       </div>
-      
-      <p className="text-xs text-gray-500 mb-2">
-        <i className="fas fa-calendar mr-1"></i>
-        {formatDate(applicant.appliedAt)}
-      </p>
 
-      {applicant.aiNotes && (
-        <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded mb-2">
-          <i className="fas fa-robot mr-1"></i>
-          <span className="font-medium">AI Notes:</span> {applicant.aiNotes.substring(0, 100)}...
+      {/* Status Badge (if finished) */}
+      {['ACCEPTED', 'REJECTED', 'OFFERED'].includes(applicant.status) && (
+        <div className={`text-xs font-bold inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg mb-3 ${applicant.status === 'ACCEPTED' ? 'bg-emerald-100 text-emerald-700' :
+          applicant.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+            'bg-blue-100 text-blue-700'
+          }`}>
+          <i className={`fas ${applicant.status === 'ACCEPTED' ? 'fa-check' : applicant.status === 'REJECTED' ? 'fa-times' : 'fa-info-circle'}`}></i>
+          {applicant.status}
         </div>
       )}
 
-      <div className="flex gap-1 mt-2">
+      {/* AI Notes */}
+      {applicant.aiNotes && (
+        <div className="text-sm bg-blue-50/60 dark:bg-blue-900/20 p-3 rounded-xl mb-4 text-gray-700 dark:text-gray-300 border border-blue-100 dark:border-blue-800/50">
+          <div className="flex items-center gap-2 mb-1.5 text-blue-600 font-bold text-xs uppercase tracking-wider">
+            <i className="fas fa-magic"></i> Insight AI
+          </div>
+          <p className="line-clamp-2 text-xs leading-relaxed opacity-90">{applicant.aiNotes}</p>
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex items-center gap-3">
         {applicant.cv && (
           <button
-            onClick={() => {
-              // Build full URL for CV file
+            onClick={(e) => {
+              e.stopPropagation();
               let cvUrl = applicant.cv.fileUrl;
               if (cvUrl && !cvUrl.startsWith('http')) {
                 if (cvUrl.startsWith('/api')) {
@@ -272,61 +300,40 @@ function ApplicantCard({ applicant, onStatusChange, formatDate, getStatusColor }
               }
               window.open(cvUrl, '_blank');
             }}
-            className="p-1.5 hover:bg-gray-100 rounded text-gray-600 text-xs border border-gray-300"
-            title="Xem CV"
+            className="flex-1 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-xs font-bold flex items-center justify-center gap-2 text-gray-700 dark:text-gray-300 group/btn"
           >
-            <i className={`fas fa-file-${applicant.cv.fileType === 'text/html' ? 'code' : 'pdf'} mr-1`}></i>
-            CV
+            <i className="far fa-file-pdf text-red-500 group-hover/btn:scale-110 transition-transform"></i> Xem CV
           </button>
         )}
+
         <button
           onClick={() => setShowDetails(!showDetails)}
-          className="p-1.5 hover:bg-gray-100 rounded text-blue-600 text-xs border border-blue-300"
-          title="Chi tiết"
+          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all border ${showDetails ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-white border-gray-200 text-gray-400 hover:border-blue-300 hover:text-blue-500'}`}
         >
-          <i className={`fas fa-${showDetails ? 'chevron-up' : 'chevron-down'} mr-1`}></i>
-          {showDetails ? 'Ẩn' : 'Chi tiết'}
+          <i className={`fas fa-${showDetails ? 'chevron-up' : 'chevron-down'}`}></i>
         </button>
       </div>
 
+      {/* Expandable Details */}
       {showDetails && (
-        <div className="mt-3 pt-3 border-t border-gray-200 space-y-2">
-          <div className="flex gap-2">
-            <button
-              onClick={() => onStatusChange('SHORTLISTED')}
-              className="flex-1 text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
-            >
-              <i className="fas fa-star mr-1"></i>
-              Shortlist
-            </button>
-            <button
-              onClick={() => onStatusChange('INTERVIEW')}
-              className="flex-1 text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200"
-            >
-              <i className="fas fa-calendar-check mr-1"></i>
-              Phỏng vấn
-            </button>
-            <button
-              onClick={() => onStatusChange('OFFERED')}
-              className="flex-1 text-xs px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200"
-            >
-              <i className="fas fa-hand-holding-usd mr-1"></i>
-              Offer
-            </button>
-            <button
-              onClick={() => onStatusChange('REJECTED')}
-              className="flex-1 text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
-            >
-              <i className="fas fa-times mr-1"></i>
-              Từ chối
-            </button>
+        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 animate-slide-down">
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            <button onClick={() => onStatusChange(applicant.id, 'VIEWED')} className="p-2.5 rounded-xl text-xs font-bold bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">Đã xem</button>
+            <button onClick={() => onStatusChange(applicant.id, 'INTERVIEW')} className="p-2.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors">Phỏng vấn</button>
+            <button onClick={() => onStatusChange(applicant.id, 'OFFERED')} className="p-2.5 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors">Offer</button>
+            <button onClick={() => onStatusChange(applicant.id, 'REJECTED')} className="p-2.5 rounded-xl text-xs font-bold bg-red-50 text-red-600 hover:bg-red-100 transition-colors">Từ chối</button>
           </div>
+
           {applicant.coverLetter && (
-            <div className="text-xs text-gray-700 bg-gray-50 p-2 rounded">
-              <p className="font-medium mb-1">Thư xin việc:</p>
-              <p className="line-clamp-3">{applicant.coverLetter}</p>
+            <div className="text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
+              <span className="font-bold block mb-1 text-gray-800 dark:text-gray-200">Cover Letter:</span>
+              {applicant.coverLetter}
             </div>
           )}
+
+          <div className="text-[10px] text-gray-400 mt-3 text-center font-mono">
+            ID: {applicant.id.split('-')[0]}...
+          </div>
         </div>
       )}
     </div>

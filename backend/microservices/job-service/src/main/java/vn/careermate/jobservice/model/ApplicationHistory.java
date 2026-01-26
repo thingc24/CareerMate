@@ -1,7 +1,6 @@
 package vn.careermate.jobservice.model;
 
 import jakarta.persistence.*;
-import vn.careermate.userservice.model.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -35,9 +34,8 @@ public class ApplicationHistory {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "changed_by")
-    private User changedBy;
+    @Column(name = "changed_by")
+    private UUID changedById;
 
     @CreatedDate
     @Column(name = "created_at", updatable = false)

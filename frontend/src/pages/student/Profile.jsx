@@ -5,6 +5,7 @@ import api from '../../services/api';
 export default function ProfileEdit() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const [activeTab, setActiveTab] = useState('general');
   const [profile, setProfile] = useState({
     dateOfBirth: '',
     gender: '',
@@ -36,16 +37,14 @@ export default function ProfileEdit() {
     try {
       setLoading(true);
       setMessage('');
-      // Force refresh to get latest data from database
       const data = await api.getStudentProfile(true);
-      console.log('ProfileEdit - Loaded data from server:', data);
       if (data && !data.error) {
-        const newProfile = {
+        setProfile({
           dateOfBirth: data.dateOfBirth || '',
           gender: data.gender || '',
           address: data.address || '',
           city: data.city || '',
-          country: data.country || 'Vietnam',
+          country: data.country || 'Việt Nam',
           university: data.university || '',
           major: data.major || '',
           graduationYear: data.graduationYear ? String(data.graduationYear) : '',
@@ -56,27 +55,14 @@ export default function ProfileEdit() {
           portfolioUrl: data.portfolioUrl || '',
           avatarUrl: data.avatarUrl || '',
           currentStatus: data.currentStatus || 'STUDENT',
-        };
-        console.log('ProfileEdit - Setting profile state:', newProfile);
-        setProfile(newProfile);
+        });
         if (data.avatarUrl) {
           setAvatarPreview(getAvatarUrl(data.avatarUrl));
         }
-      } else if (data?.error) {
-        setMessage('Lỗi: ' + data.error);
-        console.error('Profile API error:', data.error);
       }
     } catch (error) {
       console.error('Error loading profile:', error);
-      const errorMsg = error.response?.data?.error || error.message || 'Không thể tải thông tin hồ sơ';
-      setMessage('Lỗi: ' + errorMsg);
-      
-      // If 401, redirect to login
-      if (error.response?.status === 401) {
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 2000);
-      }
+      setMessage('Lỗi: ' + (error.response?.data?.error || 'Không thể tải thông tin hồ sơ'));
     } finally {
       setLoading(false);
     }
@@ -85,10 +71,7 @@ export default function ProfileEdit() {
   const getAvatarUrl = (avatarUrl) => {
     if (!avatarUrl) return null;
     if (avatarUrl.startsWith('http')) return avatarUrl;
-    // Add /api prefix because context-path is /api
-    if (avatarUrl.startsWith('/api')) {
-      return `http://localhost:8080${avatarUrl}`;
-    }
+    if (avatarUrl.startsWith('/api')) return `http://localhost:8080${avatarUrl}`;
     return `http://localhost:8080/api${avatarUrl}`;
   };
 
@@ -96,57 +79,30 @@ export default function ProfileEdit() {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       setMessage('Lỗi: Chỉ chấp nhận file ảnh');
       return;
     }
 
-    // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setMessage('Lỗi: Kích thước file không được vượt quá 5MB');
+      setMessage('Lỗi: Kích thước file quá 5MB');
       return;
     }
 
     try {
       setUploadingAvatar(true);
-      setMessage('');
-
-      // Create preview
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result);
-      };
+      reader.onloadend = () => setAvatarPreview(reader.result);
       reader.readAsDataURL(file);
 
-      // Upload avatar
       const response = await api.uploadAvatar(file);
-      if (response && response.avatarUrl) {
-        // Update profile state with new avatar URL
+      if (response?.avatarUrl) {
         setProfile(prev => ({ ...prev, avatarUrl: response.avatarUrl }));
-        // Update preview
-        setAvatarPreview(getAvatarUrl(response.avatarUrl));
         setMessage('Cập nhật ảnh đại diện thành công!');
-        
-        // Trigger avatar reload in StudentLayout
-        window.dispatchEvent(new CustomEvent('avatarUpdated', { 
-          detail: { avatarUrl: response.avatarUrl } 
+        window.dispatchEvent(new CustomEvent('avatarUpdated', {
+          detail: { avatarUrl: response.avatarUrl }
         }));
-        
-        // Reload profile to get updated data
-        setTimeout(() => {
-          loadProfile();
-        }, 500);
-      } else {
-        setMessage('Cập nhật ảnh đại diện thành công!');
-        // Trigger avatar reload anyway
-        window.dispatchEvent(new CustomEvent('avatarUpdated'));
-        // Reload profile anyway
-        setTimeout(() => {
-          loadProfile();
-        }, 500);
       }
-      setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       setMessage('Lỗi: ' + (error.response?.data?.error || 'Không thể tải ảnh lên'));
     } finally {
@@ -159,122 +115,28 @@ export default function ProfileEdit() {
     try {
       setSaving(true);
       setMessage('');
-      
-      // Prepare data - convert empty strings to null for optional fields
-      const profileData = {
-        dateOfBirth: profile.dateOfBirth && profile.dateOfBirth.trim() !== '' ? profile.dateOfBirth : null,
-        gender: profile.gender && profile.gender.trim() !== '' ? profile.gender : null,
-        address: profile.address && profile.address.trim() !== '' ? profile.address : null,
-        city: profile.city && profile.city.trim() !== '' ? profile.city : null,
-        country: profile.country && profile.country.trim() !== '' ? profile.country : 'Vietnam',
-        university: profile.university && profile.university.trim() !== '' ? profile.university : null,
-        major: profile.major && profile.major.trim() !== '' ? profile.major : null,
-        graduationYear: profile.graduationYear && profile.graduationYear.toString().trim() !== '' 
-          ? parseInt(profile.graduationYear) : null,
-        gpa: profile.gpa && profile.gpa.toString().trim() !== '' 
-          ? parseFloat(profile.gpa) : null,
-        bio: profile.bio && profile.bio.trim() !== '' ? profile.bio : null,
-        linkedinUrl: profile.linkedinUrl && profile.linkedinUrl.trim() !== '' ? profile.linkedinUrl : null,
-        githubUrl: profile.githubUrl && profile.githubUrl.trim() !== '' ? profile.githubUrl : null,
-        portfolioUrl: profile.portfolioUrl && profile.portfolioUrl.trim() !== '' ? profile.portfolioUrl : null,
-        avatarUrl: profile.avatarUrl && profile.avatarUrl.trim() !== '' ? profile.avatarUrl : null,
-        currentStatus: profile.currentStatus && profile.currentStatus.trim() !== '' ? profile.currentStatus : 'STUDENT',
-      };
-      
-      console.log('Sending profile update:', profileData);
-      console.log('Profile data details:', {
-        gender: profileData.gender,
-        address: profileData.address,
-        city: profileData.city,
-        university: profileData.university,
-        major: profileData.major
+
+      const profileData = { ...profile };
+      // Convert numeric fields
+      if (profileData.graduationYear) profileData.graduationYear = parseInt(profileData.graduationYear);
+      if (profileData.gpa) profileData.gpa = parseFloat(profileData.gpa);
+
+      // Clean empty strings to null
+      Object.keys(profileData).forEach(key => {
+        if (profileData[key] === '') profileData[key] = null;
       });
-      
+
       const response = await api.updateStudentProfile(profileData);
-      console.log('Profile update response:', response);
-      
-      if (response && response.error) {
-        throw new Error(response.error);
-      }
-      
-      setMessage(response.message || 'Cập nhật hồ sơ thành công!');
-      
-      // Update state immediately with response data
+
       if (response && !response.error) {
-        console.log('Updating profile state with response:', response);
-        setProfile({
-          dateOfBirth: response.dateOfBirth || '',
-          gender: response.gender || '',
-          address: response.address || '',
-          city: response.city || '',
-          country: response.country || 'Vietnam',
-          university: response.university || '',
-          major: response.major || '',
-          graduationYear: response.graduationYear ? String(response.graduationYear) : '',
-          gpa: response.gpa ? String(response.gpa) : '',
-          bio: response.bio || '',
-          linkedinUrl: response.linkedinUrl || '',
-          githubUrl: response.githubUrl || '',
-          portfolioUrl: response.portfolioUrl || '',
-          avatarUrl: response.avatarUrl || '',
-          currentStatus: response.currentStatus || 'STUDENT',
-        });
-        if (response.avatarUrl) {
-          setAvatarPreview(getAvatarUrl(response.avatarUrl));
-        }
+        setMessage('Đã lưu thay đổi thành công!');
+        // Optimistically update
+        setProfile(prev => ({ ...prev, ...profileData }));
+      } else {
+        throw new Error(response?.error || 'Lỗi không xác định');
       }
-      
-      // Force reload from server to ensure we have latest data
-      console.log('Reloading profile from server after update...');
-      await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms for backend to finish
-      const freshData = await api.getStudentProfile(true); // Force refresh with cache busting
-      console.log('Fresh profile data after update:', freshData);
-      
-      if (freshData && !freshData.error) {
-        // Update state with fresh data
-        setProfile({
-          dateOfBirth: freshData.dateOfBirth || '',
-          gender: freshData.gender || '',
-          address: freshData.address || '',
-          city: freshData.city || '',
-          country: freshData.country || 'Vietnam',
-          university: freshData.university || '',
-          major: freshData.major || '',
-          graduationYear: freshData.graduationYear ? String(freshData.graduationYear) : '',
-          gpa: freshData.gpa ? String(freshData.gpa) : '',
-          bio: freshData.bio || '',
-          linkedinUrl: freshData.linkedinUrl || '',
-          githubUrl: freshData.githubUrl || '',
-          portfolioUrl: freshData.portfolioUrl || '',
-          avatarUrl: freshData.avatarUrl || '',
-          currentStatus: freshData.currentStatus || 'STUDENT',
-        });
-        if (freshData.avatarUrl) {
-          setAvatarPreview(getAvatarUrl(freshData.avatarUrl));
-        }
-        console.log('Profile state updated with fresh data');
-      }
-      
-      setTimeout(() => {
-        setMessage('');
-        // Navigate to view page with refresh state to force reload
-        navigate('/student/profile/view', { 
-          replace: true, 
-          state: { refresh: Date.now() } 
-        });
-      }, 1500);
     } catch (error) {
-      console.error('Error updating profile:', error);
-      console.error('Error response data:', error.response?.data);
-      const errorMessage = error.message || error.response?.data?.error || 'Không thể cập nhật hồ sơ';
-      setMessage('Lỗi: ' + errorMessage);
-      
-      // If 401, redirect to login
-      if (error.response?.status === 401) {
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 3000);
-      }
+      setMessage('Lỗi: ' + (error.message || 'Không thể cập nhật hồ sơ'));
     } finally {
       setSaving(false);
     }
@@ -284,405 +146,268 @@ export default function ProfileEdit() {
     setProfile({ ...profile, [e.target.name]: e.target.value });
   };
 
-  if (loading) {
-    return (
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 dark:border-gray-700 border-t-blue-600 dark:border-t-blue-500"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Đang tải hồ sơ...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error state if profile failed to load
-  if (!profile || Object.keys(profile).length === 0) {
-    return (
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
-          <i className="fas fa-exclamation-circle text-red-600 dark:text-red-400 text-4xl mb-4"></i>
-          <h2 className="text-xl font-bold text-red-900 dark:text-red-100 mb-2">Không thể tải hồ sơ</h2>
-          <p className="text-red-700 dark:text-red-200 mb-4">{message || 'Vui lòng đăng nhập lại hoặc thử lại sau.'}</p>
-          <div className="flex gap-4 justify-center">
-            <button
-              onClick={loadProfile}
-              className="px-6 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition"
-            >
-              <i className="fas fa-redo mr-2"></i>Thử lại
-            </button>
-            <button
-              onClick={() => window.location.href = '/login'}
-              className="px-6 py-2 bg-gray-600 dark:bg-gray-700 text-white rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition"
-            >
-              Đăng nhập lại
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const TabButton = ({ id, icon, label }) => (
+    <button
+      type="button"
+      onClick={() => setActiveTab(id)}
+      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-left mb-2 ${activeTab === id
+        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+        }`}
+    >
+      <i className={`fas ${icon} w-6 text-center`}></i>
+      <span>{label}</span>
+    </button>
+  );
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 animate-fade-in">
-      {/* Header */}
-      <div className="mb-6">
-        <button
-          onClick={() => navigate('/student/profile/view')}
-          className="mb-4 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-blue-400 flex items-center gap-2"
-        >
-          <i className="fas fa-arrow-left"></i>
-          <span>Quay lại</span>
-        </button>
-      </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-black p-4 md:p-8 font-sans">
+      <div className="max-w-6xl mx-auto">
+        {/* Header with Background */}
+        <div className="relative mb-6">
+          <div className="h-48 md:h-64 rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 overflow-hidden shadow-lg relative">
+            <div className="absolute inset-0 bg-black/20"></div>
+            <div className="absolute inset-0 bg-[url('/patterns/grid.svg')] opacity-20"></div>
 
-      {/* Success/Error Message */}
-      {message && (
-        <div
-          className={`mb-6 p-4 rounded-xl border-2 animate-slide-up ${
-            message.includes('Lỗi')
-              ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-200'
-              : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-200'
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <i className={`fas ${message.includes('Lỗi') ? 'fa-exclamation-circle' : 'fa-check-circle'} text-xl`}></i>
+            <button
+              onClick={() => navigate('/student/profile/view')}
+              className="absolute top-6 left-6 px-4 py-2 bg-white/20 backdrop-blur-md text-white rounded-lg hover:bg-white/30 transition flex items-center gap-2 text-sm font-medium"
+            >
+              <i className="fas fa-eye"></i> Xem trang cá nhân
+            </button>
+          </div>
+
+          {/* Avatar - Absolute Positioned */}
+          <div className="absolute -bottom-12 left-8 md:left-12">
+            <div className="relative group">
+              {avatarPreview ? (
+                <img src={avatarPreview} alt="Avatar" className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white dark:border-black shadow-2xl object-cover bg-white" />
+              ) : (
+                <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white dark:border-black shadow-2xl bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
+                  <i className="fas fa-user text-4xl text-gray-400"></i>
+                </div>
+              )}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute bottom-2 right-2 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg hover:bg-blue-700 transition transform hover:scale-105"
+                title="Đổi ảnh đại diện"
+              >
+                <i className={`fas ${uploadingAvatar ? 'fa-spinner fa-spin' : 'fa-camera'}`}></i>
+              </button>
+              <input type="file" ref={fileInputRef} hidden onChange={handleAvatarChange} accept="image/*" />
+            </div>
+          </div>
+        </div>
+
+        {/* Name & Info - Flow Content */}
+        <div className="mb-10 pl-[160px] md:pl-[190px] min-h-[60px] flex flex-col justify-center hidden md:flex">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Cài đặt hồ sơ</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Quản lý thông tin cá nhân và tài khoản</p>
+        </div>
+
+        {/* Message Alert */}
+        {message && (
+          <div className={`mb-8 p-4 rounded-xl flex items-center gap-3 animate-slide-up ${message.includes('Lỗi')
+            ? 'bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800'
+            : 'bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800'
+            }`}>
+            <i className={`fas ${message.includes('Lỗi') ? 'fa-exclamation-triangle' : 'fa-check-circle'} text-xl`}></i>
             <span className="font-medium">{message}</span>
           </div>
-        </div>
-      )}
+        )}
 
-      <form onSubmit={handleSubmit}>
-        <div className="space-y-6">
-          {/* Avatar Upload */}
-          <div className="card p-6 animate-slide-up dark:bg-gray-900 dark:border-gray-800">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center">
-                <i className="fas fa-image text-white"></i>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Ảnh đại diện</h2>
+        <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-8">
+          {/* Sidebar Navigation */}
+          <div className="w-full md:w-64 flex-shrink-0">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-800 sticky top-24">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-4">Tài khoản</p>
+              <TabButton id="general" icon="fa-user-circle" label="Thông tin chung" />
+              <TabButton id="education" icon="fa-graduation-cap" label="Học vấn" />
+              <TabButton id="bio" icon="fa-file-alt" label="Giới thiệu" />
+              <TabButton id="social" icon="fa-share-alt" label="Mạng xã hội" />
+
+              <div className="h-px bg-gray-100 dark:bg-gray-800 my-2"></div>
+
+              <button
+                type="submit"
+                disabled={saving}
+                className="w-full mt-2 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+              >
+                {saving ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-save"></i>}
+                <span>{saving ? 'Đang lưu...' : 'Lưu thay đổi'}</span>
+              </button>
             </div>
-            <div className="flex items-center gap-6">
-              <div className="relative">
-                {avatarPreview ? (
-                  <img
-                    src={avatarPreview}
-                    alt="Avatar preview"
-                    className="w-32 h-32 rounded-full border-4 border-gray-200 dark:border-gray-700 object-cover"
-                  />
-                ) : (
-                  <div className="w-32 h-32 rounded-full border-4 border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                    <i className="fas fa-user text-gray-400 dark:text-gray-500 text-4xl"></i>
+          </div>
+
+          {/* Main Content Area */}
+          <div className="flex-1 min-h-[500px]">
+            {/* General Tab */}
+            {activeTab === 'general' && (
+              <div className="space-y-6 animate-fade-in">
+                <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 dark:border-gray-800">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 border-b dark:border-gray-800 pb-4">Thông tin cơ bản</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="label">Ngày sinh</label>
+                      <input type="date" name="dateOfBirth" value={profile.dateOfBirth} onChange={handleChange} className="input-field" />
+                    </div>
+                    <div>
+                      <label className="label">Giới tính</label>
+                      <select name="gender" value={profile.gender} onChange={handleChange} className="input-field">
+                        <option value="">Chọn giới tính</option>
+                        <option value="MALE">Nam</option>
+                        <option value="FEMALE">Nữ</option>
+                        <option value="OTHER">Khác</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Trạng thái hiện tại</label>
+                      <select name="currentStatus" value={profile.currentStatus} onChange={handleChange} className="input-field">
+                        <option value="STUDENT">Đang đi học</option>
+                        <option value="GRADUATED">Đã tốt nghiệp</option>
+                        <option value="JOB_SEEKING">Đang tìm việc</option>
+                        <option value="EMPLOYED">Đang đi làm</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Quốc gia</label>
+                      <input type="text" name="country" value={profile.country} onChange={handleChange} className="input-field" />
+                    </div>
                   </div>
-                )}
-                {uploadingAvatar && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
-                    <div className="animate-spin rounded-full h-8 w-8 border-4 border-white border-t-transparent"></div>
+                </div>
+
+                <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 dark:border-gray-800">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 border-b dark:border-gray-800 pb-4">Địa chỉ liên hệ</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="md:col-span-2">
+                      <label className="label">Địa chỉ nhà</label>
+                      <input type="text" name="address" value={profile.address} onChange={handleChange} className="input-field" placeholder="Số nhà, tên đường..." />
+                    </div>
+                    <div>
+                      <label className="label">Thành phố / Tỉnh</label>
+                      <input type="text" name="city" value={profile.city} onChange={handleChange} className="input-field" placeholder="Hà Nội, TP.HCM..." />
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
-              <div className="flex-1">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleAvatarChange}
-                  accept="image/*"
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingAvatar}
-                  className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition disabled:opacity-50 flex items-center gap-2"
-                >
-                  <i className="fas fa-upload"></i>
-                  <span>{uploadingAvatar ? 'Đang tải...' : 'Chọn ảnh'}</span>
-                </button>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                  Chấp nhận: JPG, PNG, GIF (tối đa 5MB)
-                </p>
-              </div>
-            </div>
-          </div>
+            )}
 
-          {/* Personal Information */}
-          <div className="card p-6 animate-slide-up dark:bg-gray-900 dark:border-gray-800">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-                <i className="fas fa-user text-white"></i>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Thông tin cá nhân</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  <i className="fas fa-calendar text-gray-400 dark:text-gray-500 mr-2"></i>
-                  Ngày sinh
-                </label>
-                <input
-                  type="date"
-                  name="dateOfBirth"
-                  value={profile.dateOfBirth}
-                  onChange={handleChange}
-                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  <i className="fas fa-venus-mars text-gray-400 dark:text-gray-500 mr-2"></i>
-                  Giới tính
-                </label>
-                <select
-                  name="gender"
-                  value={profile.gender}
-                  onChange={handleChange}
-                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
-                >
-                  <option value="">Chọn giới tính</option>
-                  <option value="MALE">Nam</option>
-                  <option value="FEMALE">Nữ</option>
-                  <option value="OTHER">Khác</option>
-                </select>
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  <i className="fas fa-map-marker-alt text-gray-400 dark:text-gray-500 mr-2"></i>
-                  Địa chỉ
-                </label>
-                <input
-                  type="text"
-                  name="address"
-                  value={profile.address}
-                  onChange={handleChange}
-                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
-                  placeholder="Số nhà, đường..."
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  <i className="fas fa-city text-gray-400 dark:text-gray-500 mr-2"></i>
-                  Thành phố
-                </label>
-                <input
-                  type="text"
-                  name="city"
-                  value={profile.city}
-                  onChange={handleChange}
-                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
-                  placeholder="Hà Nội, TP.HCM..."
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  <i className="fas fa-flag text-gray-400 dark:text-gray-500 mr-2"></i>
-                  Quốc gia
-                </label>
-                <input
-                  type="text"
-                  name="country"
-                  value={profile.country}
-                  onChange={handleChange}
-                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
-                />
-              </div>
-            </div>
-          </div>
+            {/* Education Tab */}
+            {activeTab === 'education' && (
+              <div className="space-y-6 animate-fade-in">
+                <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 dark:border-gray-800">
+                  <div className="flex items-center gap-4 mb-6 border-b dark:border-gray-800 pb-4">
+                    <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 flex items-center justify-center">
+                      <i className="fas fa-graduation-cap"></i>
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Lịch sử học tập</h2>
+                  </div>
 
-          {/* Education */}
-          <div className="card p-6 animate-slide-up dark:bg-gray-900 dark:border-gray-800" style={{ animationDelay: '100ms' }}>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                <i className="fas fa-graduation-cap text-white"></i>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="label">Trường đại học</label>
+                      <input type="text" name="university" value={profile.university} onChange={handleChange} className="input-field" placeholder="Đại học Bách Khoa..." />
+                    </div>
+                    <div>
+                      <label className="label">Chuyên ngành</label>
+                      <input type="text" name="major" value={profile.major} onChange={handleChange} className="input-field" placeholder="Kỹ thuật phần mềm..." />
+                    </div>
+                    <div>
+                      <label className="label">Năm tốt nghiệp (Dự kiến)</label>
+                      <input type="number" name="graduationYear" value={profile.graduationYear} onChange={handleChange} className="input-field" placeholder="2025" />
+                    </div>
+                    <div>
+                      <label className="label">Điểm GPA</label>
+                      <input type="number" step="0.01" name="gpa" value={profile.gpa} onChange={handleChange} className="input-field" placeholder="3.6" />
+                    </div>
+                  </div>
+                </div>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Học vấn</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  <i className="fas fa-university text-gray-400 dark:text-gray-500 mr-2"></i>
-                  Trường đại học
-                </label>
-                <input
-                  type="text"
-                  name="university"
-                  value={profile.university}
-                  onChange={handleChange}
-                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
-                  placeholder="Tên trường đại học"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  <i className="fas fa-book text-gray-400 dark:text-gray-500 mr-2"></i>
-                  Chuyên ngành
-                </label>
-                <input
-                  type="text"
-                  name="major"
-                  value={profile.major}
-                  onChange={handleChange}
-                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
-                  placeholder="Công nghệ thông tin, Kinh tế..."
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  <i className="fas fa-calendar-check text-gray-400 dark:text-gray-500 mr-2"></i>
-                  Năm tốt nghiệp
-                </label>
-                <input
-                  type="number"
-                  name="graduationYear"
-                  value={profile.graduationYear}
-                  onChange={handleChange}
-                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
-                  placeholder="2024"
-                  min="2000"
-                  max="2100"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  <i className="fas fa-star text-gray-400 dark:text-gray-500 mr-2"></i>
-                  Điểm GPA
-                </label>
-                <input
-                  type="number"
-                  name="gpa"
-                  value={profile.gpa}
-                  onChange={handleChange}
-                  step="0.01"
-                  min="0"
-                  max="4"
-                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
-                  placeholder="3.5"
-                />
-              </div>
-            </div>
-          </div>
+            )}
 
-          {/* Bio */}
-          <div className="card p-6 animate-slide-up dark:bg-gray-900 dark:border-gray-800" style={{ animationDelay: '200ms' }}>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
-                <i className="fas fa-file-alt text-white"></i>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Giới thiệu</h2>
-            </div>
-            <textarea
-              name="bio"
-              value={profile.bio}
-              onChange={handleChange}
-              rows="5"
-              className="input-field resize-none dark:bg-gray-800 dark:text-white dark:border-gray-700"
-              placeholder="Giới thiệu về bản thân, kinh nghiệm, mục tiêu nghề nghiệp..."
-            />
-          </div>
+            {/* Bio Tab */}
+            {activeTab === 'bio' && (
+              <div className="space-y-6 animate-fade-in">
+                <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 dark:border-gray-800">
+                  <div className="flex items-center gap-4 mb-6 border-b dark:border-gray-800 pb-4">
+                    <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 flex items-center justify-center">
+                      <i className="fas fa-feather-alt"></i>
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Giới thiệu bản thân</h2>
+                  </div>
 
-          {/* Social Links */}
-          <div className="card p-6 animate-slide-up dark:bg-gray-900 dark:border-gray-800" style={{ animationDelay: '300ms' }}>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                <i className="fas fa-share-alt text-white"></i>
+                  <div>
+                    <label className="label">Tiểu sử ngắn</label>
+                    <textarea
+                      name="bio"
+                      value={profile.bio}
+                      onChange={handleChange}
+                      rows="8"
+                      className="input-field resize-none leading-relaxed"
+                      placeholder="Hãy viết gì đó ấn tượng về bạn (Kinh nghiệm, sở thích, mục tiêu nghề nghiệp...)"
+                    ></textarea>
+                    <p className="text-xs text-gray-400 mt-2 text-right">Mẹo: Sử dụng markdown để định dạng văn bản tốt hơn</p>
+                  </div>
+                </div>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Liên kết mạng xã hội</h2>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  <i className="fab fa-linkedin text-blue-600 dark:text-blue-400 mr-2"></i>
-                  LinkedIn
-                </label>
-                <input
-                  type="url"
-                  name="linkedinUrl"
-                  value={profile.linkedinUrl}
-                  onChange={handleChange}
-                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
-                  placeholder="https://linkedin.com/in/yourprofile"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  <i className="fab fa-github text-gray-900 dark:text-gray-300 mr-2"></i>
-                  GitHub
-                </label>
-                <input
-                  type="url"
-                  name="githubUrl"
-                  value={profile.githubUrl}
-                  onChange={handleChange}
-                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
-                  placeholder="https://github.com/yourusername"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  <i className="fas fa-globe text-blue-600 dark:text-blue-400 mr-2"></i>
-                  Portfolio
-                </label>
-                <input
-                  type="url"
-                  name="portfolioUrl"
-                  value={profile.portfolioUrl}
-                  onChange={handleChange}
-                  className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
-                  placeholder="https://yourportfolio.com"
-                />
-              </div>
-            </div>
-          </div>
+            )}
 
-          {/* Status */}
-          <div className="card p-6 animate-slide-up dark:bg-gray-900 dark:border-gray-800" style={{ animationDelay: '400ms' }}>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-yellow-500 to-orange-600 flex items-center justify-center">
-                <i className="fas fa-info-circle text-white"></i>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Tình trạng hiện tại</h2>
-            </div>
-            <select
-              name="currentStatus"
-              value={profile.currentStatus}
-              onChange={handleChange}
-              className="input-field dark:bg-gray-800 dark:text-white dark:border-gray-700"
-            >
-              <option value="STUDENT">Sinh viên</option>
-              <option value="GRADUATED">Đã tốt nghiệp</option>
-              <option value="JOB_SEEKING">Đang tìm việc</option>
-              <option value="EMPLOYED">Đang làm việc</option>
-            </select>
-          </div>
+            {/* Social Tab */}
+            {activeTab === 'social' && (
+              <div className="space-y-6 animate-fade-in">
+                <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 dark:border-gray-800">
+                  <div className="flex items-center gap-4 mb-6 border-b dark:border-gray-800 pb-4">
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center">
+                      <i className="fas fa-link"></i>
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Liên kết ngoại vi</h2>
+                  </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-4 animate-slide-up" style={{ animationDelay: '500ms' }}>
-            <button
-              type="submit"
-              disabled={saving}
-              className="btn-primary flex-1"
-            >
-              {saving ? (
-                <>
-                  <i className="fas fa-spinner fa-spin mr-2"></i>
-                  Đang lưu...
-                </>
-              ) : (
-                <>
-                  <i className="fas fa-save mr-2"></i>
-                  Lưu thay đổi
-                </>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={loadProfile}
-              className="btn-secondary"
-            >
-              <i className="fas fa-redo mr-2"></i>
-              Hủy
-            </button>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="label flex items-center gap-2">
+                        <i className="fab fa-linkedin text-blue-700"></i> LinkedIn
+                      </label>
+                      <div className="relative">
+                        <input type="url" name="linkedinUrl" value={profile.linkedinUrl} onChange={handleChange} className="input-field pl-10" placeholder="https://linkedin.com/in/..." />
+                        <i className="fas fa-link absolute left-3 top-3.5 text-gray-400"></i>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="label flex items-center gap-2">
+                        <i className="fab fa-github text-gray-800 dark:text-white"></i> GitHub
+                      </label>
+                      <div className="relative">
+                        <input type="url" name="githubUrl" value={profile.githubUrl} onChange={handleChange} className="input-field pl-10" placeholder="https://github.com/..." />
+                        <i className="fas fa-code absolute left-3 top-3.5 text-gray-400"></i>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="label flex items-center gap-2">
+                        <i className="fas fa-globe text-blue-500"></i> Portfolio / Website
+                      </label>
+                      <div className="relative">
+                        <input type="url" name="portfolioUrl" value={profile.portfolioUrl} onChange={handleChange} className="input-field pl-10" placeholder="https://your-website.com" />
+                        <i className="fas fa-globe absolute left-3 top-3.5 text-gray-400"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      </form>
+        </form>
+
+        {/* CSS for custom classes to avoid repetition */}
+        <style>{`
+           .label {
+               @apply block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2;
+           }
+           .input-field {
+               @apply w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all;
+           }
+        `}</style>
+      </div>
     </div>
   );
 }

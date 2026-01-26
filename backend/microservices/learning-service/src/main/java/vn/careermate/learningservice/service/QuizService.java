@@ -67,6 +67,10 @@ public class QuizService {
     @Transactional
     public QuizAttempt submitQuiz(UUID attemptId, Map<UUID, String> answers) {
         try {
+            log.info("=== SUBMIT QUIZ ===");
+            log.info("Attempt ID: {}", attemptId);
+            log.info("Answers received: {}", answers);
+            
             QuizAttempt attempt = quizAttemptRepository.findById(attemptId)
                     .orElseThrow(() -> new RuntimeException("Quiz attempt not found"));
 
@@ -74,9 +78,11 @@ public class QuizService {
             Quiz quiz = quizRepository.findById(attempt.getQuiz().getId())
                     .orElseThrow(() -> new RuntimeException("Quiz not found"));
             
-            // Load questions
+            // Load questions - don't modify the collection to avoid Hibernate cascade issues
             List<QuizQuestion> questions = quizQuestionRepository.findByQuizIdOrderByOrderIndex(quiz.getId());
-            quiz.setQuestions(questions);
+            log.info("Loaded {} questions for quiz {}", questions.size(), quiz.getId());
+            // Don't call quiz.setQuestions() - it causes Hibernate cascade error
+            // Questions are already loaded via EAGER fetch in Quiz entity
             attempt.setQuiz(quiz);
 
             int correctAnswers = 0;
@@ -95,8 +101,24 @@ public class QuizService {
                         .orElse(null);
 
                 if (question != null) {
-                    boolean isCorrect = question.getCorrectAnswer() != null &&
-                            question.getCorrectAnswer().equalsIgnoreCase(answer.trim());
+                    // Compare answer - correctAnswer can be index (0, 1, 2...) or actual answer text
+                    String correctAnswerStr = question.getCorrectAnswer();
+                    String answerStr = answer != null ? answer.trim() : "";
+                    boolean isCorrect = false;
+                    
+                    if (correctAnswerStr != null && !answerStr.isEmpty()) {
+                        // Try to parse as integer (index)
+                        try {
+                            int correctIndex = Integer.parseInt(correctAnswerStr);
+                            int answerIndex = Integer.parseInt(answerStr);
+                            isCorrect = correctIndex == answerIndex;
+                            log.debug("Comparing as indices: correct={}, answer={}, match={}", correctIndex, answerIndex, isCorrect);
+                        } catch (NumberFormatException e) {
+                            // If not numeric, compare as strings
+                            isCorrect = correctAnswerStr.equalsIgnoreCase(answerStr);
+                            log.debug("Comparing as strings: correct={}, answer={}, match={}", correctAnswerStr, answerStr, isCorrect);
+                        }
+                    }
 
                     QuizAnswer quizAnswer = QuizAnswer.builder()
                             .attempt(attempt)
@@ -116,6 +138,8 @@ public class QuizService {
                     log.warn("Question {} not found in quiz {}", questionId, quiz.getId());
                 }
             }
+            
+            log.info("Evaluated {} answers: {} correct, total score: {}", answers.size(), correctAnswers, totalScore);
 
             // Save all answers first
             if (!quizAnswers.isEmpty()) {
@@ -127,6 +151,7 @@ public class QuizService {
 
             // Update attempt
             attempt.setCorrectAnswers(correctAnswers);
+            attempt.setTotalQuestions(questions.size());
             attempt.setScore(totalScore);
             attempt.setStatus(QuizAttempt.AttemptStatus.COMPLETED);
             attempt.setCompletedAt(LocalDateTime.now());

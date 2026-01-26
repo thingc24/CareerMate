@@ -18,7 +18,8 @@ public interface AIChatConversationRepository extends JpaRepository<AIChatConver
     
     List<AIChatConversation> findByStudentIdOrderByCreatedAtDesc(UUID studentId);
     
-    @Query("SELECT c FROM AIChatConversation c WHERE c.student.id = :studentId AND c.role = :role ORDER BY c.createdAt DESC")
+    // Note: AIChatConversation now uses studentId (UUID) directly, not student entity
+    @Query("SELECT c FROM AIChatConversation c WHERE c.studentId = :studentId AND c.role = :role ORDER BY c.createdAt DESC")
     List<AIChatConversation> findByStudentIdAndRole(@Param("studentId") UUID studentId, @Param("role") String role);
     
     long countByStudentId(UUID studentId);

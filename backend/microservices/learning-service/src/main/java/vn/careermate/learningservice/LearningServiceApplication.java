@@ -12,7 +12,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableDiscoveryClient
-@EnableFeignClients
+@EnableFeignClients(basePackages = "vn.careermate.common.client")
 @EnableJpaAuditing
 @EnableAsync
 @EnableScheduling

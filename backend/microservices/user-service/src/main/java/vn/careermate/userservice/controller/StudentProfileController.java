@@ -6,6 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import vn.careermate.userservice.model.StudentProfile;
+import vn.careermate.userservice.model.User;
+import vn.careermate.userservice.repository.UserRepository;
 import vn.careermate.userservice.service.StudentProfileService;
 
 import java.io.IOException;
@@ -16,10 +18,10 @@ import java.util.Map;
 @RestController
 @RequestMapping("/students")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class StudentProfileController {
 
     private final StudentProfileService studentProfileService;
+    private final UserRepository userRepository;
 
     @GetMapping("/profile")
     public ResponseEntity<Map<String, Object>> getProfile() {
@@ -50,6 +52,18 @@ public class StudentProfileController {
             log.info("GET /students/profile - Profile data - University: {}, Major: {}, City: {}, Address: {}, Gender: {}", 
                 profile.getUniversity(), profile.getMajor(), profile.getCity(), profile.getAddress(), profile.getGender());
 
+            // Get user to check avatar URL (User.avatarUrl takes priority)
+            String email = auth.getName();
+            User user = userRepository.findByEmail(email).orElse(null);
+            
+            // Priority: User.avatarUrl > StudentProfile.avatarUrl
+            String avatarUrl = null;
+            if (user != null && user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {
+                avatarUrl = user.getAvatarUrl();
+            } else if (profile.getAvatarUrl() != null && !profile.getAvatarUrl().isEmpty()) {
+                avatarUrl = profile.getAvatarUrl();
+            }
+            
             Map<String, Object> dto = new HashMap<>();
             dto.put("id", profile.getId() != null ? profile.getId().toString() : null);
             dto.put("dateOfBirth", profile.getDateOfBirth());
@@ -65,8 +79,10 @@ public class StudentProfileController {
             dto.put("linkedinUrl", profile.getLinkedinUrl());
             dto.put("githubUrl", profile.getGithubUrl());
             dto.put("portfolioUrl", profile.getPortfolioUrl());
-            dto.put("avatarUrl", profile.getAvatarUrl());
+            dto.put("avatarUrl", avatarUrl);
             dto.put("currentStatus", profile.getCurrentStatus() != null ? profile.getCurrentStatus() : "STUDENT");
+            
+            log.info("GET /students/profile - Avatar URL: {}", avatarUrl);
 
             log.info("GET /students/profile - DTO data - University: {}, Major: {}, City: {}, Address: {}, Gender: {}", 
                 dto.get("university"), dto.get("major"), dto.get("city"), dto.get("address"), dto.get("gender"));
@@ -275,6 +291,112 @@ public class StudentProfileController {
             log.error("Unexpected error uploading avatar", e);
             return ResponseEntity.status(500)
                 .body(Map.of("error", "Error uploading avatar: " + e.getMessage()));
+        }
+    }
+
+    // Endpoints for Feign Clients
+    @GetMapping("/profile/current")
+    @org.springframework.security.access.prepost.PreAuthorize("permitAll()")
+    public ResponseEntity<vn.careermate.common.dto.StudentProfileDTO> getCurrentStudentProfileForFeign() {
+        try {
+            StudentProfile profile = studentProfileService.getCurrentStudentProfile();
+            if (profile == null) {
+                return ResponseEntity.notFound().build();
+            }
+            vn.careermate.common.dto.StudentProfileDTO dto = vn.careermate.common.dto.StudentProfileDTO.builder()
+                    .id(profile.getId())
+                    .userId(profile.getUser() != null ? profile.getUser().getId() : null)
+                    .dateOfBirth(profile.getDateOfBirth())
+                    .gender(profile.getGender())
+                    .address(profile.getAddress())
+                    .city(profile.getCity())
+                    .country(profile.getCountry())
+                    .university(profile.getUniversity())
+                    .major(profile.getMajor())
+                    .graduationYear(profile.getGraduationYear())
+                    .gpa(profile.getGpa())
+                    .bio(profile.getBio())
+                    .linkedinUrl(profile.getLinkedinUrl())
+                    .githubUrl(profile.getGithubUrl())
+                    .portfolioUrl(profile.getPortfolioUrl())
+                    .createdAt(profile.getCreatedAt())
+                    .updatedAt(profile.getUpdatedAt())
+                    .build();
+            return ResponseEntity.ok(dto);
+        } catch (Exception e) {
+            log.error("Error getting current student profile: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    @GetMapping("/profile/{studentId}")
+    @org.springframework.security.access.prepost.PreAuthorize("permitAll()")
+    public ResponseEntity<vn.careermate.common.dto.StudentProfileDTO> getStudentProfileById(@PathVariable java.util.UUID studentId) {
+        try {
+            StudentProfile profile = studentProfileService.getStudentProfileById(studentId);
+            if (profile == null) {
+                return ResponseEntity.notFound().build();
+            }
+            vn.careermate.common.dto.StudentProfileDTO dto = vn.careermate.common.dto.StudentProfileDTO.builder()
+                    .id(profile.getId())
+                    .userId(profile.getUser() != null ? profile.getUser().getId() : null)
+                    .dateOfBirth(profile.getDateOfBirth())
+                    .gender(profile.getGender())
+                    .address(profile.getAddress())
+                    .city(profile.getCity())
+                    .country(profile.getCountry())
+                    .university(profile.getUniversity())
+                    .major(profile.getMajor())
+                    .graduationYear(profile.getGraduationYear())
+                    .gpa(profile.getGpa())
+                    .bio(profile.getBio())
+                    .linkedinUrl(profile.getLinkedinUrl())
+                    .githubUrl(profile.getGithubUrl())
+                    .portfolioUrl(profile.getPortfolioUrl())
+                    .createdAt(profile.getCreatedAt())
+                    .updatedAt(profile.getUpdatedAt())
+                    .build();
+            return ResponseEntity.ok(dto);
+        } catch (Exception e) {
+            log.error("Error getting student profile by ID: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    @GetMapping("/profile/user/{userId}")
+    @org.springframework.security.access.prepost.PreAuthorize("permitAll()")
+    public ResponseEntity<vn.careermate.common.dto.StudentProfileDTO> getStudentProfileByUserId(@PathVariable java.util.UUID userId) {
+        try {
+            log.info("GET /students/profile/user/{} - Request received from Feign client", userId);
+            StudentProfile profile = studentProfileService.getStudentProfileByUserId(userId);
+            if (profile == null) {
+                log.warn("GET /students/profile/user/{} - Profile not found", userId);
+                return ResponseEntity.notFound().build();
+            }
+            vn.careermate.common.dto.StudentProfileDTO dto = vn.careermate.common.dto.StudentProfileDTO.builder()
+                    .id(profile.getId())
+                    .userId(profile.getUser() != null ? profile.getUser().getId() : null)
+                    .dateOfBirth(profile.getDateOfBirth())
+                    .gender(profile.getGender())
+                    .address(profile.getAddress())
+                    .city(profile.getCity())
+                    .country(profile.getCountry())
+                    .university(profile.getUniversity())
+                    .major(profile.getMajor())
+                    .graduationYear(profile.getGraduationYear())
+                    .gpa(profile.getGpa())
+                    .bio(profile.getBio())
+                    .linkedinUrl(profile.getLinkedinUrl())
+                    .githubUrl(profile.getGithubUrl())
+                    .portfolioUrl(profile.getPortfolioUrl())
+                    .createdAt(profile.getCreatedAt())
+                    .updatedAt(profile.getUpdatedAt())
+                    .build();
+            log.info("GET /students/profile/user/{} - Profile found: ID={}", userId, profile.getId());
+            return ResponseEntity.ok(dto);
+        } catch (Exception e) {
+            log.error("Error getting student profile by user ID: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).build();
         }
     }
 }

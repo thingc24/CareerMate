@@ -17,9 +17,8 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/jobs")
+@RequestMapping("/jobs")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class JobController {
 
     private final JobService jobService;
@@ -90,5 +89,70 @@ public class JobController {
             return ResponseEntity.status(500)
                 .build();
         }
+    }
+
+    // Admin endpoints
+    @PostMapping("/{jobId}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Job> approveJob(@PathVariable UUID jobId, @RequestParam UUID adminId) {
+        return ResponseEntity.ok(jobService.approveJob(jobId, adminId));
+    }
+
+    @PostMapping("/{jobId}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Job> rejectJob(@PathVariable UUID jobId, @RequestParam UUID adminId) {
+        return ResponseEntity.ok(jobService.rejectJob(jobId, adminId));
+    }
+
+    @PostMapping("/{jobId}/hide")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Job> hideJob(@PathVariable UUID jobId, @RequestParam UUID adminId, @RequestParam String reason) {
+        return ResponseEntity.ok(jobService.hideJob(jobId, adminId, reason));
+    }
+
+    @PostMapping("/{jobId}/unhide")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Job> unhideJob(@PathVariable UUID jobId, @RequestParam UUID adminId) {
+        return ResponseEntity.ok(jobService.unhideJob(jobId, adminId));
+    }
+
+    @DeleteMapping("/{jobId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteJob(@PathVariable UUID jobId, @RequestParam UUID adminId, @RequestParam String reason) {
+        jobService.deleteJob(jobId, adminId, reason);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/admin/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<Job>> getAllJobs(
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(jobService.getAllJobs(status, pageable));
+    }
+
+    @GetMapping("/admin/pending")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<Job>> getPendingJobs(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(jobService.getPendingJobs(pageable));
+    }
+
+    @GetMapping("/admin/count")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Long> getJobCount(@RequestParam(required = false) String status) {
+        return ResponseEntity.ok(jobService.getJobCount(status));
+    }
+
+    @GetMapping("/applications/admin/count")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Long> getApplicationCount() {
+        return ResponseEntity.ok(jobService.getApplicationCount());
     }
 }
