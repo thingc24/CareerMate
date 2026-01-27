@@ -78,22 +78,29 @@ if errorlevel 1 (
 )
 
 echo.
-echo [7/8] Building Learning Service...
+echo [8/9] Building Learning Service...
 cd ..\learning-service
 call mvn clean install -DskipTests
 if errorlevel 1 (
     echo ERROR: Learning Service build failed!
-    pause
     exit /b 1
 )
 
 echo.
-echo [8/8] Building API Gateway...
+echo [9/9] Building AI Service...
+cd ..\ai-service
+call mvn clean install -DskipTests
+if errorlevel 1 (
+    echo ERROR: AI Service build failed!
+    exit /b 1
+)
+
+echo.
+echo [10/10] Building API Gateway...
 cd ..\api-gateway
 call mvn clean install -DskipTests
 if errorlevel 1 (
     echo ERROR: API Gateway build failed!
-    pause
     exit /b 1
 )
 
@@ -103,6 +110,5 @@ echo ================================================================
 echo All services built successfully!
 echo ================================================================
 echo.
-echo IMPORTANT: Stop all running services and restart with CHAY_BACKEND.ps1
+echo IMPORTANT: Stop all running services (Docker) and restart if needed.
 echo.
-pause
