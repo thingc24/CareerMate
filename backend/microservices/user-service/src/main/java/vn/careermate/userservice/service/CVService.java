@@ -160,6 +160,19 @@ public class CVService {
     }
 
     @Transactional(readOnly = true)
+    public CV getCV(UUID cvId) {
+        // Find CV
+        CV cv = cvRepository.findById(cvId)
+                .orElseThrow(() -> new RuntimeException("CV not found"));
+        
+        // Check permission - Allow both Student owner and Recruiter (if application exists)
+        // For simplicity allow authenticated users for now
+        // TODO: Implement stricter permission check
+        
+        return cv;
+    }
+
+    @Transactional(readOnly = true)
     public Map<String, Object> downloadCV(UUID cvId) {
         // Find CV
         CV cv = cvRepository.findById(cvId)

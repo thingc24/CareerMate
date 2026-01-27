@@ -5,7 +5,10 @@ import jakarta.persistence.*;
 // import vn.careermate.userservice.model.StudentProfile; // Replaced with UUID
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -20,7 +23,10 @@ import java.util.UUID;
     @Index(name = "idx_ai_chat_student", columnList = "student_id"),
     @Index(name = "idx_ai_chat_created", columnList = "created_at")
 })
-@Data
+@Getter
+@Setter
+@ToString
+@EqualsAndHashCode
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -51,6 +57,9 @@ public class AIChatConversation {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AIChatMessage> messages;
 }

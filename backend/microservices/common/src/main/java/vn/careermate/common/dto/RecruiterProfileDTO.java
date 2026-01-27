@@ -15,6 +15,7 @@ import java.util.UUID;
 public class RecruiterProfileDTO {
     private UUID id;
     private UUID userId;
+    private String fullName; // Added to map user name
     private UUID companyId; // Reference to company in content-service
     private String position;
     private String department;

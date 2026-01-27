@@ -20,6 +20,9 @@ import java.util.*;
 @Service
 public class AIService {
 
+    @Value("${ai.provider:gemini}")
+    private String provider;
+
     @Value("${ai.openrouter.api-key:}")
     private String openRouterApiKey;
 
@@ -34,8 +37,9 @@ public class AIService {
 
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
+    private final GeminiService geminiService;
 
-    public AIService(WebClient.Builder webClientBuilder) {
+    public AIService(WebClient.Builder webClientBuilder, GeminiService geminiService) {
         this.webClient = webClientBuilder
             .baseUrl("https://openrouter.ai/api/v1")
             .defaultHeader("Content-Type", "application/json")
@@ -43,6 +47,7 @@ public class AIService {
             .defaultHeader("X-Title", "CareerMate") // Optional: for analytics
             .build();
         this.objectMapper = new ObjectMapper();
+        this.geminiService = geminiService;
     }
 
     /**
@@ -71,7 +76,7 @@ public class AIService {
         );
 
         try {
-            String response = callOpenRouterAPI(prompt);
+            String response = callAIAPI(prompt);
             
             // Try to parse JSON from response
             String jsonStr = cleanJSONResponse(response);
@@ -147,7 +152,7 @@ public class AIService {
         );
 
         try {
-            String response = callOpenRouterAPI(prompt);
+            String response = callAIAPI(prompt);
             return Arrays.asList(response.split("\n"));
         } catch (Exception e) {
             log.error("Error generating interview questions", e);
@@ -214,7 +219,7 @@ public class AIService {
         );
 
         try {
-            String response = callOpenRouterAPI(prompt);
+            String response = callAIAPI(prompt);
             log.info("Raw AI response for roadmap (first 1000 chars): {}", 
                 response.length() > 1000 ? response.substring(0, 1000) + "..." : response);
             
@@ -581,9 +586,25 @@ public class AIService {
     }
 
     /**
+     * Call AI API - routes to appropriate provider (Gemini or OpenRouter)
+     */
+    public String callAIAPI(String prompt) {
+        if ("gemini".equalsIgnoreCase(provider)) {
+            log.info("Using Gemini AI provider");
+            return geminiService.callGeminiAPI(prompt);
+        } else if ("openrouter".equalsIgnoreCase(provider)) {
+            log.info("Using OpenRouter AI provider");
+            return callOpenRouterAPI(prompt);
+        } else {
+            log.warn("Unknown AI provider: {}, defaulting to Gemini", provider);
+            return geminiService.callGeminiAPI(prompt);
+        }
+    }
+
+    /**
      * Call OpenRouter API (OpenAI-compatible format)
      */
-    private String callOpenRouterAPI(String prompt) {
+    public String callOpenRouterAPI(String prompt) {
         if (openRouterApiKey == null || openRouterApiKey.isEmpty() || openRouterApiKey.equals("YOUR_OPENROUTER_API_KEY_HERE")) {
             throw new RuntimeException("OpenRouter API key is not configured");
         }
@@ -615,6 +636,7 @@ public class AIService {
                         .doOnNext(body -> log.error("Error response body: {}", body))
                         .then(Mono.error(new RuntimeException("OpenRouter API returned error: " + clientResponse.statusCode() + 
                             (clientResponse.statusCode().value() == 503 ? " SERVICE_UNAVAILABLE - Dịch vụ AI tạm thời không khả dụng. Vui lòng thử lại sau." :
+                             clientResponse.statusCode().value() == 402 ? " PAYMENT_REQUIRED - Hết hạn mức sử dụng hoặc cần số dư để sử dụng model này. Vui lòng kiểm tra tài khoản OpenRouter hoặc đổi model." :
                              clientResponse.statusCode().value() == 403 ? " FORBIDDEN - API key không hợp lệ hoặc không có quyền truy cập." :
                              clientResponse.statusCode().value() == 429 ? " RATE_LIMIT - Đã vượt quá giới hạn sử dụng. Vui lòng thử lại sau." :
                              ""))));
@@ -790,10 +812,14 @@ public class AIService {
         String prompt = systemPrompt + "\n\nCâu hỏi của người dùng: " + message;
 
         try {
-            return callOpenRouterAPI(prompt);
+            return callAIAPI(prompt);
         } catch (Exception e) {
             log.error("Error in chat", e);
-            return "Xin lỗi, có lỗi xảy ra khi xử lý câu hỏi của bạn. Vui lòng thử lại sau.";
+            String errorMsg = e.getMessage();
+            if (errorMsg != null && errorMsg.contains("402")) {
+                return "Dịch vụ AI (OpenRouter) báo lỗi 402: Hết hạn mức sử dụng (Quota) hoặc cần số dư tài khoản để sử dụng model này. Vui lòng kiểm tra lại cấu hình hoặc thử lại sau.";
+            }
+            return "Xin lỗi, có lỗi xảy ra khi xử lý câu hỏi của bạn: " + (errorMsg != null ? errorMsg : "Lỗi hệ thống") + ". Vui lòng thử lại sau.";
         }
     }
 

@@ -74,14 +74,6 @@ export default function MobileMessages() {
         return c.participant1?.id === user.id ? c.participant2 : c.participant1;
     };
 
-    const getFullUrl = (url) => {
-        if (!url) return null;
-        if (url.startsWith('http')) return url;
-        const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
-        const origin = apiBase.replace(/\/api$/, '');
-        return `${origin}${url.startsWith('/') ? url : '/' + url}`;
-    };
-
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
@@ -95,7 +87,7 @@ export default function MobileMessages() {
                 <div className="h-16 px-4 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
                     <button onClick={() => setSelectedConv(null)} className="p-2 text-slate-400"><i className="fas fa-arrow-left"></i></button>
                     <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-black overflow-hidden border border-slate-100 dark:border-slate-800">
-                        {other?.avatarUrl ? <img src={getFullUrl(other.avatarUrl)} className="w-full h-full object-cover" /> : other?.fullName?.charAt(0)}
+                        {other?.avatarUrl ? <img src={api.getFileUrl(other.avatarUrl)} className="w-full h-full object-cover" /> : other?.fullName?.charAt(0)}
                     </div>
                     <div className="flex-1 min-w-0">
                         <h3 className="text-xs font-black text-slate-800 dark:text-white uppercase truncate tracking-tight">{other?.fullName}</h3>
@@ -165,7 +157,7 @@ export default function MobileMessages() {
                                 className="w-full flex items-center gap-4 p-4 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800/50 active:scale-[0.98] transition-all"
                             >
                                 <div className="w-14 h-14 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 font-black overflow-hidden border border-slate-100 dark:border-slate-800">
-                                    {other?.avatarUrl ? <img src={getFullUrl(other.avatarUrl)} className="w-full h-full object-cover" /> : other?.fullName?.charAt(0)}
+                                    {other?.avatarUrl ? <img src={api.getFileUrl(other.avatarUrl)} className="w-full h-full object-cover" /> : other?.fullName?.charAt(0)}
                                 </div>
                                 <div className="flex-1 text-left min-w-0">
                                     <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase truncate tracking-tight">{other?.fullName}</h3>

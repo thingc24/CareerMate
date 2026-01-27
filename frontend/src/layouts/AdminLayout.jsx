@@ -24,6 +24,7 @@ export default function AdminLayout({ children }) {
     { path: '/admin/articles/create', icon: 'fa-plus-circle', label: 'Đăng bài viết' },
     { path: '/admin/cv-templates', icon: 'fa-file-code', label: 'Quản lý CV Templates' },
     { path: '/admin/packages', icon: 'fa-gem', label: 'Quản lý Gói Dịch Vụ' },
+    { path: '/admin/mock-interviews', icon: 'fa-robot', label: 'Quản lý Phỏng vấn AI' },
     { path: '/admin/analytics', icon: 'fa-chart-line', label: 'Phân Tích & Báo Cáo' },
     { path: '/admin/messages', icon: 'fa-comments', label: 'Tin nhắn' },
   ];
@@ -69,17 +70,17 @@ export default function AdminLayout({ children }) {
                 key={item.path}
                 to={item.path}
                 className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 group ${isActive(item.path)
-                    ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg shadow-indigo-500/30 translate-x-1'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:translate-x-1'
+                  ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg shadow-indigo-500/30 translate-x-1'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:translate-x-1'
                   }`}
               >
                 <div className={`p-1.5 rounded-lg ${isActive(item.path)
-                    ? 'bg-white/20'
-                    : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/30'
+                  ? 'bg-white/20'
+                  : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/30'
                   }`}>
                   <i className={`fas ${item.icon} text-sm ${isActive(item.path)
-                      ? 'text-white'
-                      : 'text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400'
+                    ? 'text-white'
+                    : 'text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400'
                     }`} />
                 </div>
                 <span className="font-semibold">{item.label}</span>

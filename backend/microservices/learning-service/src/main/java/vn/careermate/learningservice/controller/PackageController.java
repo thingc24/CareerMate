@@ -55,6 +55,17 @@ public class PackageController {
             return ResponseEntity.badRequest().build();
         }
     }
+    
+    @PostMapping("/subscriptions/{subscriptionId}/cancel")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<String> cancelSubscription(@PathVariable UUID subscriptionId) {
+        try {
+            packageService.cancelSubscription(subscriptionId);
+            return ResponseEntity.ok("Subscription cancelled successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 
     // Legacy endpoint - kept for backward compatibility
     @PostMapping("/{packageId}/subscribe")

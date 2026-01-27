@@ -41,6 +41,19 @@ export default function Packages() {
     }
   };
 
+  const handleCancel = async (subscriptionId) => {
+    if (!window.confirm('Bạn có chắc muốn hủy đăng ký này?')) return;
+    try {
+      await api.cancelSubscription(subscriptionId);
+      alert('Đã hủy thành công!');
+      loadData();
+    } catch (error) {
+      console.error('Cancel Error:', error);
+      const msg = error.response?.data ? (typeof error.response.data === 'string' ? error.response.data : JSON.stringify(error.response.data)) : error.message;
+      alert('Lỗi: ' + msg);
+    }
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
   };
@@ -49,8 +62,10 @@ export default function Packages() {
     const map = {
       ACTIVE: 'bg-green-100 text-green-700 border-green-200',
       PENDING: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+      APPROVED: 'bg-blue-100 text-blue-700 border-blue-200',
       EXPIRED: 'bg-gray-100 text-gray-500 border-gray-200',
-      REJECTED: 'bg-red-100 text-red-700 border-red-200'
+      REJECTED: 'bg-red-100 text-red-700 border-red-200',
+      CANCELLED: 'bg-gray-100 text-gray-500 border-gray-200'
     };
     return map[status] || 'bg-gray-100 text-gray-700';
   };
@@ -76,6 +91,14 @@ export default function Packages() {
   // No mock data - rely on API
   const displayPackages = packages;
 
+  // Helper to check if a package has a pending request
+  const getPendingSubscription = (packageId) => {
+    return mySubscriptions.find(sub =>
+      sub.packageEntity?.id === packageId &&
+      sub.status === 'PENDING'
+    );
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-12">
 
@@ -87,6 +110,34 @@ export default function Packages() {
         <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
           Mở khóa toàn bộ tiềm năng với các gói dịch vụ cao cấp. Đầu tư cho tương lai ngay hôm nay.
         </p>
+
+        {/* Current Subscription Banner */}
+        {mySubscription && (
+          <div className="mt-8 max-w-3xl mx-auto bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white shadow-xl transform transition-all hover:scale-[1.02]">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-2xl backdrop-blur-sm">
+                  <i className="fas fa-crown"></i>
+                </div>
+                <div className="text-left">
+                  <p className="text-blue-100 text-sm font-medium uppercase tracking-wider">Gói hiện tại</p>
+                  <h3 className="text-2xl font-bold">{mySubscription.packageEntity?.name}</h3>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-blue-100 text-sm">Hết hạn vào</p>
+                <p className="text-xl font-bold">
+                  {mySubscription.endDate ? new Date(mySubscription.endDate).toLocaleDateString('vi-VN') : 'Vĩnh viễn'}
+                </p>
+                {mySubscription.endDate && (
+                  <p className="text-xs text-blue-200 mt-1">
+                    (Còn {Math.max(0, Math.ceil((new Date(mySubscription.endDate) - new Date()) / (1000 * 60 * 60 * 24)))} ngày)
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Billing Toggle */}
         <div className="flex justify-center items-center gap-4 mt-8">
@@ -106,9 +157,10 @@ export default function Packages() {
       {/* Pricing Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
         {displayPackages.map((pkg, idx) => {
-          const isActive = mySubscription?.packageEntity?.id === pkg.id;
-          const isPopular = pkg.name === 'Pro' || pkg.name === 'Premium'; // Mock logic for visual
-          const isPremium = pkg.name === 'Premium';
+          const isActive = mySubscription?.packageEntity?.id === pkg.id && (mySubscription.status === 'ACTIVE' || mySubscription.status === 'APPROVED');
+          const pendingSub = getPendingSubscription(pkg.id);
+          const isPending = !!pendingSub;
+          const isPopular = pkg.name === 'Pro' || pkg.name === 'Premium';
 
           return (
             <div
@@ -140,16 +192,44 @@ export default function Packages() {
 
               <button
                 onClick={() => handleSubscribe(pkg.id)}
-                disabled={isActive}
-                className={`w-full py-3.5 rounded-xl font-bold text-sm transition-all duration-200 ${isActive
-                  ? 'bg-green-500 text-white cursor-default'
-                  : isPopular
-                    ? 'bg-white text-gray-900 hover:bg-gray-100'
-                    : 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100'
+                disabled={isActive || isPending}
+                className={`w-full py-3.5 rounded-xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2 ${isActive
+                  ? 'bg-green-500 text-white cursor-default opacity-100'
+                  : isPending
+                    ? 'bg-yellow-500 text-white cursor-not-allowed opacity-90'
+                    : isPopular
+                      ? 'bg-white text-gray-900 hover:bg-gray-100'
+                      : 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100'
                   }`}
               >
-                {isActive ? 'Đang sử dụng' : pkg.price === 0 ? 'Bắt đầu miễn phí' : 'Đăng ký ngay'}
+                {isActive && <i className="fas fa-check-circle"></i>}
+                {isPending && <i className="fas fa-clock"></i>}
+                {isActive ? 'Đang sử dụng' : isPending ? 'Đang chờ duyệt' : pkg.price === 0 ? 'Bắt đầu miễn phí' : 'Đăng ký ngay'}
               </button>
+
+              {isActive && (
+                <button
+                  onClick={() => handleCancel(mySubscription.id)}
+                  className="w-full mt-3 py-2 text-xs font-bold text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
+                >
+                  Hủy gói cước
+                </button>
+              )}
+
+              {isPending && (
+                <div className="mt-3 text-center">
+                  <p className="text-xs text-yellow-600 font-medium mb-2">
+                    Yêu cầu đang được xử lý...
+                  </p>
+                  <button
+                    onClick={() => handleCancel(pendingSub.id)}
+                    className="text-xs font-bold text-red-500 hover:text-red-700 hover:underline"
+                  >
+                    Hủy yêu cầu
+                  </button>
+                </div>
+              )}
+
 
               <div className="mt-8 space-y-4">
                 <p className={`text-xs font-bold uppercase tracking-wider ${isPopular ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -173,6 +253,55 @@ export default function Packages() {
           );
         })}
       </div>
+
+      {/* Subscription History */}
+      {mySubscriptions.length > 0 && (
+        <div className="mt-16 animate-fade-in-up">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+            <i className="fas fa-history text-blue-500"></i>
+            Lịch sử đăng ký
+          </h2>
+          <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50/50 dark:bg-gray-700/50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Gói dịch vụ</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Ngày bắt đầu</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Ngày kết thúc</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {mySubscriptions.map((sub, idx) => (
+                    <tr key={sub.id || idx} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="font-bold text-gray-900 dark:text-white">{sub.packageEntity?.name || 'Unknown Package'}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full border ${getStatusColor(sub.status)}`}>
+                          {sub.status === 'ACTIVE' ? 'Đang hoạt động' :
+                            sub.status === 'PENDING' ? 'Chờ duyệt' :
+                              sub.status === 'APPROVED' ? 'Đã duyệt' :
+                                sub.status === 'EXPIRED' ? 'Đã hết hạn' :
+                                  sub.status === 'REJECTED' ? 'Bị từ chối' :
+                                    sub.status === 'CANCELLED' ? 'Đã hủy' : sub.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-600 dark:text-gray-300">
+                        {sub.startDate ? new Date(sub.startDate).toLocaleDateString('vi-VN') : '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-600 dark:text-gray-300">
+                        {sub.endDate ? new Date(sub.endDate).toLocaleDateString('vi-VN') : '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Feature Comparison Table */}
       <div className="mt-20">
@@ -206,8 +335,6 @@ export default function Packages() {
           </table>
         </div>
       </div>
-
-      {/* FAQ or Trust Badges could go here */}
     </div>
   );
 }

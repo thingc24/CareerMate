@@ -33,8 +33,15 @@ jwt:
   expiration: 86400000
 
 ai:
+  provider: gemini # Changed from openrouter to gemini
+  gemini:
+    api-key: ${GEMINI_API_KEY:AIzaSyCuvfDcqhJbyy_2g7tyJuQ-W5PPXrdJBVY}
+    model: ${GEMINI_MODEL:gemini-2.5-flash}
+    base-url: https://generativelanguage.googleapis.com/v1beta
+    timeout: 30000
+  # Legacy OpenRouter config (kept for reference)  
   openrouter:
-    api-key: ${OPENROUTER_API_KEY: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}
+    api-key: ${OPENROUTER_API_KEY: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}
     model: ${OPENROUTER_MODEL:meta-llama/llama-3.2-3b-instruct:free}
     base-url: https://openrouter.ai/api/v1
     timeout: 30000

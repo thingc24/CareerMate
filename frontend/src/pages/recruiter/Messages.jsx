@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import UserInfoModal from '../../components/UserInfoModal';
 
 export default function Messages() {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -42,10 +44,58 @@ export default function Messages() {
     };
   }, [selectedConversation]);
 
-  // Check URL params for conversationId and auto-select conversation
+  // Check URL params or navigation state for auto-select conversation
   useEffect(() => {
+    console.log('=== Messages Auto-Select Debug ===');
+    console.log('Conversations loaded:', conversations.length);
+    console.log('Location state:', location.state);
+
     const conversationId = searchParams.get('conversationId');
-    if (conversationId && conversations.length > 0) {
+    const recipientId = location.state?.recipientId;
+
+    console.log('ConversationId from params:', conversationId);
+    console.log('RecipientId from state:', recipientId);
+
+    if (recipientId) {
+      console.log('Attempting to find/create conversation with recipientId:', recipientId);
+
+      if (conversations.length === 0) {
+        console.log('Conversations not loaded yet, will retry...');
+        return;
+      }
+
+      // Find or create conversation with this recipient
+      const existingConv = conversations.find(conv => {
+        const other = getOtherUser(conv);
+        const matches = other?.id === recipientId;
+        console.log(`Checking conversation ${conv.id}: other user ID = ${other?.id}, matches = ${matches}`);
+        return matches;
+      });
+
+      if (existingConv && (!selectedConversation || selectedConversation.id !== existingConv.id)) {
+        console.log('Found existing conversation:', existingConv.id);
+        setSelectedConversation(existingConv);
+        // Clear location state after selecting
+        navigate(location.pathname, { replace: true, state: {} });
+      } else if (!existingConv) {
+        console.log('No existing conversation, creating new one...');
+        // Create new conversation with this user
+        api.getOrCreateConversation(recipientId)
+          .then(newConv => {
+            console.log('Created new conversation:', newConv.id);
+            setSelectedConversation(newConv);
+            loadConversations(); // Reload to show new conversation in list
+            // Clear location state after selecting
+            navigate(location.pathname, { replace: true, state: {} });
+          })
+          .catch(err => {
+            console.error('Error creating conversation:', err);
+            alert('Không thể tạo cuộc trò chuyện: ' + (err.response?.data?.error || err.message));
+          });
+      } else {
+        console.log('Conversation already selected');
+      }
+    } else if (conversationId && conversations.length > 0 && !location.state?.recipientId) {
       const conversation = conversations.find(c => c.id === conversationId);
       if (conversation && (!selectedConversation || selectedConversation.id !== conversationId)) {
         setSelectedConversation(conversation);
@@ -53,7 +103,7 @@ export default function Messages() {
         setSearchParams({});
       }
     }
-  }, [conversations, searchParams, selectedConversation, setSearchParams]);
+  }, [conversations, searchParams, location.state, selectedConversation, setSearchParams, navigate, location.pathname]);
 
   useEffect(() => {
     if (selectedConversation) {
@@ -297,8 +347,8 @@ export default function Messages() {
                     key={conversation.id}
                     onClick={() => handleConversationClick(conversation)}
                     className={`w-full p-4 rounded-2xl transition-all duration-200 group relative overflow-hidden text-left ${isSelected
-                        ? 'bg-blue-600 shadow-lg shadow-blue-500/30'
-                        : 'hover:bg-white/80 dark:hover:bg-gray-800/80 hover:shadow-md'
+                      ? 'bg-blue-600 shadow-lg shadow-blue-500/30'
+                      : 'hover:bg-white/80 dark:hover:bg-gray-800/80 hover:shadow-md'
                       }`}
                   >
                     {/* Background decoration for selected */}
@@ -491,8 +541,8 @@ export default function Messages() {
 
                         <div
                           className={`max-w-[70%] relative px-5 py-3 shadow-sm text-sm leading-relaxed transition-all hover:shadow-md ${isMyMessage
-                              ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-2xl rounded-tr-sm'
-                              : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-gray-700 rounded-2xl rounded-tl-sm'
+                            ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-2xl rounded-tr-sm'
+                            : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-gray-700 rounded-2xl rounded-tl-sm'
                             }`}
                         >
                           <div className="whitespace-pre-wrap break-words">{msg.content}</div>
@@ -566,8 +616,8 @@ export default function Messages() {
                       type="submit"
                       disabled={loading || !input.trim()}
                       className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md transition-all transform hover:scale-105 active:scale-95 ${!input.trim()
-                          ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-                          : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-blue-500/30'
+                        ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-blue-500/30'
                         }`}
                     >
                       {loading ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-paper-plane"></i>}

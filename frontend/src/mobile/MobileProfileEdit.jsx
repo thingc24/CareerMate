@@ -77,7 +77,7 @@ export default function MobileProfileEdit() {
                 <div className="flex flex-col items-center">
                     <div className="relative group">
                         <div className="w-24 h-24 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-indigo-600 p-1">
-                            <img src={user?.avatarUrl || `https://ui-avatars.com/api/?name=${user?.fullName}&background=random`} className="w-full h-full rounded-full object-cover" />
+                            <img src={api.getFileUrl(user?.avatarUrl) || `https://ui-avatars.com/api/?name=${user?.fullName}&background=random`} className="w-full h-full rounded-full object-cover" />
                         </div>
                         <div className="absolute bottom-0 right-0 w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center border-4 border-white dark:border-slate-950 overflow-hidden">
                             <i className="fas fa-camera text-[10px]"></i>

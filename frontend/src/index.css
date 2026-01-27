@@ -275,6 +275,15 @@
     }
   }
 
+  @keyframes shimmer {
+    from {
+      transform: translateX(-150%) skewX(-12deg);
+    }
+    to {
+      transform: translateX(150%) skewX(-12deg);
+    }
+  }
+
   /* Scrollbar Styles */
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;

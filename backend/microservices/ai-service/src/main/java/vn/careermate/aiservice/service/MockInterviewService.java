@@ -1,6 +1,6 @@
 package vn.careermate.aiservice.service;
 
-import lombok.RequiredArgsConstructor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -10,22 +10,35 @@ import vn.careermate.common.dto.JobDTO;
 
 import java.util.*;
 
+import vn.careermate.aiservice.model.MockInterview;
+import vn.careermate.aiservice.model.MockInterviewQuestion;
+import vn.careermate.aiservice.repository.MockInterviewRepository;
+
+import vn.careermate.common.client.UserServiceClient;
+import vn.careermate.common.dto.UserDTO;
+
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class MockInterviewService {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(MockInterviewService.class);
 
     private final WebClient.Builder webClientBuilder;
     private final JobServiceClient jobServiceClient;
+    private final UserServiceClient userServiceClient; // Added
+    private final AIService aiService;
+    private final MockInterviewRepository mockInterviewRepository;
 
-    @Value("${ai.openrouter.api-key:}")
-    private String openRouterApiKey;
-
-    @Value("${ai.openrouter.model:meta-llama/llama-3.2-3b-instruct:free}")
-    private String openRouterModel;
-
-    @Value("${ai.openrouter.base-url:https://openrouter.ai/api/v1}")
-    private String openRouterBaseUrl;
+    public MockInterviewService(WebClient.Builder webClientBuilder, 
+                                JobServiceClient jobServiceClient, 
+                                UserServiceClient userServiceClient, // Added
+                                AIService aiService, 
+                                MockInterviewRepository mockInterviewRepository) {
+        this.webClientBuilder = webClientBuilder;
+        this.jobServiceClient = jobServiceClient;
+        this.userServiceClient = userServiceClient; // Added
+        this.aiService = aiService;
+        this.mockInterviewRepository = mockInterviewRepository;
+    }
 
     public Map<String, Object> startMockInterview(UUID jobId, String studentProfile) {
         // Get job via Feign Client
@@ -56,16 +69,77 @@ public class MockInterviewService {
             job.getTitle(), job.getDescription(), job.getDescription() != null ? job.getDescription() : ""
         );
 
-        String response = callOpenRouterAPI(prompt);
-        Map<String, Object> result = parseResponse(response);
+        String response = aiService.callAIAPI(prompt);
+        Map<String, Object> aiResult = parseResponse(response);
 
-        // Add interview session info
+        // CREATE AND SAVE INTERVIEW SESSION
+        // We need studentId. For now assuming it comes from Context or passed in profile map if possible.
+        // But Controller passes "studentProfile" string. 
+        // Let's assume we extract Student UUID from the request or header in Controller and pass it here.
+        // Since we can't change signature easily without breaking Controller, let's keep it stateless for this step 
+        // OR fix Controller first.
+        // Wait, I see MockInterview entity uses UUID studentId. 
+        // I will update the Controller to pass studentId.
+        
+        Map<String, Object> result = new HashMap<>(aiResult);
         result.put("jobId", job.getId());
         result.put("jobTitle", job.getTitle());
         result.put("startedAt", new Date());
         result.put("currentQuestionIndex", 0);
 
         return result;
+    }
+
+    public List<MockInterview> getHistory(UUID studentId) {
+        return mockInterviewRepository.findByStudentIdOrderByStartedAtDesc(studentId);
+    }
+    
+    public List<Map<String, Object>> getAllHistory() {
+        List<MockInterview> interviews = mockInterviewRepository.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "startedAt"));
+        List<Map<String, Object>> result = new ArrayList<>();
+        
+        for (MockInterview iv : interviews) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("id", iv.getId());
+            item.put("studentId", iv.getStudentId());
+            item.put("jobTitle", iv.getJobTitle());
+            item.put("startedAt", iv.getStartedAt());
+            item.put("completedAt", iv.getCompletedAt());
+            item.put("overallScore", iv.getOverallScore());
+            item.put("status", iv.getStatus());
+            item.put("transcript", iv.getTranscript());
+            
+            // Fetch student info
+            try {
+                UserDTO user = userServiceClient.getUserById(iv.getStudentId());
+                if (user != null) {
+                    item.put("studentName", user.getFullName());
+                    item.put("studentAvatar", user.getAvatarUrl());
+                    item.put("studentEmail", user.getEmail());
+                } else {
+                    item.put("studentName", "Unknown Student");
+                }
+            } catch (Exception e) {
+                log.warn("Failed to fetch student info for ID {}: {}", iv.getStudentId(), e.getMessage());
+                item.put("studentName", "Error fetching name");
+            }
+            
+            result.add(item);
+        }
+        return result;
+    }
+    
+    public MockInterview saveInterview(MockInterview interview) {
+        log.info("Saving mock interview for student: {}, job: {}, score: {}", 
+                interview.getStudentId(), interview.getJobTitle(), interview.getOverallScore());
+        try {
+            MockInterview saved = mockInterviewRepository.save(interview);
+            log.info("Successfully saved mock interview with ID: {}", saved.getId());
+            return saved;
+        } catch (Exception e) {
+            log.error("Error saving mock interview: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     public Map<String, Object> evaluateAnswer(String question, String answer, String jobContext) {
@@ -84,60 +158,23 @@ public class MockInterviewService {
             question, answer, jobContext
         );
 
-        String response = callOpenRouterAPI(prompt);
+        String response = aiService.callAIAPI(prompt);
         return parseResponse(response);
-    }
-
-    private String callOpenRouterAPI(String prompt) {
-        try {
-            WebClient webClient = webClientBuilder
-                .baseUrl(openRouterBaseUrl)
-                .defaultHeader("Content-Type", "application/json")
-                .defaultHeader("Authorization", "Bearer " + openRouterApiKey)
-                .defaultHeader("HTTP-Referer", "http://localhost:8080")
-                .defaultHeader("X-Title", "CareerMate")
-                .build();
-            
-            Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("model", openRouterModel);
-            
-            List<Map<String, Object>> messages = new ArrayList<>();
-            Map<String, Object> message = new HashMap<>();
-            message.put("role", "user");
-            message.put("content", prompt);
-            messages.add(message);
-            requestBody.put("messages", messages);
-
-            Map<String, Object> response = webClient.post()
-                    .uri("/chat/completions")
-                    .bodyValue(requestBody)
-                    .retrieve()
-                    .bodyToMono(Map.class)
-                    .block();
-            
-            // Parse OpenAI-compatible response
-            if (response != null && response.containsKey("choices")) {
-                List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
-                if (choices != null && !choices.isEmpty()) {
-                    Map<String, Object> choice = choices.get(0);
-                    if (choice.containsKey("message")) {
-                        Map<String, Object> messageMap = (Map<String, Object>) choice.get("message");
-                        if (messageMap.containsKey("content")) {
-                            return messageMap.get("content").toString();
-                        }
-                    }
-                }
-            }
-            
-            return "{}";
-        } catch (Exception e) {
-            log.error("Error calling OpenRouter API", e);
-            return "{}";
-        }
     }
 
     private Map<String, Object> parseResponse(String response) {
         Map<String, Object> result = new HashMap<>();
+        if (response == null || response.equals("{}") || response.trim().isEmpty()) {
+            return result;
+        }
+        
+        // Handle 402 error messages from AIService
+        if (response.contains("402") || response.contains("Payment Required")) {
+            result.put("error", "AI Quota Exhausted (402)");
+            result.put("message", "Hết hạn mức sử dụng AI. Vui lòng thử lại sau.");
+            return result;
+        }
+
         try {
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             

@@ -129,6 +129,7 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
   const [userProfile, setUserProfile] = useState(null);
   const [recruiterProfile, setRecruiterProfile] = useState(null);
   const [company, setCompany] = useState(null);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     loadReactions();
@@ -422,8 +423,37 @@ export default function ArticleCard({ article, onUpdate, showFullComments = fals
           <i className="fas fa-external-link-alt ml-2 text-xs text-gray-400 dark:text-gray-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
         </h2>
         {article.excerpt && (
-          <p className="text-gray-700 dark:text-gray-300 mb-4 line-clamp-3 leading-relaxed">{article.excerpt}</p>
+          <p className="text-gray-700 dark:text-gray-300 mb-3 leading-relaxed">{article.excerpt}</p>
         )}
+
+        {/* Read More Button */}
+        {!isExpanded && article.content && (
+          <button
+            onClick={() => setIsExpanded(true)}
+            className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-semibold mb-4 flex items-center gap-1 group"
+          >
+            <span>Xem thêm</span>
+            <i className="fas fa-chevron-down text-xs group-hover:translate-y-0.5 transition-transform"></i>
+          </button>
+        )}
+
+        {/* Full Content - Expanded */}
+        {isExpanded && article.content && (
+          <div className="mb-4">
+            <div
+              className="prose prose-sm dark:prose-invert max-w-none text-gray-800 dark:text-gray-200 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: article.content }}
+            />
+            <button
+              onClick={() => setIsExpanded(false)}
+              className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-semibold mt-3 flex items-center gap-1 group"
+            >
+              <span>Thu gọn</span>
+              <i className="fas fa-chevron-up text-xs group-hover:-translate-y-0.5 transition-transform"></i>
+            </button>
+          </div>
+        )}
+
         {article.thumbnailUrl && (
           <div className="relative overflow-hidden rounded-xl mb-4 border-2 border-gray-100 dark:border-gray-800 group cursor-pointer" onClick={() => navigate(`/student/articles/${article.id}`)}>
             <img

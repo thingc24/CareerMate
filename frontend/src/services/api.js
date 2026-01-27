@@ -98,9 +98,13 @@ class CareerMateAPI {
   getFileUrl(url) {
     if (!url) return null;
     if (url.startsWith('http')) return url;
-    // Format: http://localhost:8080/api...
-    const origin = this.baseURL.replace(/\/api$/, '');
-    return `${origin}${url.startsWith('/') ? url : '/' + url}`;
+
+    // Format: http://localhost:8080/api/uploads/...
+    // Ensure we don't double slash if baseURL ends with / and url starts with /
+    const baseUrl = this.baseURL.endsWith('/') ? this.baseURL.slice(0, -1) : this.baseURL;
+    const cleanUrl = url.startsWith('/') ? url : '/' + url;
+
+    return `${baseUrl}${cleanUrl}`;
   }
 
   loadTokens() {
@@ -351,7 +355,7 @@ class CareerMateAPI {
   }
 
   async getJobApplicants(jobId, page = 0, size = 10) {
-    const response = await this.client.get(`/jobs/${jobId}/applicants?page=${page}&size=${size}`);
+    const response = await this.client.get(`/applications/job/${jobId}?page=${page}&size=${size}`);
     return response.data;
   }
 
@@ -463,6 +467,11 @@ class CareerMateAPI {
     return response.data;
   }
 
+  async getRecruiterByCompanyId(companyId) {
+    const response = await this.client.get(`/recruiters/profile/by-company/${companyId}`);
+    return response.data;
+  }
+
   async getCompanyAverageRating(companyId) {
     const response = await this.client.get(`/companies/${companyId}/rating/average`);
     return response.data;
@@ -548,6 +557,11 @@ class CareerMateAPI {
   // CV APIs
   async getCVs() {
     const response = await this.client.get('/students/cv');
+    return response.data;
+  }
+
+  async getCV(cvId) {
+    const response = await this.client.get(`/students/cv/${cvId}`);
     return response.data;
   }
 
@@ -993,7 +1007,9 @@ class CareerMateAPI {
 
   // AI Services
   async analyzeCV(cvId) {
-    const response = await this.client.post(`/ai/cv/analyze/${cvId}`);
+    // Send empty object for now - backend will return helpful error message
+    // TODO: Fetch CV content and send in request body
+    const response = await this.client.post(`/ai/cv/analyze/${cvId}`, {});
     return response.data;
   }
 
@@ -1155,6 +1171,11 @@ class CareerMateAPI {
     return response.data;
   }
 
+  async cancelSubscription(subscriptionId) {
+    const response = await this.client.post(`/packages/subscriptions/${subscriptionId}/cancel`);
+    return response.data;
+  }
+
   // Packages Management
   async getAdminPackages() {
     const response = await this.client.get('/admin/packages');
@@ -1205,6 +1226,59 @@ class CareerMateAPI {
 
   async markAllNotificationsAsRead() {
     const response = await this.client.put('/notifications/mark-all-read');
+    return response.data;
+  }
+  // ========== MOCK INTERVIEWS ========== //
+
+  // 1. Recruiter Mock Interviews (Job Service)
+  async requestMockInterview(recruiterId, message, studentId) {
+    const response = await this.client.post('/jobs/mock-requests', { recruiterId, message, studentId });
+    return response.data;
+  }
+
+  async getMyMockInterviewRequests(studentId) {
+    const response = await this.client.get(`/jobs/mock-requests/my-requests?studentId=${studentId}`);
+    return response.data;
+  }
+
+  async getRecruiterMockInterviewRequests(recruiterId) {
+    const response = await this.client.get(`/jobs/mock-requests/recruiter-requests?recruiterId=${recruiterId}`);
+    return response.data;
+  }
+
+  async updateMockInterviewRequestStatus(requestId, status) {
+    const response = await this.client.put(`/jobs/mock-requests/${requestId}/status`, { status });
+    return response.data;
+  }
+
+  // 2. AI Mock Interviews (AI Service)
+  async startAIMockInterview(jobId, profile) {
+    const response = await this.client.post(`/ai/students/mock-interview/start/${jobId}`, { profile });
+    return response.data;
+  }
+
+  async getUsersByRole(role) {
+    const response = await this.client.post('/users/by-roles', [role]);
+    return response.data;
+  }
+
+  async finishAIMockInterview(interviewData) {
+    const response = await this.client.post('/ai/students/mock-interview/finish', interviewData);
+    return response.data;
+  }
+
+  async getAIMockInterviewHistory(studentId) {
+    const response = await this.client.get(`/ai/students/mock-interview/history/${studentId}`);
+    return response.data;
+  }
+
+  async getAdminMockInterviewHistory() {
+    const response = await this.client.get('/ai/students/mock-interview/admin/history');
+    return response.data;
+  }
+
+  async evaluateAIAnswer(question, answer, jobContext) {
+    const response = await this.client.post('/ai/students/mock-interview/evaluate', { question, answer, jobContext });
     return response.data;
   }
 }

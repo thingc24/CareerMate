@@ -21,6 +21,11 @@ export default function Messages() {
   const [showMenu, setShowMenu] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // New Chat Modal State
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [recruiterList, setRecruiterList] = useState([]);
+  const [loadingRecruiters, setLoadingRecruiters] = useState(false);
+
   const messagesEndRef = useRef(null);
   const pollingIntervalRef = useRef(null);
   const menuRef = useRef(null);
@@ -201,6 +206,36 @@ export default function Messages() {
       alert('Không thể xóa tin nhắn');
     }
     setShowMenu(false);
+  };
+
+  const fetchRecruiters = async () => {
+    try {
+      setLoadingRecruiters(true);
+      const recruiters = await api.getUsersByRole('RECRUITER');
+      // Filter out current user if accidentally returned (though role check handles it)
+      setRecruiterList(recruiters.filter(u => u.id !== user?.id));
+    } catch (e) {
+      console.error("Failed to fetch recruiters", e);
+    } finally {
+      setLoadingRecruiters(false);
+    }
+  };
+
+  const handleStartNewChat = async (recipientId) => {
+    try {
+      const conv = await api.getOrCreateConversation(recipientId);
+      if (conv) {
+        setSelectedConversation(conv);
+        setShowNewChatModal(false);
+        // Optimistically add to list if not present
+        if (!conversations.find(c => c.id === conv.id)) {
+          setConversations(prev => [conv, ...prev]);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to start chat", e);
+      alert("Không thể bắt đầu cuộc trò chuyện");
+    }
   };
 
   const getOtherUser = (conv) => {
@@ -439,7 +474,15 @@ export default function Messages() {
             {/* Input Area */}
             <div className="p-4 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
               <form onSubmit={handleSend} className="flex gap-3 items-end max-w-4xl mx-auto">
-                <button type="button" className="p-3 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-gray-800 rounded-full transition-colors">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowNewChatModal(true);
+                    fetchRecruiters();
+                  }}
+                  className="p-3 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-gray-800 rounded-full transition-colors"
+                  title="Chat với chuyên gia"
+                >
                   <i className="fas fa-plus"></i>
                 </button>
                 <button type="button" className="p-3 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-gray-800 rounded-full transition-colors">
@@ -471,6 +514,63 @@ export default function Messages() {
           </>
         )}
       </div>
+
+      {/* New Chat Modal (Select Expert) */}
+      {showNewChatModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 backdrop-blur-sm"
+          onClick={() => setShowNewChatModal(false)}
+        >
+          <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col max-h-[80vh]"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+              <h3 className="font-bold text-lg text-gray-800 dark:text-white">Chat với Chuyên gia</h3>
+              <button onClick={() => setShowNewChatModal(false)} className="w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center">
+                <i className="fas fa-times text-gray-500"></i>
+              </button>
+            </div>
+
+            <div className="p-4 overflow-y-auto custom-scrollbar space-y-2">
+              {loadingRecruiters ? (
+                <div className="flex justify-center p-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                </div>
+              ) : recruiterList.length === 0 ? (
+                <div className="text-center p-8 text-gray-500">
+                  <p>Hiện chưa có chuyên gia nào trực tuyến.</p>
+                </div>
+              ) : (
+                recruiterList.map(recruiter => (
+                  <button
+                    key={recruiter.id}
+                    onClick={() => handleStartNewChat(recruiter.id)}
+                    className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl transition-colors text-left"
+                  >
+                    <div className="relative">
+                      {recruiter.avatarUrl ? (
+                        <img src={recruiter.avatarUrl.startsWith('http') ? recruiter.avatarUrl : `http://localhost:8080/api${recruiter.avatarUrl}`}
+                          alt={recruiter.fullName}
+                          className="w-12 h-12 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                          {recruiter.fullName?.[0]}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-800 dark:text-white">{recruiter.fullName}</h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Chuyên gia / Nhà tuyển dụng</p>
+                    </div>
+                    <div className="ml-auto">
+                      <i className="fas fa-comment-alt text-blue-500"></i>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* User Info Modal */}
       {selectedConversation && (

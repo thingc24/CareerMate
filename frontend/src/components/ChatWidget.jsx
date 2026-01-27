@@ -223,17 +223,23 @@ export default function ChatWidget({ role = 'STUDENT' }) {
         <button
           ref={buttonRef}
           onClick={handleButtonClick}
-          className="relative group h-16 w-16 rounded-full bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 p-[2px] shadow-2xl shadow-indigo-500/40"
+          className="relative group h-16 w-16 rounded-full bg-gradient-to-tr from-yellow-100 via-yellow-300 to-yellow-500 p-[2px] shadow-2xl shadow-yellow-500/40 border border-white animate-pulse"
         >
-          <div className="h-full w-full rounded-full bg-slate-900/90 backdrop-blur-md flex items-center justify-center border border-white/10 group-hover:bg-slate-900/80 transition-all">
+          <div className="h-full w-full rounded-full bg-gradient-to-br from-white via-yellow-50 to-yellow-100 flex items-center justify-center overflow-hidden relative">
+            {/* Shimmer effect - Hiệu ứng lấp lánh */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/80 to-transparent skew-x-12 translate-x-[-150%] animate-[shimmer_1.5s_infinite]"></div>
+
             {isOpen ? (
-              <i className="fas fa-times text-2xl text-white/90"></i>
+              <i className="fas fa-times text-2xl text-yellow-600 relative z-10"></i>
             ) : (
-              <i className="fas fa-sparkles text-2xl text-transparent bg-clip-text bg-gradient-to-tr from-indigo-300 to-pink-300 animate-pulse"></i>
+              // Miss Universe 4-pointed Star SVG - Sao 4 cánh xoay
+              <svg viewBox="0 0 24 24" className="w-8 h-8 text-yellow-600 animate-[spin_10s_linear_infinite] relative z-10" fill="currentColor">
+                <path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z" />
+              </svg>
             )}
           </div>
           {/* Status Dot */}
-          <span className="absolute -top-1 -right-1 flex h-4 w-4">
+          <span className="absolute -top-1 -right-1 flex h-4 w-4 z-20">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-4 w-4 bg-green-500 border-2 border-white"></span>
           </span>

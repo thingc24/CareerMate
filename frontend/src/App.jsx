@@ -39,6 +39,8 @@ import Challenges from './pages/student/Challenges';
 import ChallengeDetail from './pages/student/ChallengeDetail';
 import Packages from './pages/student/Packages';
 import Messages from './pages/student/Messages';
+import MockInterview from './pages/student/MockInterview';
+import AIMockInterviewRoom from './pages/student/AIMockInterviewRoom';
 
 // Recruiter Pages
 import RecruiterDashboard from './pages/recruiter/Dashboard';
@@ -52,6 +54,7 @@ import RecruiterProfile from './pages/recruiter/Profile';
 import RecruiterCreateArticle from './pages/recruiter/CreateArticle';
 import MyArticles from './pages/recruiter/MyArticles';
 import RecruiterMessages from './pages/recruiter/Messages';
+import InterviewRequests from './pages/recruiter/InterviewRequests';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -63,6 +66,9 @@ import CVTemplatesManagement from './pages/admin/CVTemplatesManagement';
 import PackagesManagement from './pages/admin/PackagesManagement';
 import Analytics from './pages/admin/Analytics';
 import AdminMessages from './pages/admin/Messages';
+import AdminMockInterviews from './pages/admin/AdminMockInterviews';
+
+
 
 // Mobile App Components
 import MobileLayout from './mobile/MobileLayout';
@@ -217,6 +223,8 @@ function AppRoutes() {
                 <Route path="profile" element={<ProfileView />} />
                 <Route path="profile/view" element={<ProfileView />} />
                 <Route path="profile/edit" element={<Profile />} />
+                <Route path="mock-interview" element={<MockInterview />} />
+                <Route path="mock-interview/ai/:jobId" element={<AIMockInterviewRoom />} />
                 <Route path="" element={<Navigate to="dashboard" replace />} />
               </Routes>
             </StudentLayout>
@@ -243,6 +251,7 @@ function AppRoutes() {
                 <Route path="articles" element={<MyArticles />} />
                 <Route path="articles/:id" element={<ArticleDetail />} />
                 <Route path="messages" element={<RecruiterMessages />} />
+                <Route path="mock-requests" element={<InterviewRequests />} />
                 <Route path="" element={<Navigate to="dashboard" replace />} />
               </Routes>
             </RecruiterLayout>
@@ -267,6 +276,7 @@ function AppRoutes() {
                 <Route path="packages" element={<PackagesManagement />} />
                 <Route path="analytics" element={<Analytics />} />
                 <Route path="messages" element={<AdminMessages />} />
+                <Route path="mock-interviews" element={<AdminMockInterviews />} />
                 <Route path="" element={<Navigate to="dashboard" replace />} />
               </Routes>
             </AdminLayout>

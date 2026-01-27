@@ -117,6 +117,12 @@ export default function RecruiterLayout({ children }) {
               label="Tìm ứng viên"
               isActive={isActive('/recruiter/find-candidates')}
             />
+            <NavItem
+              to="/recruiter/mock-requests"
+              icon="fas fa-video"
+              label="Phỏng vấn thử"
+              isActive={isActive('/recruiter/mock-requests')}
+            />
 
             <p className="px-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-6 mb-3">Cộng đồng</p>
 

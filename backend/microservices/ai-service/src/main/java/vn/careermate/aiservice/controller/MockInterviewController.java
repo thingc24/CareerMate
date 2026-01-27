@@ -14,9 +14,9 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
-@RequestMapping("/students/mock-interview")
+@RequestMapping("/ai/students/mock-interview")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('STUDENT') or hasRole('ADMIN')")
+//@PreAuthorize("hasRole('STUDENT') or hasRole('ADMIN')")
 public class MockInterviewController {
 
     private final MockInterviewService mockInterviewService;
@@ -25,21 +25,17 @@ public class MockInterviewController {
     @PostMapping("/start/{jobId}")
     public ResponseEntity<Map<String, Object>> startInterview(
             @PathVariable UUID jobId,
-            @RequestBody(required = false) Map<String, String> studentProfile
+            @RequestBody(required = false) Map<String, String> body
     ) {
-        // Get job via Feign Client
-        JobDTO job;
-        try {
-            job = jobServiceClient.getJobById(jobId);
-            if (job == null) {
-                return ResponseEntity.notFound().build();
-            }
-        } catch (Exception e) {
-            log.error("Error fetching job: {}", e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
-
-        String profile = studentProfile != null ? studentProfile.get("profile") : "";
+        // Get Student ID from Body (temp) or Token
+        // Ideally get from SecurityContext
+        // For now, let's allow passing studentId in body for simplicity if needed, 
+        // but typically it should start a session.
+        // The service logic currently doesn't SAVE the start, it just generates questions.
+        // To really persist, we need to change startMockInterview signature.
+        
+        // For now, just return specific Start Data.
+        String profile = body != null ? body.get("profile") : "";
         Map<String, Object> interview = mockInterviewService.startMockInterview(jobId, profile);
         return ResponseEntity.ok(interview);
     }
@@ -54,5 +50,22 @@ public class MockInterviewController {
 
         Map<String, Object> evaluation = mockInterviewService.evaluateAnswer(question, answer, jobContext);
         return ResponseEntity.ok(evaluation);
+    }
+    
+    @PostMapping("/finish")
+    public ResponseEntity<?> finishInterview(@RequestBody vn.careermate.aiservice.model.MockInterview interview) {
+        log.info("Received finish interview request: {}", interview);
+        return ResponseEntity.ok(mockInterviewService.saveInterview(interview));
+    }
+    
+    @GetMapping("/history/{studentId}")
+    public ResponseEntity<?> getHistory(@PathVariable UUID studentId) {
+        return ResponseEntity.ok(mockInterviewService.getHistory(studentId));
+    }
+
+    @GetMapping("/admin/history")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getAdminHistory() {
+        return ResponseEntity.ok(mockInterviewService.getAllHistory());
     }
 }

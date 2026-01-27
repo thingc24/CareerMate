@@ -64,6 +64,27 @@ public class CVController {
         }
     }
 
+    @GetMapping("/{cvId}")
+    @PreAuthorize("hasAnyRole('STUDENT', 'RECRUITER')")
+    public ResponseEntity<?> getCV(@PathVariable UUID cvId) {
+        try {
+            CV cv = cvService.getCV(cvId);
+            // Detach lazy-loaded relations
+            if (cv != null) {
+                cv.setStudent(null);
+            }
+            return ResponseEntity.ok(cv);
+        } catch (RuntimeException e) {
+            log.error("Error getting CV: {}", e.getMessage());
+            return ResponseEntity.status(404)
+                .body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            log.error("Unexpected error getting CV", e);
+            return ResponseEntity.status(500)
+                .body(Map.of("error", "Error getting CV: " + e.getMessage()));
+        }
+    }
+
     @DeleteMapping("/{cvId}")
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<?> deleteCV(@PathVariable UUID cvId) {

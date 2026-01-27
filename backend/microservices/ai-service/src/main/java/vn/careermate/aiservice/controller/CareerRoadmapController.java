@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/students/roadmap")
+@RequestMapping("/ai/career-roadmap")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('STUDENT') or hasRole('ADMIN')")
 public class CareerRoadmapController {

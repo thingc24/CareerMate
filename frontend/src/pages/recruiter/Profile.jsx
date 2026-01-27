@@ -5,7 +5,7 @@ import api from '../../services/api';
 
 export default function Profile() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const fileInputRef = useRef(null);
   const [profile, setProfile] = useState({
     position: '',
@@ -28,12 +28,8 @@ export default function Profile() {
     loadData();
   }, []);
 
-  const loadData = async () => {
+  const loadProfile = async () => {
     try {
-      setLoading(true);
-      setMessage('');
-
-      // Load profile
       const profileData = await api.getRecruiterProfile();
       if (profileData) {
         setProfile({
@@ -49,6 +45,19 @@ export default function Profile() {
           setAvatarPreview(getAvatarUrl(profileData.user.avatarUrl));
         }
       }
+    } catch (error) {
+      console.error('Error loading profile:', error);
+      // Don't show error message, silently fail
+    }
+  };
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setMessage('');
+
+      // Load profile
+      await loadProfile();
 
       // Load company
       try {
@@ -114,9 +123,12 @@ export default function Profile() {
         setAvatarPreview(getAvatarUrl(result.avatarUrl));
         setMessage('Cập nhật ảnh đại diện thành công!');
         setMessageType('success');
-        if (user) {
-          user.avatarUrl = result.avatarUrl;
-        }
+
+        // Update AuthContext to reflect new avatar across all components
+        updateUser({ avatarUrl: result.avatarUrl });
+
+        // Reload profile to get updated avatar from database
+        await loadProfile();
       }
     } catch (error) {
       console.error('Error uploading avatar:', error);

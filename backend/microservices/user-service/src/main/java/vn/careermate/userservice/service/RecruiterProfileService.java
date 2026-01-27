@@ -67,11 +67,11 @@ public class RecruiterProfileService {
     }
 
     public RecruiterProfile getRecruiterByUserId(java.util.UUID userId) {
-        return recruiterProfileRepository.findByUserId(userId).orElse(null);
+        return recruiterProfileRepository.findByUserIdWithUser(userId).orElse(null);
     }
     
     public RecruiterProfile getRecruiterProfileById(UUID recruiterId) {
-        return recruiterProfileRepository.findById(recruiterId).orElse(null);
+        return recruiterProfileRepository.findByIdWithCompany(recruiterId).orElse(null);
     }
 
     public RecruiterProfile getMyProfile() {

@@ -7,7 +7,10 @@ import jakarta.persistence.*;
 // import vn.careermate.jobservice.model.Job; // Replaced with UUID
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -26,7 +29,10 @@ import java.util.UUID;
     @Index(name = "idx_mock_interviews_job", columnList = "job_id"),
     @Index(name = "idx_mock_interviews_status", columnList = "status")
 })
-@Data
+@Getter
+@Setter
+@ToString
+@EqualsAndHashCode
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -42,6 +48,9 @@ public class MockInterview {
 
     @Column(name = "job_id", nullable = false)
     private UUID jobId; // Changed from Job entity to UUID
+
+    @Column(name = "job_title")
+    private String jobTitle;
 
     @Column(name = "cv_id")
     private UUID cvId; // Changed from CV entity to UUID (optional)
@@ -67,6 +76,10 @@ public class MockInterview {
     @Column(name = "duration_seconds")
     private Integer durationSeconds;
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "transcript", columnDefinition = "jsonb")
+    private String transcript; // Full conversation JSON string or list
+
     @CreatedDate
     @Column(name = "started_at", updatable = false)
     private LocalDateTime startedAt;
@@ -75,6 +88,9 @@ public class MockInterview {
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "mockInterview", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MockInterviewQuestion> questions;
 

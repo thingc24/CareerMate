@@ -85,22 +85,24 @@ export default function CompanyDetail() {
   };
 
   const handleContact = async () => {
-    if (!recruiter?.user?.id) {
-      alert('Công ty này chưa có nhà tuyển dụng để liên hệ. Vui lòng thử lại sau.');
+    console.log('=== Company Contact Debug ===');
+    console.log('Recruiter data:', recruiter);
+    console.log('Recruiter user ID:', recruiter?.user?.id);
+    console.log('Recruiter ID:', recruiter?.id);
+
+    // Try to get user ID from multiple possible paths
+    const userId = recruiter?.user?.id || recruiter?.userId;
+
+    if (!userId) {
+      console.error('No user ID found for recruiter');
+      alert('Không tìm thấy thông tin nhà tuyển dụng. Vui lòng thử lại sau.');
       return;
     }
-    
-    try {
-      const conversation = await api.getOrCreateConversation(recruiter.user.id);
-      if (conversation?.id) {
-        navigate(`/student/messages?conversationId=${conversation.id}`);
-      } else {
-        navigate('/student/messages');
-      }
-    } catch (error) {
-      console.error('Error creating conversation:', error);
-      alert('Lỗi: ' + (error.response?.data?.error || 'Không thể tạo cuộc trò chuyện'));
-    }
+
+    console.log('Using user ID:', userId);
+
+    // Navigate to messages with recipientId in state for auto-selection
+    navigate('/student/messages', { state: { recipientId: userId } });
   };
 
   const handleSubmitRating = async (e) => {
@@ -119,11 +121,11 @@ export default function CompanyDetail() {
 
   const handleDeleteRating = async () => {
     if (!myRating) return;
-    
+
     if (!window.confirm('Bạn có chắc chắn muốn xóa đánh giá này không?')) {
       return;
     }
-    
+
     try {
       await api.deleteCompanyRating(id);
       alert('Đánh giá đã được xóa!');
@@ -180,8 +182,8 @@ export default function CompanyDetail() {
           {company.logoUrl ? (
             <div className="flex-shrink-0">
               <img
-                src={company.logoUrl.startsWith('http') 
-                  ? company.logoUrl 
+                src={company.logoUrl.startsWith('http')
+                  ? company.logoUrl
                   : `http://localhost:8080/api${company.logoUrl}`}
                 alt={company.name}
                 className="w-40 h-40 object-contain rounded-xl border-4 border-white dark:border-gray-800 shadow-lg bg-white dark:bg-gray-900 p-4"
@@ -195,11 +197,11 @@ export default function CompanyDetail() {
               <i className="fas fa-building text-blue-500 dark:text-blue-400 text-5xl"></i>
             </div>
           )}
-          
+
           {/* Company Info */}
           <div className="flex-1">
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">{company.name}</h1>
-            
+
             {/* Info Icons */}
             <div className="flex flex-wrap gap-4 mb-4">
               {company.industry && (
@@ -235,11 +237,10 @@ export default function CompanyDetail() {
                   {[...Array(5)].map((_, i) => (
                     <i
                       key={i}
-                      className={`fas fa-star text-3xl ${
-                        i < Math.floor(company.averageRating || 0)
+                      className={`fas fa-star text-3xl ${i < Math.floor(company.averageRating || 0)
                           ? 'text-yellow-400 drop-shadow-sm'
                           : 'text-gray-300 dark:text-gray-600'
-                      } transition-all`}
+                        } transition-all`}
                     ></i>
                   ))}
                 </div>
@@ -257,7 +258,7 @@ export default function CompanyDetail() {
             </div>
           </div>
         </div>
-        
+
         {/* Description */}
         {company.description && (
           <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-800">
@@ -297,8 +298,8 @@ export default function CompanyDetail() {
               {myRating ? 'Đánh giá của bạn' : 'Đánh giá công ty'}
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {myRating 
-                ? 'Bạn đã đánh giá công ty này. Bạn có thể thay đổi hoặc xóa đánh giá.' 
+              {myRating
+                ? 'Bạn đã đánh giá công ty này. Bạn có thể thay đổi hoặc xóa đánh giá.'
                 : 'Chia sẻ trải nghiệm của bạn về công ty này'}
             </p>
           </div>
@@ -314,11 +315,10 @@ export default function CompanyDetail() {
             )}
             <button
               onClick={() => setShowRatingForm(!showRatingForm)}
-              className={`px-6 py-2 rounded-lg font-medium transition-all duration-200 ${
-                showRatingForm
+              className={`px-6 py-2 rounded-lg font-medium transition-all duration-200 ${showRatingForm
                   ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md hover:shadow-lg transform hover:scale-105'
-              }`}
+                }`}
             >
               {showRatingForm ? (
                 <>
@@ -346,11 +346,10 @@ export default function CompanyDetail() {
                     key={star}
                     type="button"
                     onClick={() => setRatingForm({ ...ratingForm, rating: star })}
-                    className={`text-5xl transform transition-all duration-200 hover:scale-110 ${
-                      star <= ratingForm.rating 
-                        ? 'text-yellow-400 drop-shadow-lg' 
+                    className={`text-5xl transform transition-all duration-200 hover:scale-110 ${star <= ratingForm.rating
+                        ? 'text-yellow-400 drop-shadow-lg'
                         : 'text-gray-300 hover:text-yellow-200'
-                    }`}
+                      }`}
                   >
                     <i className="fas fa-star"></i>
                   </button>
@@ -414,7 +413,7 @@ export default function CompanyDetail() {
               const userName = rating.student?.user?.fullName || 'Người dùng ẩn danh';
               const avatarUrl = rating.student?.user?.avatarUrl;
               const initials = userName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-              
+
               // Construct full avatar URL
               let fullAvatarUrl = null;
               if (avatarUrl) {
@@ -426,7 +425,7 @@ export default function CompanyDetail() {
                   fullAvatarUrl = `http://localhost:8080/api${avatarUrl}`;
                 }
               }
-              
+
               return (
                 <div key={rating.id} className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-900 rounded-xl p-6 border-2 border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-600 transition-all duration-300 animate-fade-in">
                   <div className="flex items-start gap-4 mb-4">
@@ -443,13 +442,13 @@ export default function CompanyDetail() {
                           }}
                         />
                       ) : null}
-                      <div 
+                      <div
                         className={`w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md ${fullAvatarUrl ? 'hidden' : ''}`}
                       >
                         {initials}
                       </div>
                     </div>
-                    
+
                     {/* User Info & Rating */}
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-2">
@@ -469,14 +468,13 @@ export default function CompanyDetail() {
                           {[...Array(5)].map((_, i) => (
                             <i
                               key={i}
-                              className={`fas fa-star text-sm ${
-                                i < rating.rating ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600'
-                              }`}
+                              className={`fas fa-star text-sm ${i < rating.rating ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600'
+                                }`}
                             ></i>
                           ))}
                         </div>
                       </div>
-                      
+
                       {/* Review Text */}
                       {rating.reviewText && (
                         <div className="mt-3 bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-100 dark:border-gray-700">

@@ -287,7 +287,7 @@ export default function RecruiterDashboard() {
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 font-bold overflow-hidden border border-blue-100 dark:border-blue-800">
                           {app.student?.avatarUrl ? (
-                            <img src={app.student.avatarUrl.startsWith('http') ? app.student.avatarUrl : `http://localhost:8080/api${app.student.avatarUrl}`} alt="" className="w-full h-full object-cover" />
+                            <img src={api.getFileUrl(app.student.avatarUrl)} alt="" className="w-full h-full object-cover" />
                           ) : (
                             app.student?.fullName?.charAt(0) || '?'
                           )}
@@ -306,8 +306,8 @@ export default function RecruiterDashboard() {
                     </td>
                     <td className="py-4">
                       <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${app.status === 'PENDING' ? 'bg-amber-100 text-amber-700' :
-                          app.status === 'VIEWED' ? 'bg-blue-100 text-blue-700' :
-                            'bg-gray-100 text-gray-700'
+                        app.status === 'VIEWED' ? 'bg-blue-100 text-blue-700' :
+                          'bg-gray-100 text-gray-700'
                         }`}>
                         {app.status}
                       </span>

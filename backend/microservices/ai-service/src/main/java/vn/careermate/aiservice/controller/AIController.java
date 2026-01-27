@@ -34,14 +34,55 @@ public class AIController {
     /**
      * Analyze CV
      * POST /ai/cv/analyze/{cvId}
+     * Requires CV content in request body
      */
     @PostMapping("/cv/analyze/{cvId}")
-    @PreAuthorize("hasAnyRole('STUDENT', 'RECRUITER')")
-    public ResponseEntity<Map<String, Object>> analyzeCV(@PathVariable String cvId) {
-        // TODO: Get CV via UserServiceClient (need to add CV endpoint to UserServiceClient)
-        // For now, CV content should be passed in request body
-        return ResponseEntity.badRequest()
-            .body(Map.of("error", "Please use POST /ai/cv/analyze with CV content in request body"));
+    public ResponseEntity<Map<String, Object>> analyzeCV(
+            @PathVariable String cvId,
+            @RequestBody(required = false) Map<String, String> request) {
+        try {
+            log.info("Analyzing CV with ID: {}", cvId);
+            
+            // Get CV content from request body
+            String cvContent = "";
+            if (request != null && request.containsKey("content")) {
+                cvContent = request.get("content");
+            } else if (request != null) {
+                // Try to build CV content from structured fields
+                StringBuilder sb = new StringBuilder();
+                if (request.containsKey("profile")) sb.append(request.get("profile")).append("\n\n");
+                if (request.containsKey("experience")) sb.append("Experience:\n").append(request.get("experience")).append("\n\n");
+                if (request.containsKey("education")) sb.append("Education:\n").append(request.get("education")).append("\n\n");
+                if (request.containsKey("skills")) sb.append("Skills:\n").append(request.get("skills")).append("\n\n");
+                if (request.containsKey("certifications")) sb.append("Certifications:\n").append(request.get("certifications")).append("\n\n");
+                if (request.containsKey("fileName")) sb.append("File: ").append(request.get("fileName")).append("\n\n");
+                cvContent = sb.toString();
+            }
+
+            // If still empty, return error with helpful message
+            if (cvContent == null || cvContent.trim().isEmpty()) {
+                log.warn("CV analysis requested for cvId {} but no content provided", cvId);
+                return ResponseEntity.badRequest()
+                    .body(Map.of(
+                        "error", "CV content is required for analysis",
+                        "message", "Please provide CV content in one of these formats:",
+                        "format1", "{ \"content\": \"full CV text\" }",
+                        "format2", "{ \"profile\": \"...\", \"experience\": \"...\", \"education\": \"...\", \"skills\": \"...\", \"certifications\": \"...\" }",
+                        "cvId", cvId
+                    ));
+            }
+
+            // Analyze CV using AI service
+            Map<String, Object> analysis = aiService.analyzeCV(cvContent);
+            
+            log.info("CV analysis completed for CV ID: {}", cvId);
+            return ResponseEntity.ok(analysis);
+            
+        } catch (Exception e) {
+            log.error("Error analyzing CV", e);
+            return ResponseEntity.status(500)
+                .body(Map.of("error", "Error analyzing CV: " + e.getMessage()));
+        }
     }
 
     /**

@@ -206,6 +206,12 @@ export default function StudentLayout({ children }) {
               label="Bài viết"
               isActive={isActive('/student/articles')}
             />
+            <NavItem
+              to="/student/mock-interview"
+              icon="fas fa-video"
+              label="Phỏng vấn thử"
+              isActive={isActive('/student/mock-interview') || location.pathname.includes('/student/mock-interview')}
+            />
 
             <p className="px-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-6 mb-3">Khác</p>
 

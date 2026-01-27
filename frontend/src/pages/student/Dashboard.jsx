@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 
 export default function StudentDashboard() {
   const { user } = useAuth();
+  const [profile, setProfile] = useState(null);
   const [stats, setStats] = useState({
     applications: 0,
     cvs: 0,
@@ -12,6 +13,7 @@ export default function StudentDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [recentJobs, setRecentJobs] = useState([]);
+  const [recommendedJobs, setRecommendedJobs] = useState([]);
 
   useEffect(() => {
     loadDashboardData();
@@ -20,6 +22,14 @@ export default function StudentDashboard() {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
+
+      // Load fresh profile to get updated avatar
+      try {
+        const profileData = await api.getStudentProfile();
+        setProfile(profileData);
+      } catch (error) {
+        console.error('Error loading profile:', error);
+      }
 
       // Load applications count
       const applications = await api.getApplications(0, 1);
@@ -32,6 +42,56 @@ export default function StudentDashboard() {
       // Load recent jobs
       const jobs = await api.searchJobs('', '', 0, 6);
       setRecentJobs(jobs.content || jobs || []);
+
+      // Build diverse suggestions (mix of jobs, interviews, challenges)
+      try {
+        const suggested = [];
+        const jobs = await api.searchJobs('', '', 0, 1);
+        const jobList = jobs.content || jobs || [];
+
+        // Add a hot job if available
+        if (jobList.length > 0) {
+          suggested.push({
+            type: 'job',
+            icon: 'fa-fire',
+            color: 'orange',
+            title: jobList[0].title,
+            subtitle: jobList[0].companyName || jobList[0].company?.name || 'Công ty',
+            link: `/jobs/${jobList[0].id}`
+          });
+        }
+
+        // Add mock interview suggestion
+        suggested.push({
+          type: 'interview',
+          icon: 'fa-microphone-alt',
+          color: 'blue',
+          title: 'Thử phỏng vấn AI',
+          subtitle: 'Luyện tập kỹ năng phỏng vấn',
+          link: '/student/mock-interview'
+        });
+
+        // Add challenge suggestion (rotate daily)
+        const challenges = [
+          { title: 'Hoàn thiện hồ sơ', subtitle: 'Tăng 30% cơ hội được tuyển', icon: 'fa-user-circle', color: 'green', link: '/student/profile/edit' },
+          { title: 'Cập nhật CV', subtitle: 'CV mới = Cơ hội mới', icon: 'fa-file-alt', color: 'purple', link: '/student/cv' },
+          { title: 'Ứng tuyển ngay hôm nay', subtitle: 'Đừng bỏ lỡ cơ hội việc làm', icon: 'fa-paper-plane', color: 'indigo', link: '/student/jobs' }
+        ];
+        const dayOfWeek = new Date().getDay();
+        const challenge = challenges[dayOfWeek % challenges.length];
+
+        // Only add challenge if we have less than 3 suggestions
+        if (suggested.length < 3) {
+          suggested.push({
+            type: 'challenge',
+            ...challenge
+          });
+        }
+
+        setRecommendedJobs(suggested);
+      } catch (error) {
+        console.error('Error loading recommendations:', error);
+      }
 
     } catch (error) {
       console.error('Error loading dashboard:', error);
@@ -132,9 +192,7 @@ export default function StudentDashboard() {
               {/* Check if user has avatar, if not show placeholder */}
               <div className="relative w-full h-full rounded-full border-4 border-white/20 overflow-hidden shadow-2xl bg-white">
                 <img
-                  src={user?.avatarUrl
-                    ? (user.avatarUrl.startsWith('http') ? user.avatarUrl : `http://localhost:8080/api${user.avatarUrl}`)
-                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'Student')}&background=0D8ABC&color=fff&size=256`}
+                  src={api.getFileUrl(profile?.avatarUrl || user?.avatarUrl) || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'Student')}&background=0D8ABC&color=fff&size=256`}
                   alt="User Avatar"
                   className="w-full h-full object-cover"
                   onError={(e) => {
@@ -239,7 +297,14 @@ export default function StudentDashboard() {
                   >
                     <div className="w-16 h-16 rounded-xl bg-white p-2 shadow-sm border border-gray-100 flex items-center justify-center min-w-[4rem]">
                       {job.company?.logoUrl ? (
-                        <img src={job.company.logoUrl} alt="" className="w-full h-full object-contain" />
+                        <img
+                          src={job.company.logoUrl.startsWith('http')
+                            ? job.company.logoUrl
+                            : `http://localhost:8080/api${job.company.logoUrl}`
+                          }
+                          alt={job.company.name || 'Company logo'}
+                          className="w-full h-full object-contain"
+                        />
                       ) : (
                         <i className="fas fa-building text-gray-300 text-2xl"></i>
                       )}
@@ -305,29 +370,39 @@ export default function StudentDashboard() {
               <p className="text-purple-100 text-sm opacity-90">Dựa trên hồ sơ của bạn</p>
             </div>
             <div className="p-6">
-              <div className="space-y-4">
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center flex-shrink-0">
-                    <i className="fas fa-fire text-xl"></i>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-800 dark:text-white text-sm">Học ReactJS nâng cao</h4>
-                    <p className="text-xs text-slate-500 mt-1">Khóa học đang hot tuần này</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
-                    <i className="fas fa-building text-xl"></i>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-800 dark:text-white text-sm">VNG đang tuyển dụng</h4>
-                    <p className="text-xs text-slate-500 mt-1">Phù hợp với kỹ năng của bạn</p>
+              {loading ? (
+                <div className="space-y-4">
+                  <div className="animate-pulse flex gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-slate-200 dark:bg-slate-700"></div>
+                    <div className="flex-1">
+                      <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mb-2"></div>
+                      <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <button className="w-full mt-6 py-2.5 rounded-lg border border-purple-200 text-purple-600 font-semibold text-sm hover:bg-purple-50 transition-colors">
-                Xem chi tiết
-              </button>
+              ) : recommendedJobs.length > 0 ? (
+                <div className="space-y-4">
+                  {recommendedJobs.map((item, index) => (
+                    <Link to={item.link} key={index} className="flex gap-4 hover:opacity-80 transition-opacity group">
+                      <div className={`w-12 h-12 rounded-lg bg-${item.color}-100 text-${item.color}-600 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>
+                        <i className={`fas ${item.icon} text-xl`}></i>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-slate-800 dark:text-white text-sm line-clamp-1">{item.title}</h4>
+                        <p className="text-xs text-slate-500 mt-1 line-clamp-1">{item.subtitle}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <i className="fas fa-inbox text-3xl text-slate-300 dark:text-slate-600 mb-2"></i>
+                  <p className="text-slate-500 text-sm">Chưa có gợi ý phù hợp</p>
+                </div>
+              )}
+              <Link to="/student/jobs" className="w-full mt-6 py-2.5 rounded-lg border border-purple-200 text-purple-600 font-semibold text-sm hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors block text-center">
+                Khám phá thêm
+              </Link>
             </div>
           </div>
         </div>

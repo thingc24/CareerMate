@@ -24,11 +24,10 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/actuator/**",
-                    "/api/ai/chat/**",
-                    "/api/ai/career-roadmap/**",
-                    "/api/ai/mock-interview/**",
-                    "/api/ai/job-recommendations/**").permitAll() // Public endpoints
+                .requestMatchers("/actuator/**").permitAll()
+                .requestMatchers("/ai/cv/**").permitAll() // Allow CV analysis
+                .requestMatchers("/ai/**").permitAll() // Allow all AI endpoints without auth
+                .requestMatchers("/chat/**").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

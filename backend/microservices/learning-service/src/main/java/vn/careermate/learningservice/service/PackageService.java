@@ -246,6 +246,48 @@ public class PackageService {
         return subscription;
     }
     
+    @Transactional
+    public void cancelSubscription(UUID subscriptionId) {
+        Subscription subscription = subscriptionRepository.findById(subscriptionId)
+                .orElseThrow(() -> new RuntimeException("Subscription not found"));
+        
+        UUID currentUserId = getCurrentUserId();
+        if (!subscription.getUserId().equals(currentUserId)) {
+            throw new RuntimeException("You are not authorized to cancel this subscription");
+        }
+        
+        if (subscription.getStatus() == Subscription.SubscriptionStatus.CANCELLED ||
+            subscription.getStatus() == Subscription.SubscriptionStatus.REJECTED ||
+            subscription.getStatus() == Subscription.SubscriptionStatus.EXPIRED) {
+            throw new RuntimeException("Subscription is already inactive");
+        }
+        
+        subscription.setStatus(Subscription.SubscriptionStatus.CANCELLED);
+        // If it was active, maybe set end date to now? Or keep it until the paid period ends?
+        // For simplicity/requirement "tu huy", likely immediate cancellation.
+        // Let's set end date to now to effective immediately.
+        subscription.setEndDate(LocalDateTime.now());
+        
+        subscriptionRepository.save(subscription);
+        
+        // Notify user
+        try {
+            notificationServiceClient.createNotification(NotificationRequest.builder()
+                .userId(currentUserId)
+                .type("SUBSCRIPTION_CANCELLED")
+                .title("Hủy đăng ký thành công")
+                .message(String.format("Bạn đã hủy gói dịch vụ '%s' thành công.",
+                    subscription.getPackageEntity() != null ? subscription.getPackageEntity().getName() : "Unknown"))
+                .relatedEntityId(subscriptionId)
+                .relatedEntityType("SUBSCRIPTION")
+                .build());
+        } catch (Exception e) {
+            log.error("Error sending cancellation notification: {}", e.getMessage());
+        }
+        
+        log.info("Subscription {} cancelled by user {}", subscriptionId, currentUserId);
+    }
+    
     private void notifyAdminsAboutSubscriptionRequest(Subscription subscription, UUID userId, Package packageEntity) {
         try {
             // Get user info via Feign Client

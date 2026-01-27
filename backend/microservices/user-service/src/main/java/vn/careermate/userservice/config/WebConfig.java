@@ -17,8 +17,8 @@ public class WebConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // Use the path configuration from application.yml
         // "file:" prefix handles both absolute and relative paths correctly
-        String resourceLocation = "file:" + uploadPath + "/";
-        // Handle windows path issue if needed (replace backslashes)
+        // Use Paths.get().toUri() to ensure correct URI format on all OS (especially Windows)
+        String resourceLocation = Paths.get(uploadPath).toUri().toString();
         
         System.out.println("====== WEB CONFIG: STATIC RESOURCES ======");
         System.out.println("Mapping /uploads/** to " + resourceLocation);
