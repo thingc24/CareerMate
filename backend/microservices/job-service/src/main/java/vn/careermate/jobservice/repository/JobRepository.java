@@ -38,4 +38,8 @@ public interface JobRepository extends JpaRepository<Job, UUID> {
     long countByRecruiterIdAndStatus(UUID recruiterId, Job.JobStatus status);
     
     long countByStatus(Job.JobStatus status);
+    
+    long countByStatusAndCreatedAtBefore(Job.JobStatus status, java.time.LocalDateTime createdAt);
+    
+    long countByCreatedAtBefore(java.time.LocalDateTime createdAt);
 }

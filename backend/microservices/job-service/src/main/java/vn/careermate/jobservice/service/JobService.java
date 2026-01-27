@@ -216,14 +216,31 @@ public class JobService {
 
     @Transactional(readOnly = true)
     public long getJobCount(String status) {
-        if (status == null || status.trim().isEmpty()) {
-            return jobRepository.count();
-        }
-        try {
-            return jobRepository.countByStatus(Job.JobStatus.valueOf(status.toUpperCase()));
-        } catch (IllegalArgumentException e) {
-            log.warn("Invalid status for job count: {}", status);
-            return 0L;
+        return getJobCount(status, null);
+    }
+    
+    @Transactional(readOnly = true)
+    public long getJobCount(String status, java.time.LocalDateTime beforeDate) {
+        if (beforeDate == null) {
+            if (status == null || status.trim().isEmpty()) {
+                return jobRepository.count();
+            }
+            try {
+                return jobRepository.countByStatus(Job.JobStatus.valueOf(status.toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid status for job count: {}", status);
+                return 0L;
+            }
+        } else {
+            if (status == null || status.trim().isEmpty()) {
+                return jobRepository.countByCreatedAtBefore(beforeDate);
+            }
+            try {
+                return jobRepository.countByStatusAndCreatedAtBefore(Job.JobStatus.valueOf(status.toUpperCase()), beforeDate);
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid status for job count: {}", status);
+                return 0L;
+            }
         }
     }
 
@@ -292,10 +309,36 @@ public class JobService {
         }
         jobRepository.deleteById(jobId);
     }
+    
+    @Transactional
+    public void deleteJobsByRecruiterId(UUID recruiterId) {
+        List<Job> recruiterJobs = jobRepository.findByRecruiterId(recruiterId);
+        
+        log.info("Deleting {} jobs for recruiter {}", recruiterJobs.size(), recruiterId);
+        
+        for (Job job : recruiterJobs) {
+            // Delete related data first
+            applicationRepository.deleteByJobId(job.getId());
+            jobSkillRepository.deleteByJobId(job.getId());
+            
+            // Delete the job
+            jobRepository.delete(job);
+        }
+        
+        log.info("Successfully deleted all jobs for recruiter {}", recruiterId);
+    }
 
     @Transactional(readOnly = true)
     public long getApplicationCount() {
         return applicationRepository.count();
+    }
+    
+    @Transactional(readOnly = true)
+    public long getApplicationCount(java.time.LocalDateTime beforeDate) {
+        if (beforeDate == null) {
+            return applicationRepository.count();
+        }
+        return applicationRepository.countByAppliedAtBefore(beforeDate);
     }
 
     private void populateCompanyDetails(Page<Job> jobs) {

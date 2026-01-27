@@ -96,8 +96,16 @@ public class CompanyService {
     }
 
     public Company getCompanyById(UUID companyId) {
-        return companyRepository.findById(companyId)
-                .orElseThrow(() -> new RuntimeException("Company not found"));
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new RuntimeException("Company not found: " + companyId));
+        
+        // Set default logo if logoUrl is null or empty
+        if (company.getLogoUrl() == null || company.getLogoUrl().trim().isEmpty()) {
+            // Use a placeholder icon - Building icon from a free icon service
+            company.setLogoUrl("https://api.dicebear.com/7.x/identicon/svg?seed=" + company.getId());
+        }
+        
+        return company;
     }
     
     public Double getAverageRating(UUID companyId) {
@@ -120,6 +128,22 @@ public class CompanyService {
             log.error("Error getting ratings count for company {}: {}", companyId, e.getMessage(), e);
             return 0L;
         }
+    }
+    
+    @Transactional
+    public void deleteCompany(UUID companyId) {
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new RuntimeException("Company not found: " + companyId));
+        
+        log.info("Deleting company: {} (ID: {})", company.getName(), companyId);
+        
+        // Delete all ratings for this company first
+        ratingRepository.deleteByCompanyId(companyId);
+        
+        // Delete the company
+        companyRepository.delete(company);
+        
+        log.info("Successfully deleted company: {}", companyId);
     }
 
     @Transactional
@@ -161,6 +185,14 @@ public class CompanyService {
     @Transactional(readOnly = true)
     public long getCompanyCount() {
         return companyRepository.count();
+    }
+
+    @Transactional(readOnly = true)
+    public long getCompanyCount(java.time.LocalDateTime beforeDate) {
+        if (beforeDate == null) {
+            return companyRepository.count();
+        }
+        return companyRepository.countByCreatedAtBefore(beforeDate);
     }
 
     @Transactional

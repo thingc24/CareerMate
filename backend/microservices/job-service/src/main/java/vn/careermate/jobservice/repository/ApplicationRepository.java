@@ -32,4 +32,8 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
            "AND a.status = 'INTERVIEW' AND a.interviewScheduledAt IS NOT NULL AND a.interviewScheduledAt > :now")
     long countUpcomingInterviewsByRecruiter(@Param("recruiterId") UUID recruiterId, 
                                             @Param("now") LocalDateTime now);
+                                            
+    long countByAppliedAtBefore(LocalDateTime appliedAt);
+    
+    void deleteByJobId(UUID jobId);
 }

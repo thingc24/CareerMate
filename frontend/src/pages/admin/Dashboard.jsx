@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -21,6 +23,120 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleExportReport = () => {
+    if (!stats) return;
+
+    const doc = new jsPDF();
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('vi-VN');
+    const timeStr = today.toLocaleTimeString('vi-VN');
+
+    // Header
+    doc.setFontSize(22);
+    doc.setTextColor(79, 70, 229); // Indigo-600
+    doc.text('CareerMate - Bao Cao He Thong', 105, 20, { align: 'center' });
+
+    doc.setFontSize(12);
+    doc.setTextColor(100);
+    doc.text(`Ngay xuat: ${dateStr} ${timeStr}`, 105, 30, { align: 'center' });
+    doc.text('Nguoi xuat: Administrator', 105, 36, { align: 'center' });
+
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(200);
+    doc.line(20, 45, 190, 45);
+
+    // Summary Stats
+    doc.setFontSize(16);
+    doc.setTextColor(0);
+    doc.text('Tong Quan He Thong', 20, 55);
+
+    const summaryData = [
+      ['Chi so', 'Gia tri', 'Tang truong'],
+      ['Tong nguoi dung', stats.totalUsers.toLocaleString(), `${(stats.userGrowthPercentage || 0).toFixed(1)}%`],
+      ['Tong viec lam', stats.totalJobs.toLocaleString(), `${(stats.jobGrowthPercentage || 0).toFixed(1)}%`],
+      ['Tong bai viet', stats.totalArticles.toLocaleString(), `${(stats.articleGrowthPercentage || 0).toFixed(1)}%`],
+      ['Tong don ung tuyen', stats.totalApplications.toLocaleString(), `${(stats.applicationGrowthPercentage || 0).toFixed(1)}%`],
+      ['Tong doanh nghiep', stats.totalCompanies.toLocaleString(), `${(stats.companyGrowthPercentage || 0).toFixed(1)}%`],
+    ];
+
+    autoTable(doc, {
+      startY: 60,
+      head: [summaryData[0]],
+      body: summaryData.slice(1),
+      theme: 'grid',
+      headStyles: { fillColor: [79, 70, 229], textColor: 255 },
+      styles: { fontSize: 12, cellPadding: 3 },
+    });
+
+    // Details - Jobs
+    let finalY = doc.lastAutoTable.finalY + 15;
+    doc.setFontSize(14);
+    doc.text('Chi Tiet Viec Lam', 20, finalY);
+
+    const jobData = [
+      ['Trang thai', 'So luong'],
+      ['Dang hoat dong', stats.activeJobs.toLocaleString()],
+      ['Cho duyet', stats.pendingJobs.toLocaleString()],
+    ];
+
+    autoTable(doc, {
+      startY: finalY + 5,
+      head: [jobData[0]],
+      body: jobData.slice(1),
+      theme: 'striped',
+      headStyles: { fillColor: [245, 158, 11] }, // Amber
+    });
+
+    // Details - Articles
+    finalY = doc.lastAutoTable.finalY + 15;
+    doc.text('Chi Tiet Bai Viet', 20, finalY);
+
+    const articleData = [
+      ['Trang thai', 'So luong'],
+      ['Da xuat ban', stats.publishedArticles.toLocaleString()],
+      ['Ban nhap / Cho duyet', stats.pendingArticles.toLocaleString()],
+    ];
+
+    autoTable(doc, {
+      startY: finalY + 5,
+      head: [articleData[0]],
+      body: articleData.slice(1),
+      theme: 'striped',
+      headStyles: { fillColor: [16, 185, 129] }, // Emerald
+    });
+
+    // Details - Users (Breakdown)
+    finalY = doc.lastAutoTable.finalY + 15;
+    doc.text('Phan Bo Nguoi Dung', 20, finalY);
+
+    const userData = [
+      ['Vai tro', 'So luong'],
+      ['Sinh vien', stats.totalStudents.toLocaleString()],
+      ['Nha tuyen dung', stats.totalRecruiters.toLocaleString()],
+      ['Quan tri vien', stats.totalAdmins.toLocaleString()],
+    ];
+
+    autoTable(doc, {
+      startY: finalY + 5,
+      head: [userData[0]],
+      body: userData.slice(1),
+      theme: 'striped',
+      headStyles: { fillColor: [59, 130, 246] }, // Blue
+    });
+
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(10);
+      doc.setTextColor(150);
+      doc.text(`Trang ${i} / ${pageCount}`, 195, 290, { align: 'right' });
+      doc.text('CareerMate System Report - Generated Automatically', 10, 290, { align: 'left' });
+    }
+
+    doc.save(`CareerMate_Report_${today.getFullYear()}${(today.getMonth() + 1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}.pdf`);
   };
 
   if (loading) {
@@ -51,6 +167,7 @@ export default function AdminDashboard() {
     {
       title: 'Người dùng',
       value: stats.totalUsers,
+      growth: stats.userGrowthPercentage || 0,
       icon: 'fa-users',
       gradient: 'from-blue-500 to-cyan-500',
       shadow: 'shadow-blue-500/20',
@@ -60,6 +177,7 @@ export default function AdminDashboard() {
     {
       title: 'Việc làm',
       value: stats.totalJobs,
+      growth: stats.jobGrowthPercentage || 0,
       icon: 'fa-briefcase',
       gradient: 'from-indigo-600 to-blue-600',
       shadow: 'shadow-indigo-500/20',
@@ -69,6 +187,7 @@ export default function AdminDashboard() {
     {
       title: 'Bài viết',
       value: stats.totalArticles,
+      growth: stats.articleGrowthPercentage || 0,
       icon: 'fa-newspaper',
       gradient: 'from-emerald-500 to-teal-500',
       shadow: 'shadow-emerald-500/20',
@@ -78,6 +197,7 @@ export default function AdminDashboard() {
     {
       title: 'Đơn ứng tuyển',
       value: stats.totalApplications,
+      growth: stats.applicationGrowthPercentage || 0,
       icon: 'fa-file-signature',
       gradient: 'from-purple-500 to-pink-500',
       shadow: 'shadow-purple-500/20',
@@ -87,6 +207,7 @@ export default function AdminDashboard() {
     {
       title: 'Công ty',
       value: stats.totalCompanies,
+      growth: stats.companyGrowthPercentage || 0,
       icon: 'fa-building',
       gradient: 'from-orange-500 to-amber-500',
       shadow: 'shadow-orange-500/20',
@@ -96,6 +217,7 @@ export default function AdminDashboard() {
     {
       title: 'Tin nhắn',
       value: '24', // Placeholder for now
+      growth: 0,
       icon: 'fa-comments',
       gradient: 'from-violet-500 to-indigo-500',
       shadow: 'shadow-violet-500/20',
@@ -124,7 +246,10 @@ export default function AdminDashboard() {
           >
             <i className={`fas fa-sync-alt ${loading ? 'fa-spin' : ''}`}></i>
           </button>
-          <button className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold shadow-lg shadow-indigo-500/30 transition-all transform hover:-translate-y-0.5">
+          <button
+            onClick={handleExportReport}
+            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold shadow-lg shadow-indigo-500/30 transition-all transform hover:-translate-y-0.5"
+          >
             <i className="fas fa-file-export mr-2"></i> Xuất báo cáo
           </button>
         </div>
@@ -132,43 +257,51 @@ export default function AdminDashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {statCards.map((card, index) => (
-          <div
-            key={index}
-            className={`group relative bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl rounded-[2rem] border border-white/50 dark:border-slate-800/50 p-8 shadow-xl hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden animate-slide-up`}
-            style={{ animationDelay: `${index * 100}ms` }}
-            onClick={() => card.link && navigate(card.link)}
-          >
-            {/* Hover Background Blob */}
-            <div className={`absolute -right-10 -bottom-10 w-32 h-32 bg-gradient-to-br ${card.gradient} opacity-[0.03] group-hover:opacity-10 rounded-full blur-3xl transition-opacity duration-500`}></div>
+        {statCards.map((card, index) => {
+          const isPositive = card.growth >= 0;
+          const growthColorClass = isPositive
+            ? 'text-emerald-500 bg-emerald-500/10'
+            : 'text-rose-500 bg-rose-500/10';
+          const growthIcon = isPositive ? 'fa-arrow-up' : 'fa-arrow-down';
 
-            <div className="flex items-start justify-between relative z-10">
-              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${card.gradient} ${card.shadow} flex items-center justify-center text-white text-xl transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500`}>
-                <i className={`fas ${card.icon}`}></i>
-              </div>
-              {card.link && (
-                <div className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600 transition-all">
-                  <i className="fas fa-chevron-right text-xs"></i>
+          return (
+            <div
+              key={index}
+              className={`group relative bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl rounded-[2rem] border border-white/50 dark:border-slate-800/50 p-8 shadow-xl hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden animate-slide-up`}
+              style={{ animationDelay: `${index * 100}ms` }}
+              onClick={() => card.link && navigate(card.link)}
+            >
+              {/* Hover Background Blob */}
+              <div className={`absolute -right-10 -bottom-10 w-32 h-32 bg-gradient-to-br ${card.gradient} opacity-[0.03] group-hover:opacity-10 rounded-full blur-3xl transition-opacity duration-500`}></div>
+
+              <div className="flex items-start justify-between relative z-10">
+                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${card.gradient} ${card.shadow} flex items-center justify-center text-white text-xl transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500`}>
+                  <i className={`fas ${card.icon}`}></i>
                 </div>
-              )}
-            </div>
-
-            <div className="mt-6 relative z-10">
-              <h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">{card.title}</h3>
-              <div className="flex items-baseline gap-2">
-                <p className="text-4xl font-black text-slate-900 dark:text-white">
-                  {loading ? '---' : card.value.toLocaleString()}
-                </p>
-                <span className="text-xs font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-lg flex items-center gap-1">
-                  <i className="fas fa-arrow-up"></i> 12%
-                </span>
+                {card.link && (
+                  <div className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600 transition-all">
+                    <i className="fas fa-chevron-right text-xs"></i>
+                  </div>
+                )}
               </div>
-              <p className="mt-4 text-xs font-bold text-slate-500 dark:text-slate-400 line-clamp-1 bg-slate-100 dark:bg-slate-800/50 p-2 rounded-xl border border-slate-200/20 dark:border-slate-700/20 inline-block">
-                {card.detail}
-              </p>
+
+              <div className="mt-6 relative z-10">
+                <h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">{card.title}</h3>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-4xl font-black text-slate-900 dark:text-white">
+                    {loading ? '---' : card.value.toLocaleString()}
+                  </p>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-lg flex items-center gap-1 ${growthColorClass}`}>
+                    <i className={`fas ${growthIcon}`}></i> {Math.abs(card.growth).toFixed(1)}%
+                  </span>
+                </div>
+                <p className="mt-4 text-xs font-bold text-slate-500 dark:text-slate-400 line-clamp-1 bg-slate-100 dark:bg-slate-800/50 p-2 rounded-xl border border-slate-200/20 dark:border-slate-700/20 inline-block">
+                  {card.detail}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Main Sections Row */}

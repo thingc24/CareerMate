@@ -14,4 +14,6 @@ public interface JobSkillRepository extends JpaRepository<JobSkill, UUID> {
     @org.springframework.data.jpa.repository.Query("SELECT js.skillName, COUNT(DISTINCT js.job.id) as jobCount " +
            "FROM JobSkill js GROUP BY js.skillName ORDER BY jobCount DESC")
     List<Object[]> findTopSkillsByJobCount();
+    
+    void deleteByJobId(UUID jobId);
 }

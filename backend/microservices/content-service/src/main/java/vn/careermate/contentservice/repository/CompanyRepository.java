@@ -8,4 +8,5 @@ import java.util.UUID;
 
 @Repository
 public interface CompanyRepository extends JpaRepository<Company, UUID> {
+    long countByCreatedAtBefore(java.time.LocalDateTime createdAt);
 }

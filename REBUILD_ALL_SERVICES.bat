@@ -6,7 +6,19 @@ echo.
 
 cd /d "%~dp0backend"
 
-echo [1/8] Building Eureka Server...
+echo [1/9] Building Common Module...
+cd microservices\common
+call mvn clean install -DskipTests
+if errorlevel 1 (
+    echo ERROR: Common Module build failed!
+    pause
+    exit /b 1
+)
+
+cd ..\..
+
+echo.
+echo [2/9] Building Eureka Server...
 cd microservices\eureka-server
 call mvn clean install -DskipTests
 if errorlevel 1 (

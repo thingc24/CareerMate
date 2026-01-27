@@ -40,6 +40,17 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const oauthLogin = async (oauthData) => {
+    try {
+      const data = await api.oauthLogin(oauthData);
+      setUser(data.user);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const logout = () => {
     api.logout();
     setUser(null);
@@ -51,6 +62,7 @@ export function AuthProvider({ children }) {
     loading,
     login,
     register,
+    oauthLogin,
     logout,
   };
 

@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 public class UserController {
 
     private final UserRepository userRepository;
+    private final vn.careermate.userservice.repository.OtpTokenRepository otpTokenRepository;
 
     @GetMapping("/{userId}")
     @PreAuthorize("permitAll()") // Allow inter-service calls
@@ -90,11 +91,14 @@ public class UserController {
     }
 
     @DeleteMapping("/{userId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ADMIN')")
+    @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<Void> deleteUser(@PathVariable UUID userId) {
         if (!userRepository.existsById(userId)) {
             return ResponseEntity.notFound().build();
         }
+        // Delete related OTP tokens first to avoid Foreign Key Constraint
+        otpTokenRepository.deleteByUserId(userId);
         userRepository.deleteById(userId);
         return ResponseEntity.noContent().build();
     }

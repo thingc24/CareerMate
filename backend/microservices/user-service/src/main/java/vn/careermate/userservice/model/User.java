@@ -75,6 +75,6 @@ public class User {
     }
 
     public enum UserStatus {
-        ACTIVE, INACTIVE, SUSPENDED, DELETED
+        ACTIVE, PENDING, INACTIVE, SUSPENDED, DELETED
     }
 }

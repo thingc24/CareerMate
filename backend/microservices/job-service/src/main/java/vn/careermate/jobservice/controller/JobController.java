@@ -146,14 +146,19 @@ public class JobController {
 
     @GetMapping("/admin/count")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Long> getJobCount(@RequestParam(required = false) String status) {
-        return ResponseEntity.ok(jobService.getJobCount(status));
+    public ResponseEntity<Long> getJobCount(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime beforeDate
+    ) {
+        return ResponseEntity.ok(jobService.getJobCount(status, beforeDate));
     }
 
     @GetMapping("/applications/admin/count")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Long> getApplicationCount() {
-        return ResponseEntity.ok(jobService.getApplicationCount());
+    public ResponseEntity<Long> getApplicationCount(
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime beforeDate
+    ) {
+        return ResponseEntity.ok(jobService.getApplicationCount(beforeDate));
     }
 
     @GetMapping("/recruiter/stats")

@@ -13,6 +13,10 @@ import java.util.UUID;
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
+    
+    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.email = :email AND u.status = 'ACTIVE'")
+    Optional<User> findActiveByEmail(String email);
+    
     boolean existsByEmail(String email);
     long countByRole(User.UserRole role);
     Page<User> findByRole(User.UserRole role, Pageable pageable);

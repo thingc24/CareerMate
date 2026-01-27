@@ -71,6 +71,22 @@ public class CompanyController {
         return ResponseEntity.ok(companyService.getTopCompanies(limit));
     }
 
+    @PutMapping("/{companyId}/verify")
+    public ResponseEntity<Company> verifyCompany(
+            @PathVariable UUID companyId,
+            @RequestParam boolean verified
+    ) {
+        Company company = companyService.getCompanyById(companyId);
+        company.setVerified(verified);
+        return ResponseEntity.ok(companyService.createOrUpdateCompany(company));
+    }
+
+    @DeleteMapping("/{companyId}")
+    public ResponseEntity<Void> deleteCompany(@PathVariable UUID companyId) {
+        companyService.deleteCompany(companyId);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/{companyId}")
     public ResponseEntity<Map<String, Object>> getCompany(@PathVariable UUID companyId) {
         Company company = companyService.getCompanyById(companyId);
@@ -122,7 +138,9 @@ public class CompanyController {
     }
 
     @GetMapping("/admin/count")
-    public ResponseEntity<Long> getCompanyCount() {
-        return ResponseEntity.ok(companyService.getCompanyCount());
+    public ResponseEntity<Long> getCompanyCount(
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime beforeDate
+    ) {
+        return ResponseEntity.ok(companyService.getCompanyCount(beforeDate));
     }
 }

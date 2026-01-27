@@ -59,6 +59,6 @@ public class AuditLog {
     }
 
     public enum EntityType {
-        USER, JOB, ARTICLE, PACKAGE, SUBSCRIPTION, CV_TEMPLATE
+        USER, JOB, ARTICLE, PACKAGE, SUBSCRIPTION, CV_TEMPLATE, COMPANY
     }
 }

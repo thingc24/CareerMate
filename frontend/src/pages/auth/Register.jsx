@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../services/api';
+import { GoogleLogin } from '@react-oauth/google';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -11,6 +13,7 @@ export default function Register() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const { oauthLogin } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -20,7 +23,7 @@ export default function Register() {
 
     try {
       await api.register(formData);
-      navigate('/login');
+      navigate(`/verify-otp?email=${encodeURIComponent(formData.email)}&type=REGISTRATION`);
     } catch (err) {
       setError(err.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại.');
     } finally {
@@ -28,142 +31,185 @@ export default function Register() {
     }
   };
 
+  const handleSocialLogin = async (provider, credential) => {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await oauthLogin({
+        provider: provider.toUpperCase(),
+        credential
+      });
+      const role = data.user.role;
+      if (role === 'STUDENT') navigate('/student/dashboard');
+      else if (role === 'RECRUITER') navigate('/recruiter/dashboard');
+      else if (role === 'ADMIN') navigate('/admin/dashboard');
+      else navigate('/');
+    } catch (err) {
+      setError(err.response?.data?.message || `Lỗi đăng ký ${provider}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
-      <div className="max-w-5xl w-full grid grid-cols-1 md:grid-cols-[0.9fr,1.1fr] gap-10 items-center">
-        {/* Left: form */}
-        <div className="bg-white/95 backdrop-blur rounded-2xl shadow-2xl border border-slate-200 px-6 py-7 sm:px-8 sm:py-8">
-          <div className="space-y-2 mb-6 text-center">
-            <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
-              Tạo tài khoản CareerMate
-            </h2>
-            <p className="text-sm text-slate-500">
-              Chỉ mất vài bước để bạn bắt đầu quản lý hành trình nghề nghiệp.
-            </p>
+    <div className="min-h-screen flex flex-col lg:grid lg:grid-cols-2 bg-white font-sans">
+
+      {/* Left Pane: Ecosystem & Community (Visible on Desktop) */}
+      <div className="hidden lg:flex relative flex-col justify-between p-16 xl:p-24 overflow-hidden bg-[#0a0a10]">
+        {/* Animated background glows */}
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[100px] animate-pulse"></div>
+        <div className="absolute bottom-[-5%] right-[-5%] w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-[80px]"></div>
+
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-24 animate-fade-in">
+            <div className="w-10 h-10 rounded-lg bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+              <i className="fas fa-bolt text-white"></i>
+            </div>
+            <span className="text-xl font-black text-white tracking-tight">CareerMate</span>
           </div>
 
-          <form className="space-y-5" onSubmit={handleSubmit}>
+          <div className="space-y-8 animate-fade-in-up">
+            <h1 className="text-6xl xl:text-7xl font-black text-white leading-tight tracking-tighter">
+              Bứt phá <br />
+              mọi <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">giới hạn</span>.
+            </h1>
+            <p className="text-xl text-slate-400 max-w-md leading-relaxed">
+              Dẫn đầu tương lai với lộ trình sự nghiệp cá nhân hóa và mạng lưới chuyên nghiệp toàn cầu.
+            </p>
+          </div>
+        </div>
+
+        <div className="relative z-10 space-y-8 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+          <div className="flex items-center gap-4">
+            <div className="flex -space-x-3">
+              {[1, 2, 3].map(i => (
+                <img key={i} className="w-10 h-10 rounded-full border-2 border-[#0a0a10]" src={`https://i.pravatar.cc/100?u=${i + 100}`} alt="User" />
+              ))}
+            </div>
+            <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Cùng 10k+ học viên</p>
+          </div>
+          <div className="h-[1px] w-32 bg-gradient-to-r from-white/10 to-transparent"></div>
+        </div>
+      </div>
+
+      {/* Right Pane: Register Form */}
+      <div className="flex-1 flex items-center justify-center p-8 sm:p-12 bg-[#f9fafb] overflow-y-auto">
+        <div className="w-full max-w-[460px] animate-fade-in-right py-12">
+
+          <div className="text-left mb-10">
+            <h2 className="text-3xl font-black text-slate-900 mb-2">Tạo tài khoản mới</h2>
+            <p className="text-slate-500 font-medium">Bắt đầu hành trình của bạn ngay hôm nay.</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+              <div className="p-4 rounded-lg bg-red-50 border border-red-100 text-red-600 text-sm font-semibold animate-shake">
                 {error}
               </div>
             )}
 
-            <div className="space-y-4">
-              <div className="space-y-1.5 text-left">
-                <label htmlFor="fullName" className="block text-sm font-medium text-slate-700">
-                  Họ và tên
-                </label>
+            <div className="space-y-5">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider ml-1">Họ và Tên</label>
                 <input
-                  id="fullName"
-                  name="fullName"
                   type="text"
                   required
-                  className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/60"
-                  placeholder="Nguyễn Văn A"
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                  className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all font-medium"
+                  placeholder="Nhập đầy đủ họ tên"
                 />
               </div>
 
-              <div className="space-y-1.5 text-left">
-                <label htmlFor="email" className="block text-sm font-medium text-slate-700">
-                  Email
-                </label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider ml-1">Địa chỉ Email</label>
                 <input
-                  id="email"
-                  name="email"
                   type="email"
                   required
-                  className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/60"
-                  placeholder="nhapemail@truong.edu.vn"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all font-medium"
+                  placeholder="name@example.com"
                 />
               </div>
 
-              <div className="space-y-1.5 text-left">
-                <label htmlFor="password" className="block text-sm font-medium text-slate-700">
-                  Mật khẩu
-                </label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider ml-1">Mật khẩu</label>
                 <input
-                  id="password"
-                  name="password"
                   type="password"
                   required
-                  className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/60"
-                  placeholder="Tối thiểu 8 ký tự, bao gồm chữ và số"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all font-medium"
+                  placeholder="Tạo mật khẩu bảo mật"
                 />
               </div>
 
-              <div className="space-y-1.5 text-left">
-                <label htmlFor="role" className="block text-sm font-medium text-slate-700">
-                  Vai trò
-                </label>
-                <select
-                  id="role"
-                  name="role"
-                  className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/60"
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                >
-                  <option value="STUDENT">Sinh viên</option>
-                  <option value="RECRUITER">Nhà tuyển dụng</option>
-                </select>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider ml-1">Loại tài khoản</label>
+                <div className="grid grid-cols-2 gap-3 h-12">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, role: 'STUDENT' })}
+                    className={`rounded-xl border-2 font-bold text-sm transition-all ${formData.role === 'STUDENT'
+                      ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                      : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                      }`}
+                  >
+                    Sinh viên
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, role: 'RECRUITER' })}
+                    className={`rounded-xl border-2 font-bold text-sm transition-all ${formData.role === 'RECRUITER'
+                      ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                      : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                      }`}
+                  >
+                    Nhà tuyển dụng
+                  </button>
+                </div>
               </div>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full h-12 bg-slate-900 text-white hover:bg-black transition-all duration-300 rounded-xl font-bold text-sm shadow-lg active:scale-[0.98] disabled:opacity-50 mt-2"
             >
-              {loading ? 'Đang đăng ký...' : 'Đăng ký'}
+              {loading ? <i className="fas fa-circle-notch fa-spin mr-2"></i> : 'LẤY MÃ OTP'}
             </button>
 
-            <p className="text-center text-xs sm:text-sm text-slate-500">
-              Đã có tài khoản?{' '}
-              <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
-                Đăng nhập
-              </Link>
-            </p>
-          </form>
-        </div>
+            <div className="flex justify-center w-full mt-4">
+              <GoogleLogin
+                onSuccess={credentialResponse => {
+                  handleSocialLogin('Google', credentialResponse.credential);
+                }}
+                onError={() => {
+                  setError('Đăng ký Google thất bại');
+                }}
+                useOneTap
+                theme="outline"
+                size="large"
+                width="460"
+                text="signup_with"
+                shape="rectangular"
+              />
+            </div>
 
-        {/* Right: intro */}
-        <div className="hidden md:flex flex-col text-slate-100 space-y-6">
-          <div className="inline-flex items-center gap-3 rounded-full bg-slate-800/70 px-4 py-1 text-xs font-medium text-slate-200 ring-1 ring-slate-700/70">
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-white text-xs font-semibold">
-              CM
-            </span>
-            <span>Một tài khoản – ba vai trò: Sinh viên, Nhà tuyển dụng, Admin</span>
+            <div className="text-center pt-6">
+              <p className="text-sm text-slate-600 font-medium">
+                Đã có tài khoản? <Link to="/login" className="text-emerald-600 font-bold hover:underline underline-offset-4 decoration-2">Đăng nhập tại đây</Link>
+              </p>
+            </div>
+          </form>
+
+          <div className="mt-12 text-center lg:text-left">
+            <p className="text-xs text-slate-400 font-medium">© 2026 CareerMate. Hệ thống bảo mật CareerMate.</p>
           </div>
-          <h1 className="text-3xl lg:text-4xl font-bold tracking-tight leading-tight">
-            Bắt đầu hành trình sự nghiệp cùng{' '}
-            <span className="text-blue-400">CareerMate</span>
-          </h1>
-          <p className="text-sm lg:text-base text-slate-300 max-w-md">
-            Tạo hồ sơ, tải CV, theo dõi job và tương tác với nhà tuyển dụng một cách chuyên nghiệp hơn.
-          </p>
-          <ul className="space-y-2 text-sm text-slate-300">
-            <li className="flex items-center gap-2">
-              <i className="fas fa-star text-amber-400" />
-              <span>Giao diện hiện đại, tập trung vào trải nghiệm người dùng.</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <i className="fas fa-shield-alt text-emerald-400" />
-              <span>Bảo mật với JWT và phân quyền rõ ràng.</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <i className="fas fa-brain text-sky-400" />
-              <span>Tích hợp AI hỗ trợ định hướng và đánh giá CV.</span>
-            </li>
-          </ul>
         </div>
       </div>
     </div>
   );
 }
-

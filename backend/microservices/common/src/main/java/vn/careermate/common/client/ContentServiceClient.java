@@ -21,6 +21,9 @@ public interface ContentServiceClient {
     @PostMapping("/companies")
     CompanyDTO createOrUpdateCompany(@RequestBody CompanyDTO companyDTO);
     
+    @DeleteMapping("/companies/{companyId}")
+    void deleteCompany(@PathVariable UUID companyId);
+    
     // Article endpoints
     @GetMapping("/articles/{articleId}")
     ArticleDTO getArticleById(@PathVariable UUID articleId);
@@ -55,8 +58,13 @@ public interface ContentServiceClient {
     void deleteArticle(@PathVariable UUID articleId, @RequestParam UUID adminId, @RequestParam String reason);
     
     @GetMapping("/articles/admin/count")
-    Long getArticleCount(@RequestParam(required = false) String status);
+    Long getArticleCount(
+        @RequestParam(required = false) String status,
+        @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime beforeDate
+    );
     
     @GetMapping("/companies/admin/count")
-    Long getCompanyCount();
+    Long getCompanyCount(
+        @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime beforeDate
+    );
 }

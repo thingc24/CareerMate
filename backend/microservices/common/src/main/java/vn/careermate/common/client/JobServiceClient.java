@@ -63,10 +63,15 @@ public interface JobServiceClient {
     );
     
     @GetMapping("/jobs/admin/count")
-    Long getJobCount(@RequestParam(required = false) String status);
+    Long getJobCount(
+        @RequestParam(required = false) String status,
+        @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime beforeDate
+    );
 
     @GetMapping("/jobs/applications/admin/count")
-    Long getApplicationCount();
+    Long getApplicationCount(
+       @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime beforeDate
+    );
 
     @GetMapping("/jobs/recruiter/stats")
     java.util.Map<String, Object> getRecruiterStats(@RequestParam UUID recruiterId);

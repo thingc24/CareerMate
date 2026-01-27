@@ -17,6 +17,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
@@ -32,24 +34,15 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
-                   .authorizeHttpRequests(auth -> auth
-                       // Public endpoints - authentication
-                       .requestMatchers("/auth/**").permitAll()
-                       .requestMatchers("/api/auth/**").permitAll()
-                       // File serving endpoints - public access
-                       .requestMatchers("/uploads/**").permitAll()
-                       .requestMatchers("/test/**").permitAll()
-                       // Health check endpoints
-                       .requestMatchers("/actuator/health").permitAll()
-                       .requestMatchers("/actuator/info").permitAll()
-                       // Public endpoints for inter-service and frontend
-                       .requestMatchers(org.springframework.http.HttpMethod.GET, "/users/**").permitAll()
-                       .requestMatchers(org.springframework.http.HttpMethod.GET, "/recruiters/**").permitAll()
-                       .requestMatchers(org.springframework.http.HttpMethod.GET, "/students/**").permitAll()
-                       .requestMatchers(org.springframework.http.HttpMethod.POST, "/users/by-roles").permitAll() // For notifications
-                       // All other endpoints require authentication
-                       .anyRequest().authenticated()
-                   )
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(AntPathRequestMatcher.antMatcher("/auth/**")).permitAll()
+                .requestMatchers(AntPathRequestMatcher.antMatcher("/api/auth/**")).permitAll()
+                .requestMatchers(AntPathRequestMatcher.antMatcher("/uploads/**")).permitAll()
+                .requestMatchers(AntPathRequestMatcher.antMatcher("/users/uploads/**")).permitAll()
+                .requestMatchers(AntPathRequestMatcher.antMatcher("/error")).permitAll()
+                .requestMatchers(AntPathRequestMatcher.antMatcher("/actuator/**")).permitAll()
+                .anyRequest().authenticated()
+            )
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
@@ -57,14 +50,10 @@ public class SecurityConfig {
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .exceptionHandling(exceptions -> exceptions
                 .authenticationEntryPoint((request, response, authException) -> {
+                    System.err.println("CRITICAL: Security 401 on " + request.getRequestURI());
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     response.setContentType("application/json");
-                    response.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"Authentication required. Please login first.\"}");
-                })
-                .accessDeniedHandler((request, response, accessDeniedException) -> {
-                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                    response.setContentType("application/json");
-                    response.getWriter().write("{\"error\":\"Forbidden\",\"message\":\"Access denied. You don't have permission to access this resource.\"}");
+                    response.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"Authentication required. Path: " + request.getRequestURI() + "\"}");
                 })
             );
 

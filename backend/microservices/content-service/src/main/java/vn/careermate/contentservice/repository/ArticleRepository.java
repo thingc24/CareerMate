@@ -19,6 +19,10 @@ public interface ArticleRepository extends JpaRepository<Article, UUID> {
     
     long countByStatus(Article.ArticleStatus status);
     
+    long countByStatusAndCreatedAtBefore(Article.ArticleStatus status, java.time.LocalDateTime createdAt);
+    
+    long countByCreatedAtBefore(java.time.LocalDateTime createdAt);
+    
     @Query("SELECT a FROM Article a WHERE a.status = :status AND a.publishedAt IS NOT NULL ORDER BY a.publishedAt DESC")
     Page<Article> findByStatusAndPublishedAtIsNotNullOrderByPublishedAtDesc(
         @Param("status") Article.ArticleStatus status, Pageable pageable);

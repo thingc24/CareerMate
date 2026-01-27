@@ -21,4 +21,6 @@ public interface CompanyRatingRepository extends JpaRepository<CompanyRating, UU
     
     @Query(value = "SELECT COUNT(*) FROM contentservice.company_ratings WHERE company_id = :companyId", nativeQuery = true)
     Long countByCompanyId(@Param("companyId") UUID companyId);
+    
+    void deleteByCompanyId(UUID companyId);
 }

@@ -19,9 +19,28 @@ class CareerMateAPI {
       },
     });
 
+    // Helper function to detect public auth endpoints that don't need tokens
+    const isPublicAuthEndpoint = (url) => {
+      if (!url) return false;
+      const publicPatterns = [
+        '/auth/login',
+        '/auth/register',
+        '/auth/oauth-login',
+        '/auth/refresh',
+        '/auth/forgot-password',
+        '/auth/reset-password'
+      ];
+      return publicPatterns.some(pattern => url.includes(pattern));
+    };
+
     // Request interceptor
     this.client.interceptors.request.use(
       (config) => {
+        // Skip token injection for public auth endpoints
+        if (isPublicAuthEndpoint(config.url)) {
+          return config;
+        }
+
         // Reload token from localStorage on each request
         this.loadTokens();
         if (this.token) {
@@ -52,6 +71,11 @@ class CareerMateAPI {
         const originalRequest = error.config;
 
         if (error.response?.status === 401 && !originalRequest._retry) {
+          // DO NOT retry for public auth endpoints
+          if (isPublicAuthEndpoint(originalRequest.url)) {
+            return Promise.reject(error);
+          }
+
           originalRequest._retry = true;
 
           try {
@@ -69,6 +93,14 @@ class CareerMateAPI {
         return Promise.reject(error);
       }
     );
+  }
+
+  getFileUrl(url) {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    // Format: http://localhost:8080/api...
+    const origin = this.baseURL.replace(/\/api$/, '');
+    return `${origin}${url.startsWith('/') ? url : '/' + url}`;
   }
 
   loadTokens() {
@@ -131,6 +163,35 @@ class CareerMateAPI {
     return response.data;
   }
 
+  async verifyOtp(email, otp, type) {
+    const response = await this.client.post(`/auth/verify-otp?email=${email}&otp=${otp}&type=${type}`);
+    return response.data;
+  }
+
+  async forgotPassword(email) {
+    const response = await this.client.post(`/auth/forgot-password?email=${email}`);
+    return response.data;
+  }
+
+  async resetPassword(data) {
+    const response = await this.client.post('/auth/reset-password', data);
+    return response.data;
+  }
+
+  async oauthLogin(oauthData) {
+    const response = await this.client.post('/auth/oauth-login', oauthData);
+    // Backend returns 'accessToken', not 'token'
+    const token = response.data.accessToken || response.data.token;
+    if (token) {
+      this.token = token;
+      this.refreshToken = response.data.refreshToken;
+      localStorage.setItem('token', this.token);
+      localStorage.setItem('refreshToken', this.refreshToken);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+    }
+    return response.data;
+  }
+
   // Student APIs
   async getJobs(page = 0, size = 10) {
     // Use searchJobs with empty filters to get all jobs
@@ -170,6 +231,10 @@ class CareerMateAPI {
     // Updated: Use /api/applications instead of /api/students/applications (moved to job-service)
     const response = await this.client.post(`/applications?${params}`);
     return response.data;
+  }
+
+  async getStudentApplications(page = 0, size = 10) {
+    return this.getApplications(page, size);
   }
 
   async getApplications(page = 0, size = 10) {
@@ -286,14 +351,12 @@ class CareerMateAPI {
   }
 
   async getJobApplicants(jobId, page = 0, size = 10) {
-    // Note: This endpoint needs to be verified in JobController or ApplicationController
-    // Assuming ApplicationController handles it, or JobController
-    // Based on JobController file listing, there is ApplicationController.java
-    // Let's assume /applications/job/{jobId}?
-    // Or /jobs/{jobId}/applications
-    // Warning: I haven't seen ApplicationController. Let's check it first.
-    // Reverting to /jobs/{jobId}/applicants for now, but I should check ApplicationController.
-    const response = await this.client.get(`/applications/job/${jobId}?page=${page}&size=${size}`);
+    const response = await this.client.get(`/jobs/${jobId}/applicants?page=${page}&size=${size}`);
+    return response.data;
+  }
+
+  async getRecruiterJobStats(recruiterId) {
+    const response = await this.client.get(`/jobs/recruiter/stats?recruiterId=${recruiterId}`);
     return response.data;
   }
 
@@ -371,6 +434,10 @@ class CareerMateAPI {
       }
       throw error;
     }
+  }
+
+  async updateCompany(companyData) {
+    return this.createOrUpdateCompany(companyData);
   }
 
   async createOrUpdateCompany(companyData) {
@@ -898,31 +965,6 @@ class CareerMateAPI {
   }
 
   // Package APIs
-  async getPackages() {
-    const response = await this.client.get('/packages');
-    return response.data;
-  }
-
-  async getMySubscription() {
-    const response = await this.client.get('/packages/my-subscription');
-    return response.data;
-  }
-
-  async subscribePackage(packageId) {
-    // Legacy - use requestSubscription instead
-    return this.requestSubscription(packageId);
-  }
-
-  async requestSubscription(packageId) {
-    const response = await this.client.post(`/packages/${packageId}/request`);
-    return response.data;
-  }
-
-  async getMySubscriptions() {
-    const response = await this.client.get('/packages/my-subscriptions');
-    return response.data;
-  }
-
   // Admin subscription management
   async getPendingSubscriptions(page = 0, size = 10) {
     const response = await this.client.get(`/packages/subscriptions/pending?page=${page}&size=${size}`);
@@ -946,30 +988,6 @@ class CareerMateAPI {
 
   async getSubscriptionsHistory(page = 0, size = 10) {
     const response = await this.client.get(`/packages/subscriptions/history?page=${page}&size=${size}`);
-    return response.data;
-  }
-
-  async uploadCV(file) {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const response = await this.client.post('/students/cv/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
-  }
-
-  async uploadCV(file) {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const response = await this.client.post('/students/cv/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
     return response.data;
   }
 
@@ -1010,6 +1028,11 @@ class CareerMateAPI {
   async getAdminDashboardStats() {
     const response = await this.client.get('/admin/dashboard/stats');
     return response.data;
+  }
+
+  async getUsers(page = 0, size = 10, keyword = '') {
+    // For mobile find candidates - use admin users but search students
+    return this.getAdminUsers('STUDENT', page, size);
   }
 
   async getAdminUsers(role = null, page = 0, size = 10) {

@@ -399,14 +399,31 @@ public class ArticleService {
 
     @Transactional(readOnly = true)
     public long getArticleCount(String status) {
-        if (status == null || status.trim().isEmpty()) {
-            return articleRepository.count();
-        }
-        try {
-            return articleRepository.countByStatus(Article.ArticleStatus.valueOf(status.toUpperCase()));
-        } catch (IllegalArgumentException e) {
-            log.warn("Invalid status for article count: {}", status);
-            return 0L;
+        return getArticleCount(status, null);
+    }
+
+    @Transactional(readOnly = true)
+    public long getArticleCount(String status, java.time.LocalDateTime beforeDate) {
+        if (beforeDate == null) {
+            if (status == null || status.trim().isEmpty()) {
+                return articleRepository.count();
+            }
+            try {
+                return articleRepository.countByStatus(Article.ArticleStatus.valueOf(status.toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid status for article count: {}", status);
+                return 0L;
+            }
+        } else {
+            if (status == null || status.trim().isEmpty()) {
+                return articleRepository.countByCreatedAtBefore(beforeDate);
+            }
+            try {
+                return articleRepository.countByStatusAndCreatedAtBefore(Article.ArticleStatus.valueOf(status.toUpperCase()), beforeDate);
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid status for article count: {}", status);
+                return 0L;
+            }
         }
     }
 

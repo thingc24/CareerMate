@@ -179,29 +179,35 @@ public class RecruiterProfileService {
             throw new RuntimeException("Company not found. Please create company profile first.");
         }
 
-        // TODO: Update company logo via ContentServiceClient
-        // For now, just return the file path - content-service should handle logo update
-        log.warn("Company logo update should be handled by content-service. Company ID: {}, Logo URL: {}", companyId, filePath);
-        
-        /* Original implementation - commented for microservice refactoring
-        Company company = recruiter.getCompany();
-        
-        if (company == null) {
-            throw new RuntimeException("Company not found. Please create company profile first.");
-        }
-
-        // Delete old logo if exists
-        if (company.getLogoUrl() != null && !company.getLogoUrl().isEmpty()) {
-            try {
-                fileStorageService.deleteFile(company.getLogoUrl());
-            } catch (Exception e) {
-                // Log warning but continue
+        try {
+            // Get current company
+            CompanyDTO company = contentServiceClient.getCompanyById(companyId);
+            
+            // Delete old logo if exists
+            if (company.getLogoUrl() != null && !company.getLogoUrl().isEmpty()) {
+                try {
+                    fileStorageService.deleteFile(company.getLogoUrl());
+                } catch (Exception e) {
+                    log.warn("Could not delete old logo: {}", e.getMessage());
+                    // Continue anyway
+                }
             }
+            
+            // Update company with new logo URL
+            company.setLogoUrl(filePath);
+            contentServiceClient.createOrUpdateCompany(company);
+            
+            log.info("Updated company {} logo to: {}", companyId, filePath);
+        } catch (Exception e) {
+            log.error("Error updating company logo: {}", e.getMessage(), e);
+            // Delete uploaded file since we couldn't update the company
+            try {
+                fileStorageService.deleteFile(filePath);
+            } catch (Exception ex) {
+                log.warn("Could not delete uploaded file after error: {}", ex.getMessage());
+            }
+            throw new RuntimeException("Failed to update company logo: " + e.getMessage());
         }
-        
-        company.setLogoUrl(filePath);
-        companyRepository.save(company);
-        */
 
         return filePath;
     }

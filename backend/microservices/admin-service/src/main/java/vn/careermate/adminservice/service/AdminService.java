@@ -45,20 +45,45 @@ public class AdminService {
             long totalAdmins = allUsers.stream().filter(u -> "ADMIN".equals(u.getRole())).count();
 
             // Get job counts
-            Long totalJobs = jobServiceClient.getJobCount(null);
-            Long pendingJobs = jobServiceClient.getJobCount("PENDING");
-            Long activeJobs = jobServiceClient.getJobCount("ACTIVE");
+            Long totalJobs = jobServiceClient.getJobCount(null, null);
+            Long pendingJobs = jobServiceClient.getJobCount("PENDING", null);
+            Long activeJobs = jobServiceClient.getJobCount("ACTIVE", null);
 
             // Get application count
-            Long totalApplications = jobServiceClient.getApplicationCount();
+            Long totalApplications = jobServiceClient.getApplicationCount(null);
 
             // Get company count
-            Long totalCompanies = contentServiceClient.getCompanyCount();
+            Long totalCompanies = contentServiceClient.getCompanyCount(null);
 
             // Get article counts
-            Long totalArticles = contentServiceClient.getArticleCount(null);
-            Long pendingArticles = contentServiceClient.getArticleCount("PENDING");
-            Long publishedArticles = contentServiceClient.getArticleCount("PUBLISHED");
+            Long totalArticles = contentServiceClient.getArticleCount(null, null);
+            Long pendingArticles = contentServiceClient.getArticleCount("PENDING", null);
+            Long publishedArticles = contentServiceClient.getArticleCount("PUBLISHED", null);
+
+            // Growth calculation (Current vs 30 days ago)
+            LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+
+            // Users growth
+            long users30DaysAgo = allUsers.stream()
+                .filter(u -> u.getCreatedAt() != null && u.getCreatedAt().isBefore(thirtyDaysAgo))
+                .count();
+            double userGrowth = calculateGrowth(totalUsers, users30DaysAgo);
+
+            // Jobs growth
+            Long totalJobs30DaysAgo = jobServiceClient.getJobCount(null, thirtyDaysAgo);
+            double jobGrowth = calculateGrowth(totalJobs != null ? totalJobs : 0L, totalJobs30DaysAgo != null ? totalJobs30DaysAgo : 0L);
+
+            // Applications growth
+            Long totalApplications30DaysAgo = jobServiceClient.getApplicationCount(thirtyDaysAgo);
+            double applicationGrowth = calculateGrowth(totalApplications != null ? totalApplications : 0L, totalApplications30DaysAgo != null ? totalApplications30DaysAgo : 0L);
+
+            // Companies growth
+            Long totalCompanies30DaysAgo = contentServiceClient.getCompanyCount(thirtyDaysAgo);
+            double companyGrowth = calculateGrowth(totalCompanies != null ? totalCompanies : 0L, totalCompanies30DaysAgo != null ? totalCompanies30DaysAgo : 0L);
+
+            // Articles growth
+            Long totalArticles30DaysAgo = contentServiceClient.getArticleCount(null, thirtyDaysAgo);
+            double articleGrowth = calculateGrowth(totalArticles != null ? totalArticles : 0L, totalArticles30DaysAgo != null ? totalArticles30DaysAgo : 0L);
 
             return AdminDashboardStats.builder()
                     .totalUsers(totalUsers)
@@ -73,8 +98,13 @@ public class AdminService {
                     .totalArticles(totalArticles != null ? totalArticles : 0L)
                     .pendingArticles(pendingArticles != null ? pendingArticles : 0L)
                     .publishedArticles(publishedArticles != null ? publishedArticles : 0L)
+                    .userGrowthPercentage(userGrowth)
+                    .jobGrowthPercentage(jobGrowth)
+                    .articleGrowthPercentage(articleGrowth)
+                    .applicationGrowthPercentage(applicationGrowth)
+                    .companyGrowthPercentage(companyGrowth)
                     .build();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("Error getting dashboard stats: {}", e.getMessage(), e);
             // Return empty stats on error
         return AdminDashboardStats.builder()
@@ -273,9 +303,9 @@ public class AdminService {
             long newJobsLast30Days = 0L; // TODO: Implement when endpoint available
             long newJobsLast7Days = 0L; // TODO: Implement when endpoint available
         
-        Map<String, Long> jobsByStatus = new HashMap<>();
-            jobsByStatus.put("PENDING", jobServiceClient.getJobCount("PENDING") != null ? jobServiceClient.getJobCount("PENDING") : 0L);
-            jobsByStatus.put("ACTIVE", jobServiceClient.getJobCount("ACTIVE") != null ? jobServiceClient.getJobCount("ACTIVE") : 0L);
+            Map<String, Long> jobsByStatus = new HashMap<>();
+            jobsByStatus.put("PENDING", jobServiceClient.getJobCount("PENDING", null) != null ? jobServiceClient.getJobCount("PENDING", null) : 0L);
+            jobsByStatus.put("ACTIVE", jobServiceClient.getJobCount("ACTIVE", null) != null ? jobServiceClient.getJobCount("ACTIVE", null) : 0L);
 
             // Application analytics (TODO: Add endpoints)
             long newApplicationsLast30Days = 0L;
@@ -481,9 +511,58 @@ public class AdminService {
             
             String userName = user.getFullName() != null ? user.getFullName() : user.getEmail();
             
+            // CASCADE DELETE: If user is a RECRUITER, delete all their content
+            if ("RECRUITER".equals(user.getRole())) {
+                try {
+                    RecruiterProfileDTO recruiterProfile = userServiceClient.getRecruiterProfileByUserId(userId);
+                    if (recruiterProfile != null) {
+                        
+                        // 1. Delete all JOBS by this recruiter
+                        try {
+                            List<JobDTO> recruiterJobs = jobServiceClient.getJobsByRecruiter(recruiterProfile.getId());
+                            log.info("Deleting {} jobs for recruiter {}", recruiterJobs.size(), userId);
+                            
+                            for (JobDTO job : recruiterJobs) {
+                                jobServiceClient.deleteJob(job.getId(), adminId, "Cascade deletion from recruiter removal");
+                            }
+                            
+                            createAuditLog(adminId, adminEmail, AuditLog.ActionType.DELETE,
+                                    AuditLog.EntityType.JOB, null, recruiterJobs.size() + " jobs",
+                                    "Deleted jobs (cascade from recruiter deletion)", ipAddress);
+                        } catch (Exception e) {
+                            log.warn("Could not delete jobs for recruiter {}: {}", userId, e.getMessage());
+                        }
+                        
+                        // 2. Delete all ARTICLES by this recruiter
+                        try {
+                            // ContentService doesn't have getArticlesByAuthor, so we skip for now
+                            // TODO: Add this functionality later if needed
+                            log.info("Article deletion not implemented - skipping");
+                        } catch (Exception e) {
+                            log.warn("Could not delete articles for recruiter {}: {}", userId, e.getMessage());
+                        }
+                        
+                        // 3. Delete COMPANY
+                        if (recruiterProfile.getCompanyId() != null) {
+                            UUID companyId = recruiterProfile.getCompanyId();
+                            log.info("Deleting company {} before deleting recruiter {}", companyId, userId);
+                            contentServiceClient.deleteCompany(companyId);
+                            
+                            createAuditLog(adminId, adminEmail, AuditLog.ActionType.DELETE,
+                                    AuditLog.EntityType.COMPANY, companyId, "Company of " + userName,
+                                    "Deleted company (cascade from recruiter deletion)", ipAddress);
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("Error during cascade delete for recruiter {}: {}", userId, e.getMessage());
+                    // Continue with user deletion even if cascade delete fails
+                }
+            }
+            
+            // Delete the user
             userServiceClient.deleteUser(userId);
 
-            // Create audit log
+            // Create audit log for user deletion
             createAuditLog(adminId, adminEmail, AuditLog.ActionType.DELETE,
                     AuditLog.EntityType.USER, userId, userName,
                     "Admin deleted user: " + userName + " (Role: " + user.getRole() + ")", ipAddress);
@@ -524,5 +603,12 @@ public class AdminService {
         } catch (Exception e) {
             log.error("Error creating audit log: {}", e.getMessage(), e);
         }
+    }
+
+    private double calculateGrowth(long current, long previous) {
+        if (previous == 0) {
+            return current > 0 ? 100.0 : 0.0;
+        }
+        return ((double) (current - previous) / previous) * 100.0;
     }
 }

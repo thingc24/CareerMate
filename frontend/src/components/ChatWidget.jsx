@@ -10,7 +10,11 @@ export default function ChatWidget({ role = 'STUDENT' }) {
   const [selectedFile, setSelectedFile] = useState(null);
 
   // Draggable state
-  const [position, setPosition] = useState({ bottom: 24, right: 24 });
+  const isMobileLayout = window.location.pathname.includes('/mobile');
+  const [position, setPosition] = useState({
+    bottom: isMobileLayout ? 100 : 24,
+    right: 24
+  });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [hasMoved, setHasMoved] = useState(false);
@@ -245,7 +249,7 @@ export default function ChatWidget({ role = 'STUDENT' }) {
             right: `${position.right}px`,
             zIndex: 50
           }}
-          className="w-[380px] h-[600px] flex flex-col rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-white/80 backdrop-blur-xl animate-scale-in origin-bottom-right"
+          className="w-[380px] max-w-[95vw] h-[600px] max-h-[80vh] flex flex-col rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-white/80 backdrop-blur-xl animate-scale-in origin-bottom-right"
         >
           {/* Header */}
           <div className="absolute inset-0 bg-gradient-to-b from-white/40 to-transparent pointer-events-none z-0"></div>
@@ -289,8 +293,8 @@ export default function ChatWidget({ role = 'STUDENT' }) {
                 <div className={`max-w-[80%] space-y-1 ${msg.role === 'user' ? 'items-end flex flex-col' : 'items-start flex flex-col'}`}>
                   <div
                     className={`p-3.5 rounded-2xl shadow-sm text-sm leading-relaxed ${msg.role === 'user'
-                        ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-tr-sm'
-                        : 'bg-white border border-gray-100 text-gray-800 rounded-tl-sm'
+                      ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-tr-sm'
+                      : 'bg-white border border-gray-100 text-gray-800 rounded-tl-sm'
                       }`}
                   >
                     {msg.file && (

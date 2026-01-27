@@ -161,8 +161,11 @@ public class ArticleController {
 
     @GetMapping("/admin/count")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Long> getArticleCount(@RequestParam(required = false) String status) {
-        return ResponseEntity.ok(articleService.getArticleCount(status));
+    public ResponseEntity<Long> getArticleCount(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime beforeDate
+    ) {
+        return ResponseEntity.ok(articleService.getArticleCount(status, beforeDate));
     }
 
     @PostMapping("/{articleId}/reactions")

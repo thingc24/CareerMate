@@ -44,6 +44,9 @@ public class Company {
     private Integer foundedYear;
 
     private String headquarters;
+    
+    @Column(columnDefinition = "boolean default false")
+    private boolean verified = false;
 
     @CreatedDate
     @Column(name = "created_at", updatable = false)

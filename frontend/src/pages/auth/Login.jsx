@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function Login() {
@@ -7,7 +8,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, oauthLogin } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -17,16 +18,11 @@ export default function Login() {
 
     try {
       const data = await login(email, password);
-      // Navigate based on user role
-      if (data.user.role === 'STUDENT') {
-        navigate('/student/dashboard');
-      } else if (data.user.role === 'RECRUITER') {
-        navigate('/recruiter/dashboard');
-      } else if (data.user.role === 'ADMIN') {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/');
-      }
+      const role = data.user.role;
+      if (role === 'STUDENT') navigate('/student/dashboard');
+      else if (role === 'RECRUITER') navigate('/recruiter/dashboard');
+      else if (role === 'ADMIN') navigate('/admin/dashboard');
+      else navigate('/');
     } catch (err) {
       setError(err.response?.data?.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
     } finally {
@@ -34,119 +30,163 @@ export default function Login() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
-      <div className="max-w-5xl w-full grid grid-cols-1 md:grid-cols-[1.1fr,0.9fr] gap-10 items-center">
-        {/* Left side: intro */}
-        <div className="hidden md:flex flex-col text-slate-100 space-y-6">
-          <div className="inline-flex items-center gap-3 rounded-full bg-slate-800/70 px-4 py-1 text-xs font-medium text-slate-200 ring-1 ring-slate-700/70">
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-white text-xs font-semibold">
-              CM
-            </span>
-            <span>Nền tảng định hướng và kết nối việc làm cho sinh viên</span>
-          </div>
-          <h1 className="text-3xl lg:text-4xl font-bold tracking-tight leading-tight">
-            Chào mừng đến với{' '}
-            <span className="text-blue-400">CareerMate</span>
-          </h1>
-          <p className="text-sm lg:text-base text-slate-300 max-w-md">
-            Quản lý CV, theo dõi đơn ứng tuyển và khám phá các cơ hội việc làm phù hợp với lộ trình sự nghiệp của bạn.
-          </p>
-          <ul className="space-y-2 text-sm text-slate-300">
-            <li className="flex items-center gap-2">
-              <i className="fas fa-check-circle text-emerald-400" />
-              <span>Bảng điều khiển trực quan cho sinh viên, nhà tuyển dụng, admin.</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <i className="fas fa-check-circle text-emerald-400" />
-              <span>Tích hợp AI gợi ý công việc và phân tích CV.</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <i className="fas fa-check-circle text-emerald-400" />
-              <span>Theo dõi trạng thái ứng tuyển rõ ràng, dễ quan sát.</span>
-            </li>
-          </ul>
-        </div>
+  const handleSocialLogin = async (provider, credential) => {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await oauthLogin({
+        provider: provider.toUpperCase(),
+        credential
+      });
+      const role = data.user.role;
+      if (role === 'STUDENT') navigate('/student/dashboard');
+      else if (role === 'RECRUITER') navigate('/recruiter/dashboard');
+      else if (role === 'ADMIN') navigate('/admin/dashboard');
+      else navigate('/');
+    } catch (err) {
+      setError(err.response?.data?.message || `Lỗi đăng nhập ${provider}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        {/* Right side: form */}
-        <div className="bg-white/95 backdrop-blur rounded-2xl shadow-2xl border border-slate-200 px-6 py-7 sm:px-8 sm:py-8">
-          <div className="space-y-2 mb-6 text-center">
-            <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
-              Đăng nhập tài khoản
-            </h2>
-            <p className="text-sm text-slate-500">
-              Nhập email và mật khẩu để tiếp tục.
+  return (
+    <div className="min-h-screen flex flex-col lg:grid lg:grid-cols-2 bg-white font-sans">
+
+      {/* Left Pane: Branding & Vision (Visible on Desktop) */}
+      <div className="hidden lg:flex relative flex-col justify-between p-16 xl:p-24 overflow-hidden bg-[#5f33e1]">
+        {/* Subtle decorative circles */}
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-white/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-[-5%] right-[-5%] w-[400px] h-[400px] bg-indigo-400/10 rounded-full blur-3xl"></div>
+
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-24 animate-fade-in">
+            <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-lg">
+              <span className="text-xl font-black text-[#5f33e1]">C</span>
+            </div>
+            <span className="text-xl font-black text-white tracking-tight">CareerMate</span>
+          </div>
+
+          <div className="space-y-8 animate-fade-in-up">
+            <h1 className="text-6xl xl:text-7xl font-black text-white leading-tight tracking-tighter">
+              Chìa khóa <br />
+              mở cửa <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-blue-400">tương lai</span>.
+            </h1>
+            <p className="text-xl text-indigo-100/80 max-w-md leading-relaxed">
+              Nền tảng phát triển sự nghiệp toàn diện, kết nối việc làm thông minh và mạng lưới chuyên gia toàn cầu.
             </p>
           </div>
+        </div>
 
-          <form className="space-y-5" onSubmit={handleSubmit}>
+        <div className="relative z-10 flex items-center gap-6 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+          <div className="flex -space-x-3">
+            {[1, 2, 3].map(i => (
+              <img key={i} className="w-10 h-10 rounded-full border-2 border-[#5f33e1]" src={`https://i.pravatar.cc/100?u=${i + 50}`} alt="User" />
+            ))}
+          </div>
+          <p className="text-sm font-medium text-indigo-100/60 uppercase tracking-widest">Được tin dùng bởi 10k+ chuyên gia</p>
+        </div>
+      </div>
+
+      {/* Right Pane: Login Form */}
+      <div className="flex-1 flex items-center justify-center p-8 sm:p-12 bg-[#f9fafb]">
+        <div className="w-full max-w-[420px] animate-fade-in-right">
+
+          {/* Logo for Mobile */}
+          <div className="lg:hidden flex justify-center mb-12">
+            <div className="w-12 h-12 rounded-xl bg-[#5f33e1] flex items-center justify-center shadow-xl">
+              <span className="text-2xl font-black text-white">C</span>
+            </div>
+          </div>
+
+          <div className="text-left mb-10">
+            <h2 className="text-3xl font-black text-slate-900 mb-2">Chào mừng trở lại</h2>
+            <p className="text-slate-500 font-medium">Vui lòng nhập thông tin để đăng nhập.</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+              <div className="p-4 rounded-lg bg-red-50 border border-red-100 text-red-600 text-sm font-semibold animate-shake">
                 {error}
               </div>
             )}
 
-            <div className="space-y-4">
-              <div className="space-y-1.5 text-left">
-                <label htmlFor="email" className="block text-sm font-medium text-slate-700">
-                  Email
-                </label>
+            <div className="space-y-5">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Địa chỉ Email</label>
                 <input
-                  id="email"
-                  name="email"
                   type="email"
-                  autoComplete="email"
                   required
-                  className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/60"
-                  placeholder="nhapemail@truong.edu.vn"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#5f33e1] focus:ring-4 focus:ring-[#5f33e1]/10 transition-all font-medium"
+                  placeholder="Nhập email của bạn"
                 />
               </div>
 
-              <div className="space-y-1.5 text-left">
-                <label htmlFor="password" className="block text-sm font-medium text-slate-700">
-                  Mật khẩu
-                </label>
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Mật khẩu</label>
+                  <Link to="/forgot-password" size="sm" className="text-xs font-bold text-[#5f33e1] hover:text-[#4d29b8] transition-colors">Quên mật khẩu?</Link>
+                </div>
                 <input
-                  id="password"
-                  name="password"
                   type="password"
-                  autoComplete="current-password"
                   required
-                  className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/60"
-                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#5f33e1] focus:ring-4 focus:ring-[#5f33e1]/10 transition-all font-medium"
+                  placeholder="Nhập mật khẩu"
                 />
               </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id="remember" className="w-4 h-4 rounded border-slate-300 text-[#5f33e1] focus:ring-[#5f33e1]" />
+              <label htmlFor="remember" className="text-sm font-medium text-slate-600 cursor-pointer">Ghi nhớ đăng nhập</label>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full h-12 bg-[#5f33e1] text-white hover:bg-[#4d29b8] transition-all duration-300 rounded-xl font-bold text-sm shadow-lg shadow-indigo-200 active:scale-[0.98] disabled:opacity-50"
             >
-              {loading ? (
-                <>
-                  <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  <span>Đang đăng nhập...</span>
-                </>
-              ) : (
-                <span>Đăng nhập</span>
-              )}
+              {loading ? <i className="fas fa-circle-notch fa-spin mr-2"></i> : 'Đăng nhập'}
             </button>
 
-            <p className="text-center text-xs sm:text-sm text-slate-500">
-              Chưa có tài khoản?{' '}
-              <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
-                Đăng ký ngay
-              </Link>
-            </p>
+            <div className="flex justify-center w-full">
+              <GoogleLogin
+                onSuccess={credentialResponse => {
+                  console.log('=== GOOGLE LOGIN SUCCESS ===');
+                  console.log('Credential:', credentialResponse.credential);
+                  handleSocialLogin('Google', credentialResponse.credential);
+                }}
+                onError={() => {
+                  console.error('=== GOOGLE LOGIN FAILED ===');
+                  setError('Đăng nhập Google thất bại');
+                }}
+                useOneTap
+                theme="outline"
+                size="large"
+                width="420"
+                text="continue_with"
+                shape="rectangular"
+              />
+            </div>
+
+            <div className="text-center pt-6">
+              <p className="text-sm text-slate-600 font-medium">
+                Chưa có tài khoản? <Link to="/register" className="text-[#5f33e1] font-bold hover:underline underline-offset-4 decoration-2">Đăng ký miễn phí</Link>
+              </p>
+            </div>
           </form>
+
+          {/* Footer Copyright */}
+          <div className="mt-12 text-center lg:text-left">
+            <p className="text-xs text-slate-400 font-medium">© 2026 CareerMate. Bảo lưu mọi quyền.</p>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-

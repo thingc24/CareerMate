@@ -132,30 +132,47 @@ export default function RecruiterLayout({ children }) {
               label="Tin nhắn"
               isActive={isActive('/recruiter/messages')}
             />
-            <NavItem
+            {/* <NavItem
               to="/recruiter/profile"
               icon="fas fa-user-tie"
               label="Hồ sơ cá nhân"
               isActive={isActive('/recruiter/profile')}
-            />
+            /> */}
           </nav>
 
           <div className="p-4 border-t border-gray-100/50 dark:border-gray-800/50 bg-white/30 dark:bg-black/20 backdrop-blur-sm">
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-black/50 border border-white/40 dark:border-white/5 shadow-sm">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-sm">
-                <span className="text-sm font-bold">{user?.fullName?.charAt(0) || 'R'}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                  {user?.fullName || 'Nhà tuyển dụng'}
-                </p>
-                <Link to="/recruiter/profile" className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline">
-                  Xem hồ sơ
-                </Link>
-              </div>
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-black/50 border border-white/40 dark:border-white/5 shadow-sm group hover:shadow-md transition-all duration-300">
+              <Link to="/recruiter/profile" className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-sm overflow-hidden shrink-0">
+                  {user?.avatarUrl ? (
+                    <img
+                      src={user.avatarUrl.startsWith('http')
+                        ? user.avatarUrl
+                        : `${(import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api').replace(/\/+$/, '')}/users/${user.avatarUrl.replace(/^\/+/, '')}`}
+                      alt={user.fullName}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.parentElement.classList.add('flex', 'items-center', 'justify-center');
+                        e.target.parentElement.innerHTML = `<span class="text-sm font-bold">${user?.fullName?.charAt(0) || 'R'}</span>`;
+                      }}
+                    />
+                  ) : (
+                    <span className="text-sm font-bold">{user?.fullName?.charAt(0) || 'R'}</span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white truncate group-hover:text-emerald-600 transition-colors">
+                    {user?.fullName || 'Nhà tuyển dụng'}
+                  </p>
+                  <span className="text-xs text-emerald-600 dark:text-emerald-400 group-hover:underline">
+                    Hồ sơ cá nhân
+                  </span>
+                </div>
+              </Link>
               <button
                 onClick={handleLogout}
-                className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors shrink-0"
                 title="Đăng xuất"
               >
                 <i className="fas fa-sign-out-alt"></i>

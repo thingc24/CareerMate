@@ -145,10 +145,10 @@ export default function CVUpload() {
           {/* Drag & Drop Zone */}
           <div
             className={`relative border-2 border-dashed rounded-3xl p-10 text-center transition-all duration-300 ${dragActive
-                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 scale-[1.02]'
-                : uploading
-                  ? 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 cursor-not-allowed'
-                  : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800/50'
+              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 scale-[1.02]'
+              : uploading
+                ? 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 cursor-not-allowed'
+                : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800/50'
               }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -251,7 +251,9 @@ export default function CVUpload() {
                       <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         {cv.fileUrl && (
                           <a
-                            href={cv.fileUrl.startsWith('http') ? cv.fileUrl : `http://localhost:8080/api${cv.fileUrl}`}
+                            href={cv.fileUrl.startsWith('http')
+                              ? cv.fileUrl
+                              : `${(import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api').replace(/\/+$/, '')}/users/${cv.fileUrl.replace(/^\/+/, '')}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

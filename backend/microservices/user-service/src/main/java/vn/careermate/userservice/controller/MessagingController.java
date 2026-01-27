@@ -21,13 +21,13 @@ public class MessagingController {
     private final MessagingService messagingService;
 
     @GetMapping("/conversations")
-    @PreAuthorize("hasAnyRole('STUDENT', 'RECRUITER')")
+    @PreAuthorize("hasAnyRole('STUDENT', 'RECRUITER', 'ADMIN')")
     public ResponseEntity<List<Conversation>> getMyConversations() {
         return ResponseEntity.ok(messagingService.getMyConversations());
     }
 
     @GetMapping("/conversations/{conversationId}")
-    @PreAuthorize("hasAnyRole('STUDENT', 'RECRUITER')")
+    @PreAuthorize("hasAnyRole('STUDENT', 'RECRUITER', 'ADMIN')")
     public ResponseEntity<Conversation> getConversation(@PathVariable UUID conversationId) {
         return ResponseEntity.ok(messagingService.getConversation(conversationId));
     }
@@ -39,7 +39,7 @@ public class MessagingController {
     }
 
     @GetMapping("/conversations/{conversationId}/messages")
-    @PreAuthorize("hasAnyRole('STUDENT', 'RECRUITER')")
+    @PreAuthorize("hasAnyRole('STUDENT', 'RECRUITER', 'ADMIN')")
     public ResponseEntity<List<Message>> getMessages(
             @PathVariable UUID conversationId,
             @RequestParam(defaultValue = "0") int page,

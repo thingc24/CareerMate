@@ -14,6 +14,18 @@ spring:
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
+  
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: lustra.team.tan@gmail.com
+    password: uwlmrxtipkwqiiia
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
       minimum-idle: 5
       connection-timeout: 30000
       idle-timeout: 600000
@@ -64,7 +76,7 @@ logging:
   level:
     root: INFO
     vn.careermate.userservice: DEBUG
-    org.springframework.security: INFO
+    org.springframework.security: DEBUG
     org.springframework.web.servlet.resource: DEBUG
     org.hibernate.SQL: DEBUG
   pattern:

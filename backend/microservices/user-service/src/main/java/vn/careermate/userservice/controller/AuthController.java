@@ -1,6 +1,7 @@
 package vn.careermate.userservice.controller;
 
 import jakarta.validation.Valid;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,6 +32,39 @@ public class AuthController {
         return ResponseEntity.ok(authService.refreshToken(request.getRefreshToken()));
     }
 
+    @PostMapping("/verify-otp")
+    public ResponseEntity<AuthResponse> verifyOtp(@RequestParam String email, @RequestParam String otp, @RequestParam String type) {
+        return ResponseEntity.ok(authService.verifyOtp(email, otp, type));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(@RequestParam String email) {
+        authService.forgotPassword(email);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request.getEmail(), request.getOtp(), request.getNewPassword());
+        return ResponseEntity.ok().build();
+    }
+
+    @Data
+    public static class ResetPasswordRequest {
+        @jakarta.validation.constraints.Email
+        private String email;
+        private String otp;
+        private String newPassword;
+    }
+
+    @PostMapping("/oauth-login")
+    public ResponseEntity<AuthResponse> oauthLogin(@RequestBody OAuthLoginRequest request) {
+        return ResponseEntity.ok(authService.loginWithOAuth(
+                request.getProvider(),
+                request.getCredential()
+        ));
+    }
+
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
         // In a stateless JWT system, logout is typically handled client-side
@@ -49,5 +83,14 @@ public class AuthController {
         public void setRefreshToken(String refreshToken) {
             this.refreshToken = refreshToken;
         }
+    }
+
+    @lombok.Data
+    public static class OAuthLoginRequest {
+        private String provider;
+        private String credential; // The Google ID Token
+        private String email;
+        private String fullName;
+        private String avatarUrl;
     }
 }
