@@ -10,6 +10,8 @@ import vn.careermate.aiservice.service.VectorDBService;
 import vn.careermate.common.client.UserServiceClient;
 import vn.careermate.common.client.JobServiceClient;
 import vn.careermate.common.dto.JobDTO;
+import vn.careermate.common.dto.CVDTO;
+import org.springframework.util.StreamUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -47,7 +49,7 @@ public class AIController {
             String cvContent = "";
             if (request != null && request.containsKey("content")) {
                 cvContent = request.get("content");
-            } else if (request != null) {
+            } else if (request != null && !request.isEmpty()) {
                 // Try to build CV content from structured fields
                 StringBuilder sb = new StringBuilder();
                 if (request.containsKey("profile")) sb.append(request.get("profile")).append("\n\n");
@@ -57,11 +59,45 @@ public class AIController {
                 if (request.containsKey("certifications")) sb.append("Certifications:\n").append(request.get("certifications")).append("\n\n");
                 if (request.containsKey("fileName")) sb.append("File: ").append(request.get("fileName")).append("\n\n");
                 cvContent = sb.toString();
+            } else {
+                // Request body is empty, try to fetch CV from User Service
+                try {
+                    log.info("Request body empty. Fetching CV {} from User Service...", cvId);
+                    CVDTO cv = userServiceClient.getCVById(UUID.fromString(cvId));
+                    if (cv != null && cv.getExtractedContent() != null) {
+                        cvContent = cv.getExtractedContent();
+                        log.info("Successfully fetched CV content from User Service. Length: {}", cvContent.length());
+                    } else {
+                        log.warn("CV fetched but content is null or empty");
+                    }
+                } catch (Exception e) {
+                    log.error("Failed to fetch CV from User Service", e);
+                }
             }
 
-            // If still empty, return error with helpful message
+            // If still empty, try to download file and use multimodal
             if (cvContent == null || cvContent.trim().isEmpty()) {
-                log.warn("CV analysis requested for cvId {} but no content provided", cvId);
+                try {
+                    log.info("Extracted content is empty. Attempting multimodal analysis for CV: {}", cvId);
+                    feign.Response feignResponse = userServiceClient.downloadCV(UUID.fromString(cvId));
+                    if (feignResponse.status() == 200) {
+                        byte[] fileBytes = StreamUtils.copyToByteArray(feignResponse.body().asInputStream());
+                        String contentType = feignResponse.headers().get("Content-Type").stream().findFirst().orElse("application/pdf");
+                        
+                        log.info("Successfully downloaded raw CV file. Size: {}, Type: {}", fileBytes.length, contentType);
+                        Map<String, Object> result = aiService.analyzeCV(contentType, fileBytes);
+                        return ResponseEntity.ok(result);
+                    } else {
+                        log.warn("Failed to download CV file from User Service. Status: {}", feignResponse.status());
+                    }
+                } catch (Exception e) {
+                    log.error("Error during multimodal CV analysis", e);
+                }
+            }
+
+            // If still empty or multimodal failed, return error with helpful message
+            if (cvContent == null || cvContent.trim().isEmpty()) {
+                log.warn("CV analysis requested for cvId {} but no content provided and multimodal failed", cvId);
                 return ResponseEntity.badRequest()
                     .body(Map.of(
                         "error", "CV content is required for analysis",
@@ -126,12 +162,25 @@ public class AIController {
                 ));
             } else {
                 // Fallback to AI-based matching
-                return ResponseEntity.ok(Map.of(
-                    "jobId", jobId,
-                    "matchingCVs", List.of(),
-                    "method", "ai-fallback",
-                    "message", "Vector DB not enabled, using basic matching"
-                ));
+                try {
+                    List<vn.careermate.common.dto.CVDTO> allCVs = userServiceClient.getAllCVs();
+                    List<Map<String, Object>> rankedCandidates = aiService.rankCandidates(jobDescription, allCVs);
+                    
+                    return ResponseEntity.ok(Map.of(
+                        "jobId", jobId,
+                        "matchingCVs", rankedCandidates,
+                        "method", "ai-ranking-fallback",
+                        "message", "Vector DB not enabled, using AI-based ranking"
+                    ));
+                } catch (Exception e) {
+                    log.error("AI matching fallback failed: {}", e.getMessage());
+                    return ResponseEntity.ok(Map.of(
+                        "jobId", jobId,
+                        "matchingCVs", List.of(),
+                        "method", "fallback-failed",
+                        "message", "Both vector-db and AI matching failed"
+                    ));
+                }
             }
         } catch (Exception e) {
             return ResponseEntity.badRequest()
@@ -139,50 +188,8 @@ public class AIController {
         }
     }
 
-    /**
-     * Start mock interview
-     * POST /ai/interview/start
-     */
-    @PostMapping("/interview/start")
-    @PreAuthorize("hasRole('STUDENT')")
-    public ResponseEntity<Map<String, Object>> startMockInterview(
-            @RequestBody Map<String, String> request) {
-        try {
-            String jobIdStr = request.get("jobId");
-            String cvContent = request.get("cvContent"); // CV content passed directly
-            
-            // Get job via Feign Client if jobId provided
-            String jobDescription = "Job description";
-            if (jobIdStr != null) {
-                try {
-                    JobDTO job = jobServiceClient.getJobById(UUID.fromString(jobIdStr));
-                    if (job != null) {
-                        jobDescription = String.format("%s. %s", job.getTitle(), job.getDescription());
-                    }
-                } catch (Exception e) {
-                    log.warn("Error fetching job: {}", e.getMessage());
-                }
-            }
-            
-            // Use CV content from request body (or empty if not provided)
-            if (cvContent == null) {
-                cvContent = "";
-            }
-            
-            // Generate interview questions
-            List<String> questions = aiService.generateInterviewQuestions(jobDescription, cvContent);
-            
-            Map<String, Object> response = Map.of(
-                "interviewId", "interview-" + System.currentTimeMillis(),
-                "questions", questions
-            );
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                .body(Map.of("error", "Error starting interview: " + e.getMessage()));
-        }
-    }
+    // Note: Mock Interview endpoints moved to MockInterviewController
+    // Keeping startMockInterview as a redirect/deprecated if needed or just remove it
 
     /**
      * Get career roadmap

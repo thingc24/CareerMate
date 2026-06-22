@@ -1,7 +1,5 @@
 package vn.careermate.userservice.service;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -22,9 +20,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class StudentProfileService {
-
-    @PersistenceContext
-    private EntityManager entityManager;
 
     private final StudentProfileRepository studentProfileRepository;
     private final UserRepository userRepository;
@@ -77,22 +72,10 @@ public class StudentProfileService {
                 log.info("Found existing profile with ID: {}", profile.getId());
             }
 
-            // Reload từ database để đảm bảo có data mới nhất (tránh cache)
-            UUID profileId = profile.getId();
-            entityManager.flush(); // Ensure any pending changes are saved
-            entityManager.clear(); // Clear persistence context
-            StudentProfile freshProfile = studentProfileRepository.findWithUserById(profileId)
-                    .orElseThrow(() -> new RuntimeException("Profile not found: " + profileId));
-            
-            log.info("Profile reloaded from database. ID: {}, University: {}, Major: {}, City: {}, Address: {}, Gender: {}", 
-                freshProfile.getId(), freshProfile.getUniversity(), freshProfile.getMajor(), 
-                freshProfile.getCity(), freshProfile.getAddress(), freshProfile.getGender());
+            log.info("Profile retrieved. ID: {}, University: {}, Major: {}", 
+                profile.getId(), profile.getUniversity(), profile.getMajor());
 
-            // Detach entity khỏi persistence context để tránh cascade operations
-            entityManager.detach(freshProfile);
-            
-            log.info("Profile detached from persistence context. ID: {}", freshProfile.getId());
-            return freshProfile;
+            return profile;
         } catch (RuntimeException e) {
             log.error("RuntimeException getting student profile: {}", e.getMessage(), e);
             throw e;
@@ -152,29 +135,7 @@ public class StudentProfileService {
             log.info("After setting fields - gender: {}, address: {}, city: {}, university: {}, major: {}", 
                 existing.getGender(), existing.getAddress(), existing.getCity(), existing.getUniversity(), existing.getMajor());
             
-            // Save và flush để đảm bảo data được lưu vào database ngay lập tức
-            log.info("Before save - existing profile: ID={}, University={}, Major={}, City={}, Address={}, Gender={}", 
-                existing.getId(), existing.getUniversity(), existing.getMajor(), existing.getCity(), existing.getAddress(), existing.getGender());
-            
-            StudentProfile saved = studentProfileRepository.save(existing);
-            entityManager.flush(); // Force write to database
-            entityManager.clear(); // Clear persistence context để reload fresh data
-            
-            log.info("After save and flush - saved profile: ID={}, University={}, Major={}, City={}, Address={}, Gender={}", 
-                saved.getId(), saved.getUniversity(), saved.getMajor(), saved.getCity(), saved.getAddress(), saved.getGender());
-            
-            // Reload từ database bằng cách query trực tiếp để đảm bảo có data mới nhất
-            UUID profileId = saved.getId();
-            StudentProfile freshData = studentProfileRepository.findById(profileId)
-                    .orElseThrow(() -> new RuntimeException("Profile not found after save: " + profileId));
-            
-            log.info("After reload from DB - fresh profile: ID={}, University={}, Major={}, City={}, Address={}, Gender={}", 
-                freshData.getId(), freshData.getUniversity(), freshData.getMajor(), freshData.getCity(), freshData.getAddress(), freshData.getGender());
-            
-            // Detach fresh data before returning
-            entityManager.detach(freshData);
-            
-            return freshData;
+            return studentProfileRepository.save(existing);
         } catch (Exception e) {
             log.error("Error in updateProfile service", e);
             throw new RuntimeException("Failed to update profile: " + e.getMessage(), e);

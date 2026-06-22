@@ -19,6 +19,10 @@ public class FileStorageService {
     @Value("${app.storage.local.path:./uploads}")
     private String uploadPath;
 
+    public String getUploadDir() {
+        return uploadPath;
+    }
+
     public String storeFile(MultipartFile file, String subdirectory) throws IOException {
         // Create directory if not exists
         Path uploadDir = Paths.get(uploadPath, subdirectory);

@@ -246,6 +246,11 @@ public class MessagingService {
         return userRepository.findByRoleIn(List.of(User.UserRole.RECRUITER));
     }
 
+    @Transactional(readOnly = true)
+    public List<User> getAllStudents() {
+        return userRepository.findByRoleIn(List.of(User.UserRole.STUDENT));
+    }
+
     @Transactional
     public void deleteAllMessages(UUID conversationId) {
         User currentUser = getCurrentUser();

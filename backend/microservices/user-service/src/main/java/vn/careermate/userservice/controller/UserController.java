@@ -97,8 +97,6 @@ public class UserController {
         if (!userRepository.existsById(userId)) {
             return ResponseEntity.notFound().build();
         }
-        // Delete related OTP tokens first to avoid Foreign Key Constraint
-        otpTokenRepository.deleteByUserId(userId);
         userRepository.deleteById(userId);
         return ResponseEntity.noContent().build();
     }

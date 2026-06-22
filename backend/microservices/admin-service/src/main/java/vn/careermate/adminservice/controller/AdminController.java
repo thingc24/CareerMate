@@ -402,4 +402,53 @@ public class AdminController {
         Pageable pageable = PageRequest.of(page, size);
         return ResponseEntity.ok(adminService.getAuditLogs(pageable));
     }
+
+    // Company Management
+    @GetMapping("/companies")
+    public ResponseEntity<Page<vn.careermate.common.dto.CompanyDTO>> getAllCompanies(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(adminService.getAllCompanies(keyword, pageable));
+    }
+
+    @PutMapping("/companies/{companyId}/verify")
+    public ResponseEntity<vn.careermate.common.dto.CompanyDTO> verifyCompany(
+            @PathVariable UUID companyId,
+            @RequestParam boolean verified,
+            @RequestHeader(value = "X-Forwarded-For", required = false) String ipAddress
+    ) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        UserDTO admin = userServiceClient.getUserByEmail(email);
+        if (admin == null) {
+            throw new RuntimeException("Admin not found");
+        }
+        
+        return ResponseEntity.ok(adminService.verifyCompany(companyId, verified, admin.getId(), email, ipAddress != null ? ipAddress : "unknown"));
+    }
+
+    @DeleteMapping("/companies/{companyId}")
+    public ResponseEntity<Void> deleteCompany(
+            @PathVariable UUID companyId,
+            @RequestBody Map<String, String> request,
+            @RequestHeader(value = "X-Forwarded-For", required = false) String ipAddress
+    ) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        UserDTO admin = userServiceClient.getUserByEmail(email);
+        if (admin == null) {
+            throw new RuntimeException("Admin not found");
+        }
+        
+        String reason = request.get("reason");
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new RuntimeException("Reason is required");
+        }
+        
+        adminService.deleteCompany(companyId, admin.getId(), email, reason, ipAddress != null ? ipAddress : "unknown");
+        return ResponseEntity.ok().build();
+    }
 }

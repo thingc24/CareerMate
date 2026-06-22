@@ -32,19 +32,27 @@ export default function CVAnalysis() {
       }
 
       // 3. Prepare content for analysis
-      // Note: Backend needs text content. If we don't have extracted text, 
-      // we might need to send a mock or try to extract from metadata.
-      // For now, we construct a basic content string from available metadata if not empty.
       let content = "";
-      if (cv.fileName) content += `File: ${cv.fileName}\n`;
-      // TODO: If we had profile/experience in CV object (which depends on how it was created), use it.
-      // But CV from file upload might not have structured data yet.
-      // Fallback: Send a placeholder to let backend know we want analysis but don't have text
-      // Backend handles empty content with proper error, BUT since we want to suppress the 400 error
-      // and maybe show a "Text extraction needed" state or Mock it for the demo:
+
+      // Use extractedContent if available (from PDF/DOCX extraction)
+      if (cv.extractedContent && cv.extractedContent.trim()) {
+        content = cv.extractedContent;
+        console.log('Using extracted content:', content.substring(0, 100) + '...');
+      } else {
+        // Fallback: Try to build content from metadata if available
+        if (cv.fileName) content += `File: ${cv.fileName}\n`;
+
+        // If still empty, show error
+        if (!content.trim()) {
+          console.warn('No content available for analysis');
+          alert('⚠️ CV này chưa có nội dung để phân tích. Vui lòng upload lại CV hoặc sử dụng CV có định dạng PDF/DOCX.');
+          setLoading(false);
+          return;
+        }
+      }
 
       const requestBody = {
-        content: content || "CV Analysis Request",
+        content: content,
         fileName: cv.fileName,
         fileUrl: cv.fileUrl
       };
@@ -55,6 +63,7 @@ export default function CVAnalysis() {
 
       if (data && data.error) {
         console.error('CV Analysis error:', data.error);
+        alert('❌ Lỗi phân tích: ' + data.error);
         return;
       }
 
@@ -65,10 +74,7 @@ export default function CVAnalysis() {
         error.response?.data?.message ||
         error.message ||
         'Không thể phân tích CV';
-      // Only alert if it's not the "content required" error which we expect for raw files
-      if (!errorMsg.includes('content is required')) {
-        alert('❌ Lỗi: ' + errorMsg);
-      }
+      alert('❌ Lỗi: ' + errorMsg);
     } finally {
       setLoading(false);
     }

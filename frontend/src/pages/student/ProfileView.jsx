@@ -34,9 +34,7 @@ export default function ProfileView() {
 
   const getAvatarUrl = () => {
     if (profile?.avatarUrl) {
-      let url = profile.avatarUrl.startsWith('http') ? profile.avatarUrl :
-        profile.avatarUrl.startsWith('/api') ? `http://localhost:8080${profile.avatarUrl}` :
-          `http://localhost:8080/api${profile.avatarUrl}`;
+      let url = api.getFileUrl(profile.avatarUrl);
       return url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
     }
     return null;

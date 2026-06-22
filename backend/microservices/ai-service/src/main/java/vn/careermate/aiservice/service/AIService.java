@@ -32,7 +32,7 @@ public class AIService {
     @Value("${ai.openrouter.model:meta-llama/llama-3.2-3b-instruct:free}")
     private String openRouterModel;
 
-    @Value("${ai.openrouter.timeout:30000}")
+    @Value("${ai.openrouter.timeout:60000}")
     private int timeout;
 
     private final WebClient webClient;
@@ -54,11 +54,6 @@ public class AIService {
      * Analyze CV and return structured feedback
      */
     public Map<String, Object> analyzeCV(String cvContent) {
-        if (openRouterApiKey == null || openRouterApiKey.isEmpty() || openRouterApiKey.equals("YOUR_OPENROUTER_API_KEY_HERE")) {
-            log.warn("OpenRouter API key not configured");
-            return createErrorResponse("AI service not configured. Please set OPENROUTER_API_KEY in application.yml");
-        }
-
         String prompt = String.format(
             "Bạn là chuyên gia tư vấn nghề nghiệp. Hãy phân tích CV sau đây một cách chi tiết và trả về kết quả dưới dạng JSON với cấu trúc chính xác:\n\n" +
             "{\n" +
@@ -113,6 +108,52 @@ public class AIService {
         } catch (Exception e) {
             log.error("Error analyzing CV", e);
             return createErrorResponse("Error analyzing CV: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Analyze CV from file data (multimodal)
+     */
+    public Map<String, Object> analyzeCV(String mimeType, byte[] fileData) {
+        String prompt = 
+            "Bạn là chuyên gia tư vấn nghề nghiệp. Hãy phân tích CV (được đính kèm trong request này) một cách chi tiết và trả về kết quả dưới dạng JSON với cấu trúc chính xác:\n\n" +
+            "{\n" +
+            "  \"score\": số từ 0-100 (tổng điểm),\n" +
+            "  \"structureScore\": số từ 0-100 (điểm cấu trúc),\n" +
+            "  \"contentScore\": số từ 0-100 (điểm nội dung),\n" +
+            "  \"strengths\": [\"điểm mạnh 1\", \"điểm mạnh 2\", ...],\n" +
+            "  \"weaknesses\": [\"điểm yếu 1\", \"điểm yếu 2\", ...],\n" +
+            "  \"suggestions\": [\"gợi ý 1\", \"gợi ý 2\", ...],\n" +
+            "  \"summary\": \"Tóm tắt đánh giá ngắn gọn\"\n" +
+            "}\n\n" +
+            "QUAN TRỌNG: Chỉ trả về JSON, không có text hoặc markdown khác.";
+
+        try {
+            String response = callAIAPI(prompt, mimeType, fileData);
+            
+            // Try to parse JSON from response
+            String jsonStr = cleanJSONResponse(response);
+            
+            Map<String, Object> result = new HashMap<>();
+            
+            // Extract scores
+            result.put("score", extractNumber(jsonStr, "score", 75));
+            result.put("structureScore", extractNumber(jsonStr, "structureScore", 70));
+            result.put("contentScore", extractNumber(jsonStr, "contentScore", 80));
+            
+            result.put("strengths", extractArray(jsonStr, "strengths", 
+                Arrays.asList("Có kinh nghiệm", "Kỹ năng tốt", "Trình độ phù hợp")));
+            result.put("weaknesses", extractArray(jsonStr, "weaknesses",
+                Arrays.asList("Cần bổ sung thông tin", "Cải thiện format")));
+            result.put("suggestions", extractArray(jsonStr, "suggestions",
+                Arrays.asList("Thêm thông tin chi tiết hơn", "Cải thiện cấu trúc CV", "Bổ sung kỹ năng")));
+            result.put("summary", extractString(jsonStr, "summary", 
+                "CV có tiềm năng nhưng cần cải thiện một số điểm."));
+            
+            return result;
+        } catch (Exception e) {
+            log.error("Error analyzing CV with file", e);
+            return createErrorResponse("Error analyzing CV with file: " + e.getMessage());
         }
     }
 
@@ -219,6 +260,7 @@ public class AIService {
         );
 
         try {
+            log.info("Calling AI API for career roadmap. Target Role: {}, Student Info length: {}", targetRole, studentInfo.length());
             String response = callAIAPI(prompt);
             log.info("Raw AI response for roadmap (first 1000 chars): {}", 
                 response.length() > 1000 ? response.substring(0, 1000) + "..." : response);
@@ -249,7 +291,7 @@ public class AIService {
             
             return result;
         } catch (Exception e) {
-            log.error("Error getting career roadmap", e);
+            log.error("Error getting career roadmap: {}", e.getMessage());
             return createDefaultRoadmap(targetRole);
         }
     }
@@ -602,6 +644,19 @@ public class AIService {
     }
 
     /**
+     * Call AI API with multimodal data
+     */
+    public String callAIAPI(String prompt, String mimeType, byte[] fileData) {
+        if ("gemini".equalsIgnoreCase(provider)) {
+            log.info("Using Gemini AI provider for multimodal request");
+            return geminiService.callGeminiAPI(prompt, mimeType, fileData);
+        } else {
+            log.warn("Multimodal request not supported for provider: {}, falling back to text prompt", provider);
+            return callAIAPI(prompt);
+        }
+    }
+
+    /**
      * Call OpenRouter API (OpenAI-compatible format)
      */
     public String callOpenRouterAPI(String prompt) {
@@ -769,11 +824,6 @@ public class AIService {
      * Chat with AI based on role and context
      */
     public String chat(String message, String context, String role) {
-        if (openRouterApiKey == null || openRouterApiKey.isEmpty() || openRouterApiKey.equals("YOUR_OPENROUTER_API_KEY_HERE")) {
-            log.warn("OpenRouter API key not configured");
-            return "Xin lỗi, dịch vụ AI chưa được cấu hình. Vui lòng liên hệ quản trị viên.";
-        }
-
         // Build context-specific prompt
         String systemPrompt = "";
         switch (role.toUpperCase()) {
@@ -827,5 +877,65 @@ public class AIService {
         Map<String, Object> error = new HashMap<>();
         error.put("error", message);
         return error;
+    }
+
+    /**
+     * Rank candidates based on job description
+     */
+    public List<Map<String, Object>> rankCandidates(String jobDescription, List<vn.careermate.common.dto.CVDTO> cvs) {
+        if (cvs == null || cvs.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        log.info("Ranking {} candidates for job", cvs.size());
+        
+        // In a real scenario, we might use AI to rank them one by one or in batches
+        // For efficiency, we'll do a basic AI-based scoring simulation or call AI for top N
+        
+        List<Map<String, Object>> results = new ArrayList<>();
+        
+        for (vn.careermate.common.dto.CVDTO cv : cvs) {
+            if (cv.getExtractedContent() == null || cv.getExtractedContent().isEmpty()) continue;
+            
+            String prompt = String.format(
+                "Bạn là chuyên gia tuyển dụng. Hãy chấm điểm mức độ phù hợp (0-100) của ứng viên này cho vị trí công việc sau.\n\n" +
+                "Mô tả công việc:\n%s\n\n" +
+                "CV ứng viên:\n%s\n\n" +
+                "Trả về CHỈ một số nguyên từ 0 đến 100 đại diện cho điểm số.",
+                jobDescription.length() > 1000 ? jobDescription.substring(0, 1000) : jobDescription,
+                cv.getExtractedContent().length() > 2000 ? cv.getExtractedContent().substring(0, 2000) : cv.getExtractedContent()
+            );
+            
+            try {
+                String scoreStr = callAIAPI(prompt);
+                int score = 0;
+                try {
+                    // Extract only numbers from response
+                    String numericPart = scoreStr.replaceAll("[^0-9]", "");
+                    if (!numericPart.isEmpty()) {
+                        score = Integer.parseInt(numericPart);
+                    }
+                } catch (Exception e) {
+                    log.warn("Could not parse AI score: {}", scoreStr);
+                    score = 50; // default
+                }
+                
+                Map<String, Object> result = new HashMap<>();
+                result.put("cvId", cv.getId());
+                result.put("score", score);
+                result.put("name", cv.getFileName()); // In reality, fetch user name
+                results.add(result);
+            } catch (Exception e) {
+                log.error("Error scoring candidate {}: {}", cv.getId(), e.getMessage());
+            }
+            
+            // Limit to top N for demo performance
+            if (results.size() >= 5) break;
+        }
+        
+        // Sort by score descending
+        results.sort((a, b) -> ((Integer) b.get("score")).compareTo((Integer) a.get("score")));
+        
+        return results;
     }
 }

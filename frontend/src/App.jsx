@@ -59,6 +59,7 @@ import InterviewRequests from './pages/recruiter/InterviewRequests';
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
 import UserManagement from './pages/admin/UserManagement';
+import CompanyManagement from './pages/admin/CompanyManagement';
 import JobManagement from './pages/admin/JobManagement';
 import AdminCreateArticle from './pages/admin/CreateArticle';
 import ArticleManagement from './pages/admin/ArticleManagement';
@@ -268,6 +269,7 @@ function AppRoutes() {
               <Routes>
                 <Route path="dashboard" element={<AdminDashboard />} />
                 <Route path="users" element={<UserManagement />} />
+                <Route path="companies" element={<CompanyManagement />} />
                 <Route path="jobs" element={<JobManagement />} />
                 <Route path="articles" element={<ArticleManagement />} />
                 <Route path="articles/:id" element={<ArticleDetail />} />

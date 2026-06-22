@@ -185,23 +185,44 @@ public class JobService {
     }
 
     @Transactional(readOnly = true)
-    public Page<Job> searchJobs(String keyword, String location, Pageable pageable) {
+    public Page<Job> searchJobs(String keyword, String location, UUID companyId, String status, Pageable pageable) {
         try {
             // Normalize null/empty strings
             String normalizedKeyword = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
             String normalizedLocation = (location != null && !location.trim().isEmpty()) ? location.trim() : null;
             
-            Page<Job> jobs = jobRepository.searchJobs(normalizedKeyword, normalizedLocation, pageable);
+            Page<Job> jobs;
+            
+            // If companyId is specified, filter by company
+            if (companyId != null) {
+                // Convert status string to enum if provided
+                Job.JobStatus jobStatus = null;
+                if (status != null && !status.trim().isEmpty()) {
+                    try {
+                        jobStatus = Job.JobStatus.valueOf(status.toUpperCase());
+                    } catch (IllegalArgumentException e) {
+                        log.warn("Invalid job status: {}", status);
+                    }
+                }
+                
+                if (jobStatus != null) {
+                    jobs = jobRepository.findByCompanyIdAndStatus(companyId, jobStatus, pageable);
+                } else {
+                    jobs = jobRepository.findByCompanyId(companyId, pageable);
+                }
+            } else {
+                jobs = jobRepository.searchJobs(normalizedKeyword, normalizedLocation, pageable);
+            }
             
             // Company info will be fetched via ContentServiceClient when needed
             populateCompanyDetails(jobs);
             
             return jobs != null ? jobs : Page.empty(pageable);
         } catch (RuntimeException e) {
-            log.error("Runtime error searching jobs: keyword={}, location={}, error={}", keyword, location, e.getMessage());
+            log.error("Runtime error searching jobs: keyword={}, location={}, companyId={}, error={}", keyword, location, companyId, e.getMessage());
             return Page.empty(pageable);
         } catch (Exception e) {
-            log.error("Unexpected error searching jobs: keyword={}, location={}", keyword, location, e);
+            log.error("Unexpected error searching jobs: keyword={}, location={}, companyId={}", keyword, location, companyId, e);
             return Page.empty(pageable);
         }
     }
@@ -290,7 +311,8 @@ public class JobService {
         Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new RuntimeException("Job not found"));
         job.setHidden(true);
-        // Log reason elsewhere or add field
+        job.setHiddenReason(reason);
+        job.setHiddenAt(java.time.LocalDateTime.now());
         return jobRepository.save(job);
     }
 
@@ -299,6 +321,8 @@ public class JobService {
         Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new RuntimeException("Job not found"));
         job.setHidden(false);
+        job.setHiddenReason(null);
+        job.setHiddenAt(null);
         return jobRepository.save(job);
     }
 

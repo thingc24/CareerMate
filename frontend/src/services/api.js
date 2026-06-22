@@ -370,8 +370,7 @@ class CareerMateAPI {
   }
 
   async findMatchingCandidates(jobId) {
-    const response = await this.client.get(`/ai/jobs/${jobId}/matching`);
-    return response.data;
+    return this.getJobMatching(jobId);
   }
 
   async updateApplicationStatus(applicationId, status, note = '') {
@@ -468,7 +467,12 @@ class CareerMateAPI {
   }
 
   async getRecruiterByCompanyId(companyId) {
-    const response = await this.client.get(`/recruiters/profile/by-company/${companyId}`);
+    const response = await this.client.get(`/recruiters/by-company/${companyId}`);
+    return response.data;
+  }
+
+  async getExpertRecruiters() {
+    const response = await this.client.get('/recruiters/experts');
     return response.data;
   }
 
@@ -523,6 +527,17 @@ class CareerMateAPI {
     return response.data;
   }
 
+  // Get available users to chat with
+  async getAvailableRecruiters() {
+    const response = await this.client.get('/messaging/available-recruiters');
+    return response.data;
+  }
+
+  async getAvailableStudents() {
+    const response = await this.client.get('/messaging/available-students');
+    return response.data;
+  }
+
   // Admin messaging APIs
   async getAllRecruiters() {
     const response = await this.client.get('/messaging/admin/recruiters');
@@ -567,6 +582,25 @@ class CareerMateAPI {
 
   async deleteCV(cvId) {
     const response = await this.client.delete(`/students/cv/${cvId}`);
+    return response.data;
+  }
+
+  async downloadCV(cvId) {
+    const response = await this.client.get(`/students/cv/download/${cvId}`, {
+      responseType: 'blob'
+    });
+    return response.data;
+  }
+
+  async uploadCV(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await this.client.post('/students/cv/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   }
 
@@ -1006,10 +1040,9 @@ class CareerMateAPI {
   }
 
   // AI Services
-  async analyzeCV(cvId) {
-    // Send empty object for now - backend will return helpful error message
-    // TODO: Fetch CV content and send in request body
-    const response = await this.client.post(`/ai/cv/analyze/${cvId}`, {});
+  async analyzeCV(cvId, requestBody = {}) {
+    // If no request body provided, send empty object
+    const response = await this.client.post(`/ai/cv/analyze/${cvId}`, requestBody);
     return response.data;
   }
 
@@ -1019,8 +1052,9 @@ class CareerMateAPI {
   }
 
   async startMockInterview(jobId, cvId) {
-    const response = await this.client.post('/ai/interview/start', { jobId, cvId });
-    return response.data;
+    // Redirect to the modern mock interview flow
+    // In our new system, mocking interviews is job-specific
+    return this.startAIMockInterview(jobId, { cvId });
   }
 
   async getCareerRoadmap(currentSkills, targetRole) {
@@ -1119,6 +1153,23 @@ class CareerMateAPI {
 
   async getAuditLogs(page = 0, size = 20) {
     const response = await this.client.get(`/admin/audit-logs?page=${page}&size=${size}`);
+    return response.data;
+  }
+
+  // Admin Company Management
+  async getAdminCompanies(page = 0, size = 10, keyword = '') {
+    const params = new URLSearchParams({ page: page.toString(), size: size.toString() });
+    if (keyword) params.append('keyword', keyword);
+    const response = await this.client.get(`/admin/companies?${params}`);
+    return response.data;
+  }
+
+  async deleteAdminCompany(companyId, reason) {
+    await this.client.delete(`/admin/companies/${companyId}`, { data: { reason } });
+  }
+
+  async verifyCompany(companyId, verified) {
+    const response = await this.client.put(`/admin/companies/${companyId}/verify?verified=${verified}`);
     return response.data;
   }
 
@@ -1257,8 +1308,18 @@ class CareerMateAPI {
     return response.data;
   }
 
+  async startCustomAIMockInterview(jobTitle, jobDescription = '') {
+    const response = await this.client.post('/ai/students/mock-interview/start-custom', { jobTitle, jobDescription });
+    return response.data;
+  }
+
   async getUsersByRole(role) {
     const response = await this.client.post('/users/by-roles', [role]);
+    return response.data;
+  }
+
+  async getExpertRecruiters() {
+    const response = await this.client.get('/recruiters/experts');
     return response.data;
   }
 

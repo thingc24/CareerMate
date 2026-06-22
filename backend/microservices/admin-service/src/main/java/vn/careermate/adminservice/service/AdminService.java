@@ -2,6 +2,8 @@ package vn.careermate.adminservice.service;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.annotation.PostConstruct;
+import org.springframework.jdbc.core.JdbcTemplate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -25,10 +27,20 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AdminService {
 
-    @PersistenceContext
-    private EntityManager entityManager;
-
     private final AuditLogRepository auditLogRepository;
+    private final JdbcTemplate jdbcTemplate;
+
+    @PostConstruct
+    public void init() {
+        try {
+            log.info("Checking and dropping audit_logs check constraints if they exist...");
+            jdbcTemplate.execute("ALTER TABLE adminservice.audit_logs DROP CONSTRAINT IF EXISTS audit_logs_entity_type_check");
+            jdbcTemplate.execute("ALTER TABLE adminservice.audit_logs DROP CONSTRAINT IF EXISTS audit_logs_action_type_check");
+            log.info("Audit log constraints dropped successfully (if they existed).");
+        } catch (Exception e) {
+            log.warn("Could not drop audit log constraints: {}. This might be expected if they don't exist.", e.getMessage());
+        }
+    }
     private final UserServiceClient userServiceClient;
     private final JobServiceClient jobServiceClient;
     private final ContentServiceClient contentServiceClient;
@@ -582,6 +594,47 @@ public class AdminService {
 
     public Page<AuditLog> getAuditLogsByEntity(AuditLog.EntityType entityType, UUID entityId, Pageable pageable) {
         return auditLogRepository.findByEntityTypeAndEntityIdOrderByCreatedAtDesc(entityType, entityId, pageable);
+    }
+
+    public Page<CompanyDTO> getAllCompanies(String keyword, Pageable pageable) {
+        try {
+            return contentServiceClient.getAllCompanies(pageable.getPageNumber(), pageable.getPageSize(), keyword);
+        } catch (Exception e) {
+            log.error("Error getting all companies: {}", e.getMessage(), e);
+            return Page.empty(pageable);
+        }
+    }
+
+    @Transactional
+    public void deleteCompany(UUID companyId, UUID adminId, String adminEmail, String reason, String ipAddress) {
+        try {
+            contentServiceClient.deleteCompany(companyId);
+            
+            // Create audit log
+            createAuditLog(adminId, adminEmail, AuditLog.ActionType.DELETE,
+                    AuditLog.EntityType.COMPANY, companyId, "Company " + companyId,
+                    "Admin deleted company. Reason: " + reason, ipAddress);
+        } catch (Exception e) {
+            log.error("Error deleting company: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to delete company: " + e.getMessage());
+        }
+    }
+
+    @Transactional
+    public CompanyDTO verifyCompany(UUID companyId, boolean verified, UUID adminId, String adminEmail, String ipAddress) {
+        try {
+            CompanyDTO company = contentServiceClient.verifyCompany(companyId, verified);
+            
+            // Create audit log
+            createAuditLog(adminId, adminEmail, verified ? AuditLog.ActionType.APPROVE : AuditLog.ActionType.REJECT,
+                    AuditLog.EntityType.COMPANY, companyId, company.getName(),
+                    "Admin " + (verified ? "verified" : "unverified") + " company: " + company.getName(), ipAddress);
+            
+            return company;
+        } catch (Exception e) {
+            log.error("Error verifying company: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to verify company: " + e.getMessage());
+        }
     }
 
     private void createAuditLog(UUID adminId, String adminEmail, AuditLog.ActionType actionType,

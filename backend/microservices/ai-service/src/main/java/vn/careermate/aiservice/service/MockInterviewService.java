@@ -72,18 +72,37 @@ public class MockInterviewService {
         String response = aiService.callAIAPI(prompt);
         Map<String, Object> aiResult = parseResponse(response);
 
-        // CREATE AND SAVE INTERVIEW SESSION
-        // We need studentId. For now assuming it comes from Context or passed in profile map if possible.
-        // But Controller passes "studentProfile" string. 
-        // Let's assume we extract Student UUID from the request or header in Controller and pass it here.
-        // Since we can't change signature easily without breaking Controller, let's keep it stateless for this step 
-        // OR fix Controller first.
-        // Wait, I see MockInterview entity uses UUID studentId. 
-        // I will update the Controller to pass studentId.
-        
         Map<String, Object> result = new HashMap<>(aiResult);
         result.put("jobId", job.getId());
         result.put("jobTitle", job.getTitle());
+        result.put("startedAt", new Date());
+        result.put("currentQuestionIndex", 0);
+
+        return result;
+    }
+
+    public Map<String, Object> startCustomMockInterview(String jobTitle, String jobDescription) {
+        // Generate interview questions based on custom role
+        String prompt = String.format(
+            "Bạn là một người phỏng vấn chuyên nghiệp. Dựa trên vị trí công việc sau đây, hãy tạo 5 câu hỏi phỏng vấn phù hợp.\n" +
+            "Trả lời dưới dạng JSON:\n" +
+            "{\n" +
+            "  \"questions\": [\n" +
+            "    {\"question\": \"Câu hỏi 1\", \"type\": \"technical\"},\n" +
+            "    {\"question\": \"Câu hỏi 2\", \"type\": \"behavioral\"}\n" +
+            "  ]\n" +
+            "}\n\n" +
+            "Vị trí: %s\n" +
+            "Mô tả: %s",
+            jobTitle, jobDescription != null ? jobDescription : "N/A"
+        );
+
+        String response = aiService.callAIAPI(prompt);
+        Map<String, Object> aiResult = parseResponse(response);
+
+        Map<String, Object> result = new HashMap<>(aiResult);
+        result.put("jobId", null);
+        result.put("jobTitle", jobTitle);
         result.put("startedAt", new Date());
         result.put("currentQuestionIndex", 0);
 
@@ -111,7 +130,22 @@ public class MockInterviewService {
             
             // Fetch student info
             try {
-                UserDTO user = userServiceClient.getUserById(iv.getStudentId());
+                UserDTO user = null;
+                try {
+                    user = userServiceClient.getUserById(iv.getStudentId());
+                } catch (Exception e) {
+                    // Fallback: maybe the stored ID is studentProfileId instead of userId
+                    try {
+                        vn.careermate.common.dto.StudentProfileDTO profile = userServiceClient.getStudentProfileById(iv.getStudentId());
+                        if (profile != null && profile.getUser() != null) {
+                            user = profile.getUser();
+                        }
+                    } catch (Exception ex) {
+                        // Both failed
+                        log.debug("Fallback profile fetch also failed for ID {}: {}", iv.getStudentId(), ex.getMessage());
+                    }
+                }
+
                 if (user != null) {
                     item.put("studentName", user.getFullName());
                     item.put("studentAvatar", user.getAvatarUrl());

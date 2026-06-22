@@ -310,11 +310,40 @@ public class RecruiterProfileService {
         return recruiterProfileRepository.findByCompanyId(companyId).orElse(null);
     }
 
+    @Transactional(readOnly = true)
+    public java.util.List<Map<String, Object>> getAllExperts() {
+        java.util.List<RecruiterProfile> profiles = recruiterProfileRepository.findByIsExpertTrue();
+        return profiles.stream().map(rp -> {
+            Map<String, Object> map = new java.util.HashMap<>();
+            map.put("id", rp.getId());
+            map.put("userId", rp.getUser() != null ? rp.getUser().getId() : null);
+            map.put("name", rp.getUser() != null ? rp.getUser().getFullName() : "Chuyên gia");
+            map.put("avatarUrl", rp.getUser() != null ? rp.getUser().getAvatarUrl() : null);
+            map.put("position", rp.getPosition());
+            map.put("companyId", rp.getCompanyId());
+            
+            // Try to set company name if companyId exists
+            if (rp.getCompanyId() != null) {
+                try {
+                    // Cache or just fetch (small number of recruiters for now)
+                    CompanyDTO company = contentServiceClient.getCompanyById(rp.getCompanyId());
+                    map.put("companyName", company != null ? company.getName() : "Công ty");
+                } catch (Exception e) {
+                    map.put("companyName", "Công ty");
+                }
+            } else {
+                map.put("companyName", "Tự do");
+            }
+            
+            return map;
+        }).collect(java.util.stream.Collectors.toList());
+    }
+
     @Transactional
     public void resetCompanyLink() {
         RecruiterProfile recruiter = getCurrentRecruiterProfile();
-        log.info("Resetting company link for recruiter {}", recruiter.getId());
         recruiter.setCompanyId(null);
-        recruiterProfileRepository.saveAndFlush(recruiter);
+        recruiterProfileRepository.save(recruiter);
+        log.info("Company link reset for recruiter: {}", recruiter.getId());
     }
 }

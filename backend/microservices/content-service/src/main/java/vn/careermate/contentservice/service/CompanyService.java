@@ -7,11 +7,13 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 import vn.careermate.contentservice.model.Company;
 import vn.careermate.contentservice.repository.CompanyRatingRepository;
 import vn.careermate.contentservice.repository.CompanyRepository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -22,6 +24,8 @@ public class CompanyService {
 
     private final CompanyRepository companyRepository;
     private final CompanyRatingRepository ratingRepository;
+    private final RestTemplate restTemplate;
+    private final vn.careermate.common.client.UserServiceClient userServiceClient;
 
     @Transactional(readOnly = true)
     public Page<Company> getAllCompanies(Pageable pageable, String keyword) {
@@ -137,9 +141,6 @@ public class CompanyService {
         
         log.info("Deleting company: {} (ID: {})", company.getName(), companyId);
         
-        // Delete all ratings for this company first
-        ratingRepository.deleteByCompanyId(companyId);
-        
         // Delete the company
         companyRepository.delete(company);
         
@@ -163,6 +164,7 @@ public class CompanyService {
                         if (company.getCompanySize() != null) existing.setCompanySize(company.getCompanySize());
                         if (company.getFoundedYear() != null) existing.setFoundedYear(company.getFoundedYear());
                         if (company.getHeadquarters() != null) existing.setHeadquarters(company.getHeadquarters());
+                        existing.setVerified(company.isVerified());
                         
                         Company saved = companyRepository.save(existing);
                         log.info("Company {} updated successfully.", saved.getId());
@@ -193,6 +195,51 @@ public class CompanyService {
             return companyRepository.count();
         }
         return companyRepository.countByCreatedAtBefore(beforeDate);
+    }
+
+    /**
+     * Get recruiter ID for a company
+     */
+    @Transactional(readOnly = true)
+    public UUID getCompanyRecruiterId(UUID companyId) {
+        try {
+            // 1. Try to get recruiter directly from recruiter profile in user-service
+            try {
+                vn.careermate.common.dto.RecruiterProfileDTO recruiter = userServiceClient.getRecruiterByCompanyId(companyId);
+                if (recruiter != null && recruiter.getUserId() != null) {
+                    log.info("Found recruiter {} for company {} via user-service", recruiter.getUserId(), companyId);
+                    return recruiter.getUserId();
+                }
+            } catch (Exception e) {
+                log.warn("Failed to fetch recruiter via user-service for company {}: {}", companyId, e.getMessage());
+            }
+
+            // 2. Fallback: Query job-service to get jobs for this company
+            log.info("Falling back to job-service for company {}", companyId);
+            String jobServiceUrl = "http://job-service/jobs?companyId=" + companyId + "&size=1&status=ACTIVE";
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> response = restTemplate.getForObject(jobServiceUrl, Map.class);
+            
+            if (response != null && response.get("content") != null) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> jobs = (List<Map<String, Object>>) response.get("content");
+                
+                if (!jobs.isEmpty()) {
+                    Map<String, Object> firstJob = jobs.get(0);
+                    String recruiterIdStr = (String) firstJob.get("recruiterId");
+                    if (recruiterIdStr != null) {
+                        return UUID.fromString(recruiterIdStr);
+                    }
+                }
+            }
+            
+            log.warn("No active jobs or recruiter profile found for company {}", companyId);
+            return null;
+        } catch (Exception e) {
+            log.error("Error fetching recruiter ID for company {}: {}", companyId, e.getMessage(), e);
+            return null;
+        }
     }
 
     @Transactional

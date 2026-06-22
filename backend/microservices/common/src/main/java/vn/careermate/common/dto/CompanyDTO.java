@@ -21,4 +21,8 @@ public class CompanyDTO {
     private String companySize;
     private Integer foundedYear;
     private String headquarters;
+    private Double averageRating;
+    private Long ratingsCount;
+    private UUID recruiterId;
+    private Boolean verified;
 }

@@ -88,6 +88,19 @@ public class MessagingController {
         return ResponseEntity.ok(Map.of("count", count));
     }
 
+    // Public endpoints for discovering users to chat with
+    @GetMapping("/available-recruiters")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<List<User>> getAvailableRecruiters() {
+        return ResponseEntity.ok(messagingService.getAllRecruiters());
+    }
+
+    @GetMapping("/available-students")
+    @PreAuthorize("hasRole('RECRUITER')")
+    public ResponseEntity<List<User>> getAvailableStudents() {
+        return ResponseEntity.ok(messagingService.getAllStudents());
+    }
+
     // Admin endpoints
     @GetMapping("/admin/recruiters")
     @PreAuthorize("hasRole('ADMIN')")

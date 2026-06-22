@@ -26,6 +26,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/ai/cv/**").permitAll() // Allow CV analysis
+                .requestMatchers("/ai/students/mock-interview/**").permitAll() // Explicitly allow mock interview
                 .requestMatchers("/ai/**").permitAll() // Allow all AI endpoints without auth
                 .requestMatchers("/chat/**").permitAll()
                 .anyRequest().authenticated()

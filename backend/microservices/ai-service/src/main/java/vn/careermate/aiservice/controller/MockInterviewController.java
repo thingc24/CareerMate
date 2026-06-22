@@ -16,30 +16,55 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/ai/students/mock-interview")
 @RequiredArgsConstructor
-//@PreAuthorize("hasRole('STUDENT') or hasRole('ADMIN')")
 public class MockInterviewController {
 
     private final MockInterviewService mockInterviewService;
     private final JobServiceClient jobServiceClient;
 
+    // @PreAuthorize("isAuthenticated()")
     @PostMapping("/start/{jobId}")
     public ResponseEntity<Map<String, Object>> startInterview(
-            @PathVariable UUID jobId,
+            @PathVariable String jobId,
             @RequestBody(required = false) Map<String, String> body
     ) {
-        // Get Student ID from Body (temp) or Token
-        // Ideally get from SecurityContext
-        // For now, let's allow passing studentId in body for simplicity if needed, 
-        // but typically it should start a session.
-        // The service logic currently doesn't SAVE the start, it just generates questions.
-        // To really persist, we need to change startMockInterview signature.
+        log.info("Starting mock interview for job ID string: {}", jobId);
         
-        // For now, just return specific Start Data.
-        String profile = body != null ? body.get("profile") : "";
-        Map<String, Object> interview = mockInterviewService.startMockInterview(jobId, profile);
+        UUID uuid;
+        try {
+            uuid = UUID.fromString(jobId);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid UUID format: {}", jobId);
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid Job ID format: " + jobId));
+        }
+
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        log.info("Current user authorities: {}", auth != null ? auth.getAuthorities() : "null");
+        try {
+            String profile = body != null ? body.get("profile") : "";
+            Map<String, Object> interview = mockInterviewService.startMockInterview(uuid, profile);
+            log.info("Successfully started mock interview for job: {}", uuid);
+            return ResponseEntity.ok(interview);
+        } catch (Exception e) {
+            log.error("Error in startInterview controller: {}", e.getMessage(), e);
+            if (e.getMessage().contains("429") || e.getMessage().contains("Quota")) {
+                 return ResponseEntity.status(429).body(Map.of("error", "AI Quota Exhausted. Please try again later."));
+            }
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // @PreAuthorize("isAuthenticated()")
+    @PostMapping("/start-custom")
+    public ResponseEntity<Map<String, Object>> startCustomInterview(
+            @RequestBody Map<String, String> body
+    ) {
+        String jobTitle = body.get("jobTitle");
+        String jobDescription = body.get("jobDescription");
+        Map<String, Object> interview = mockInterviewService.startCustomMockInterview(jobTitle, jobDescription);
         return ResponseEntity.ok(interview);
     }
 
+    // @PreAuthorize("isAuthenticated()")
     @PostMapping("/evaluate")
     public ResponseEntity<Map<String, Object>> evaluateAnswer(
             @RequestBody Map<String, String> request

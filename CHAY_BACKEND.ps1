@@ -11,27 +11,18 @@ $portsInUse = @()
 foreach ($port in $ports) {
     $processId = netstat -ano | findstr ":$port " | Select-String "LISTENING" | ForEach-Object { ($_ -split " +")[-1] } | Select-Object -Unique
     if ($processId) {
-        $portsInUse += @{Port=$port; PID=$processId}
+        $portsInUse += @{Port = $port; PID = $processId }
     }
 }
 
 if ($portsInUse.Count -gt 0) {
-    Write-Host "The following ports are already in use:" -ForegroundColor Yellow
+    Write-Host "The following ports are already in use. Auto-stopping them..." -ForegroundColor Yellow
     foreach ($item in $portsInUse) {
         Write-Host "  Port $($item.Port) - PID: $($item.PID)" -ForegroundColor Yellow
+        taskkill /PID $item.PID /F 2>&1 | Out-Null
     }
-    $choice = Read-Host "Do you want to stop them and restart? (y/n)"
-    if ($choice -eq "y" -or $choice -eq "Y") {
-        Write-Host "Stopping processes..." -ForegroundColor Yellow
-        foreach ($item in $portsInUse) {
-            taskkill /PID $item.PID /F 2>&1 | Out-Null
-        }
-        Start-Sleep -Seconds 2
-        Write-Host "Processes stopped" -ForegroundColor Green
-    } else {
-        Write-Host "Exiting. Please stop the processes manually." -ForegroundColor Red
-        exit
-    }
+    Start-Sleep -Seconds 2
+    Write-Host "Processes stopped" -ForegroundColor Green
 }
 
 # Set Java and Maven paths
@@ -63,15 +54,15 @@ $basePath = Join-Path $PWD "backend\microservices"
 
 # Services to start in order
 $services = @(
-    @{Name="eureka-server"; Path="eureka-server"; Port=8761; Order=1},
-    @{Name="api-gateway"; Path="api-gateway"; Port=8080; Order=2},
-    @{Name="user-service"; Path="user-service"; Port=8081; Order=3},
-    @{Name="job-service"; Path="job-service"; Port=8082; Order=4},
-    @{Name="content-service"; Path="content-service"; Port=8083; Order=5},
-    @{Name="notification-service"; Path="notification-service"; Port=8084; Order=6},
-    @{Name="learning-service"; Path="learning-service"; Port=8085; Order=7},
-    @{Name="ai-service"; Path="ai-service"; Port=8086; Order=8},
-    @{Name="admin-service"; Path="admin-service"; Port=8087; Order=9}
+    @{Name = "eureka-server"; Path = "eureka-server"; Port = 8761; Order = 1 },
+    @{Name = "api-gateway"; Path = "api-gateway"; Port = 8080; Order = 2 },
+    @{Name = "user-service"; Path = "user-service"; Port = 8081; Order = 3 },
+    @{Name = "job-service"; Path = "job-service"; Port = 8082; Order = 4 },
+    @{Name = "content-service"; Path = "content-service"; Port = 8083; Order = 5 },
+    @{Name = "notification-service"; Path = "notification-service"; Port = 8084; Order = 6 },
+    @{Name = "learning-service"; Path = "learning-service"; Port = 8085; Order = 7 },
+    @{Name = "ai-service"; Path = "ai-service"; Port = 8086; Order = 8 },
+    @{Name = "admin-service"; Path = "admin-service"; Port = 8087; Order = 9 }
 )
 
 Write-Host "Starting all Microservices with Spring Boot..." -ForegroundColor Cyan
@@ -121,7 +112,7 @@ foreach ($svc in $services | Sort-Object Order) {
         }
     } -ArgumentList $servicePath, $svc.Name, $svc.Port, $env:JAVA_HOME, "C:\Program Files\apache-maven-3.9.12\bin"
     
-    $jobs += @{Job=$job; Name=$svc.Name; Port=$svc.Port}
+    $jobs += @{Job = $job; Name = $svc.Name; Port = $svc.Port }
     
     Write-Host "  [OK] $($svc.Name) starting..." -ForegroundColor Green
     
@@ -158,7 +149,8 @@ while ($elapsed -lt $maxWait) {
         try {
             $response = Invoke-WebRequest -Uri "http://localhost:$($jobInfo.Port)/actuator/health" -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop
             $running++
-        } catch {
+        }
+        catch {
             # Service not ready yet
         }
     }
@@ -182,7 +174,8 @@ foreach ($jobInfo in $jobs) {
         $response = Invoke-WebRequest -Uri "http://localhost:$($jobInfo.Port)/actuator/health" -TimeoutSec 3 -UseBasicParsing
         Write-Host "[OK] $($jobInfo.Name) - RUNNING (port $($jobInfo.Port))" -ForegroundColor Green
         $running++
-    } catch {
+    }
+    catch {
         Write-Host "[X] $($jobInfo.Name) - NOT RUNNING (port $($jobInfo.Port))" -ForegroundColor Red
     }
 }
@@ -212,7 +205,8 @@ try {
             }
         }
     }
-} catch {
+}
+catch {
     Write-Host "`nStopping all services..." -ForegroundColor Yellow
     foreach ($jobInfo in $jobs) {
         Stop-Job -Job $jobInfo.Job -ErrorAction SilentlyContinue

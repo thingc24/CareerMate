@@ -8,7 +8,6 @@ export default function CompanyDetail() {
   const [company, setCompany] = useState(null);
   const [ratings, setRatings] = useState([]);
   const [myRating, setMyRating] = useState(null);
-  const [recruiter, setRecruiter] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showRatingForm, setShowRatingForm] = useState(false);
   const [ratingForm, setRatingForm] = useState({
@@ -19,7 +18,6 @@ export default function CompanyDetail() {
   useEffect(() => {
     loadCompany();
     loadRatings();
-    loadRecruiter();
     loadMyRating();
   }, [id]);
 
@@ -53,17 +51,7 @@ export default function CompanyDetail() {
     }
   };
 
-  const loadRecruiter = async () => {
-    try {
-      const data = await api.getCompanyRecruiter(id);
-      if (data) {
-        setRecruiter(data);
-      }
-    } catch (error) {
-      console.error('Error loading recruiter:', error);
-      setRecruiter(null);
-    }
-  };
+
 
   const loadMyRating = async () => {
     try {
@@ -86,23 +74,22 @@ export default function CompanyDetail() {
 
   const handleContact = async () => {
     console.log('=== Company Contact Debug ===');
-    console.log('Recruiter data:', recruiter);
-    console.log('Recruiter user ID:', recruiter?.user?.id);
-    console.log('Recruiter ID:', recruiter?.id);
+    console.log('Company data:', company);
+    console.log('Company recruiter ID:', company?.recruiterId);
 
-    // Try to get user ID from multiple possible paths
-    const userId = recruiter?.user?.id || recruiter?.userId;
+    // Get recruiter ID directly from company
+    const recruiterId = company?.recruiterId;
 
-    if (!userId) {
-      console.error('No user ID found for recruiter');
+    if (!recruiterId) {
+      console.error('No recruiter ID found for company');
       alert('Không tìm thấy thông tin nhà tuyển dụng. Vui lòng thử lại sau.');
       return;
     }
 
-    console.log('Using user ID:', userId);
+    console.log('Using recruiter ID:', recruiterId);
 
     // Navigate to messages with recipientId in state for auto-selection
-    navigate('/student/messages', { state: { recipientId: userId } });
+    navigate('/student/messages', { state: { recipientId: recruiterId } });
   };
 
   const handleSubmitRating = async (e) => {
@@ -238,8 +225,8 @@ export default function CompanyDetail() {
                     <i
                       key={i}
                       className={`fas fa-star text-3xl ${i < Math.floor(company.averageRating || 0)
-                          ? 'text-yellow-400 drop-shadow-sm'
-                          : 'text-gray-300 dark:text-gray-600'
+                        ? 'text-yellow-400 drop-shadow-sm'
+                        : 'text-gray-300 dark:text-gray-600'
                         } transition-all`}
                     ></i>
                   ))}
@@ -316,8 +303,8 @@ export default function CompanyDetail() {
             <button
               onClick={() => setShowRatingForm(!showRatingForm)}
               className={`px-6 py-2 rounded-lg font-medium transition-all duration-200 ${showRatingForm
-                  ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md hover:shadow-lg transform hover:scale-105'
+                ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md hover:shadow-lg transform hover:scale-105'
                 }`}
             >
               {showRatingForm ? (
@@ -347,8 +334,8 @@ export default function CompanyDetail() {
                     type="button"
                     onClick={() => setRatingForm({ ...ratingForm, rating: star })}
                     className={`text-5xl transform transition-all duration-200 hover:scale-110 ${star <= ratingForm.rating
-                        ? 'text-yellow-400 drop-shadow-lg'
-                        : 'text-gray-300 hover:text-yellow-200'
+                      ? 'text-yellow-400 drop-shadow-lg'
+                      : 'text-gray-300 hover:text-yellow-200'
                       }`}
                   >
                     <i className="fas fa-star"></i>

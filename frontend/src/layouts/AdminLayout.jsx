@@ -19,6 +19,7 @@ export default function AdminLayout({ children }) {
   const navItems = [
     { path: '/admin/dashboard', icon: 'fa-tachometer-alt', label: 'Dashboard' },
     { path: '/admin/users', icon: 'fa-users-cog', label: 'Quản lý người dùng' },
+    { path: '/admin/companies', icon: 'fa-building', label: 'Quản lý doanh nghiệp' },
     { path: '/admin/jobs', icon: 'fa-briefcase', label: 'Quản lý tin tuyển dụng' },
     { path: '/admin/articles', icon: 'fa-newspaper', label: 'Quản lý bài viết' },
     { path: '/admin/articles/create', icon: 'fa-plus-circle', label: 'Đăng bài viết' },

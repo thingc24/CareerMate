@@ -58,6 +58,9 @@ public class CV {
     @Column(name = "ai_analysis", columnDefinition = "jsonb")
     private Map<String, Object> aiAnalysis;
 
+    @Column(name = "extracted_content", columnDefinition = "TEXT")
+    private String extractedContent;
+
     @Column(name = "ai_score", precision = 5, scale = 2)
     private java.math.BigDecimal aiScore;
 

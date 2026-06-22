@@ -191,7 +191,7 @@ export default function FindCandidates() {
                   <div key={index} className="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-100 dark:border-gray-800 hover:border-emerald-200 dark:hover:border-emerald-800 hover:shadow-xl transition-all group relative overflow-hidden flex flex-col">
                     {/* Match Score Indicator */}
                     <div className="absolute top-0 right-0 px-4 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-sm font-bold rounded-bl-2xl border-b border-l border-emerald-100 dark:border-emerald-800">
-                      {Math.floor(Math.random() * 20 + 80)}% Match
+                      {candidate.score}% Match
                     </div>
 
                     <div className="flex items-start gap-5 mb-5">
@@ -199,9 +199,10 @@ export default function FindCandidates() {
                         <i className="fas fa-user"></i>
                       </div>
                       <div className="pt-1">
-                        <p className="font-bold text-gray-900 dark:text-white text-lg group-hover:text-emerald-600 transition-colors line-clamp-1 mb-1" title={candidate}>
-                          CV ID: {candidate}
+                        <p className="font-bold text-gray-900 dark:text-white text-lg group-hover:text-emerald-600 transition-colors line-clamp-1 mb-1" title={candidate.name}>
+                          {candidate.name || 'Ứng viên tiềm năng'}
                         </p>
+                        <p className="text-sm text-gray-500 mb-1">CV ID: {candidate.cvId}</p>
                         <p className="text-xs font-bold text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-md w-fit flex items-center gap-1 border border-amber-100 dark:border-amber-900/30">
                           <i className="fas fa-star"></i> Potential Candidate
                         </p>

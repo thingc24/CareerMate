@@ -3,6 +3,7 @@ package vn.careermate.common.client;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 import vn.careermate.common.dto.UserDTO;
+import vn.careermate.common.dto.CVDTO;
 import vn.careermate.common.dto.RecruiterProfileDTO;
 import vn.careermate.common.dto.StudentProfileDTO;
 import vn.careermate.common.config.FeignClientConfiguration;
@@ -41,6 +42,16 @@ public interface UserServiceClient {
     @GetMapping("/students/profile/user/{userId}")
     StudentProfileDTO getStudentProfileByUserId(@PathVariable UUID userId);
     
+    // CV endpoints
+    @GetMapping("/students/cv/{cvId}")
+    CVDTO getCVById(@PathVariable UUID cvId);
+
+    @GetMapping("/students/cv/all")
+    List<CVDTO> getAllCVs();
+
+    @GetMapping("/students/cv/download/{cvId}")
+    feign.Response downloadCV(@PathVariable UUID cvId);
+
     // Get users by roles (for notifications)
     @PostMapping("/users/by-roles")
     List<UserDTO> getUsersByRoles(@RequestBody List<String> roles);

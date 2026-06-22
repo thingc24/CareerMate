@@ -42,6 +42,7 @@ public class CVService {
     private final FileStorageService fileStorageService;
     private final AIServiceClient aiServiceClient;
     private final LearningServiceClient learningServiceClient;
+    private final TextExtractionService textExtractionService;
 
     @Transactional(readOnly = true)
     private StudentProfile getCurrentStudentProfile() {
@@ -60,6 +61,7 @@ public class CVService {
 
     @Transactional
     public CV uploadCV(MultipartFile file) throws IOException {
+        log.info("CVService.uploadCV - Start processing file: {}", file.getOriginalFilename());
         StudentProfile student = getCurrentStudentProfile();
         
         // Validate file type
@@ -75,7 +77,28 @@ public class CVService {
         // Save file using FileStorageService
         String filePath = fileStorageService.storeFile(file, "cvs");
 
-        // Create CV record
+        // Extract text from uploaded file
+        String extractedText = "";
+        try {
+            log.info("CVService - Starting text extraction for file: {}", filePath);
+            // Get the actual file path using the helper method
+            String actualPath = fileStorageService.resolveFilePath(filePath);
+            java.io.File uploadedFile = new java.io.File(actualPath);
+            
+            log.info("CVService - Resolved path: {}. Exists: {}", actualPath, uploadedFile.exists());
+            
+            if (uploadedFile.exists()) {
+                extractedText = textExtractionService.extractTextFromFile(uploadedFile, contentType);
+                log.info("CVService - Successfully extracted {} characters", extractedText.length());
+            } else {
+                log.warn("CVService - Uploaded file not found at path: {}", actualPath);
+            }
+        } catch (Exception e) {
+            log.error("CVService - Error extracting text from CV: {}", fileName, e);
+            // Continue without extracted text
+        }
+
+        // Create CV record with extracted content
         CV cv = CV.builder()
                 .student(student)
                 .fileUrl(filePath)
@@ -83,15 +106,15 @@ public class CVService {
                 .fileSize(file.getSize())
                 .fileType(contentType)
                 .isDefault(false)
+                .extractedContent(extractedText)
                 .build();
 
         cv = cvRepository.save(cv);
 
         // Analyze CV with AI (async) - via Feign Client
         try {
-            // Extract CV content for analysis (simplified - in real scenario, read file content)
-            String cvContent = ""; // TODO: Extract from file if needed
-            aiServiceClient.analyzeCV(cv.getId(), cvContent);
+            // Use extracted content for analysis
+            aiServiceClient.analyzeCV(cv.getId(), extractedText);
         } catch (Exception e) {
             log.warn("Failed to analyze CV with AI service: {}", e.getMessage());
             // Continue without AI analysis
@@ -160,6 +183,24 @@ public class CVService {
     }
 
     @Transactional(readOnly = true)
+    public List<CV> getAllCVs() {
+        try {
+            List<CV> cvs = cvRepository.findAll();
+            if (cvs != null) {
+                cvs.forEach(cv -> {
+                    if (cv != null && cv.getStudent() != null) {
+                        cv.setStudent(null);
+                    }
+                });
+            }
+            return cvs != null ? cvs : List.of();
+        } catch (Exception e) {
+            log.error("Error getting all CVs", e);
+            return List.of();
+        }
+    }
+
+    @Transactional(readOnly = true)
     public CV getCV(UUID cvId) {
         // Find CV
         CV cv = cvRepository.findById(cvId)
@@ -185,22 +226,26 @@ public class CVService {
         // we will allow download for now if authenticated. 
         // Security improvement: Check if user is owner OR is a Recruiter.
         
-        StudentProfile currentStudent = null;
-        try {
-             currentStudent = getCurrentStudentProfile();
-        } catch (Exception e) {
-            // Not a student or not owner - maybe Recruiter/Admin
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-             if (auth == null || !auth.isAuthenticated()) {
-                 throw new RuntimeException("Unauthorized");
-             }
-             // If Recruiter/Admin, proceed. 
-        }
+        // Check permission: Owner OR (Recruiter/Admin)
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isRecruiterOrAdmin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_RECRUITER") || a.getAuthority().equals("ROLE_ADMIN"));
 
-        if (currentStudent != null && !cv.getStudent().getId().equals(currentStudent.getId())) {
-             // If logged in as student but not owner
-             throw new RuntimeException("You don't have permission to download this CV");
+        if (!isRecruiterOrAdmin) {
+            // If not recruiter/admin, must be the student owner
+            StudentProfile currentStudent;
+            try {
+                 currentStudent = getCurrentStudentProfile();
+            } catch (Exception e) {
+                // If can't get student profile and not recruiter -> Unauthorized
+                throw new RuntimeException("Unauthorized");
+            }
+
+            if (!cv.getStudent().getId().equals(currentStudent.getId())) {
+                 throw new RuntimeException("You don't have permission to download this CV");
+            }
         }
+        // If isRecruiterOrAdmin, proceed.
 
         if (cv.getFileUrl() == null) {
             throw new RuntimeException("CV file URL not found");
@@ -228,8 +273,12 @@ public class CVService {
         // Convert DTO to template-like object for rendering
         // Note: We'll need to fetch template HTML/CSS separately or include in DTO
         // For now, using a simplified approach
-        String templateHtml = ""; // TODO: Fetch from learning-service or include in DTO
-        String templateCss = "";
+        // Use HTML/CSS from template DTO
+        String templateHtml = templateDTO.getTemplateHtml();
+        String templateCss = templateDTO.getTemplateCss();
+        
+        if (templateHtml == null) templateHtml = "";
+        if (templateCss == null) templateCss = "";
         
         // Upload photo if provided
         String photoUrl = null;

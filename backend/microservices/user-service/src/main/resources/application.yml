@@ -69,8 +69,8 @@ app:
   storage:
     type: local
     local:
-      # Use absolute path to match WebConfig serving path
-      path: ${STORAGE_PATH:C:/xampp/htdocs/CareerMate/backend/uploads}
+      # Use relative path within project directory
+      path: ${STORAGE_PATH:./uploads}
 
 logging:
   level:

@@ -19,6 +19,16 @@ export default function MockInterview() {
     const [selectedRecruiter, setSelectedRecruiter] = useState('');
     const [bookingMessage, setBookingMessage] = useState('');
     const [searchRecruiter, setSearchRecruiter] = useState('');
+    const [showCustomModal, setShowCustomModal] = useState(false);
+    const [customRole, setCustomRole] = useState({ title: '', desc: '' });
+
+    const SUGGESTED_ROLES = [
+        { title: 'Frontend Developer', desc: 'Phát triển giao diện người dùng bằng React, Vue hoặc Angular.' },
+        { title: 'Backend Developer', desc: 'Xây dựng hệ thống máy chủ, API và cơ sở dữ liệu.' },
+        { title: 'Fullstack Developer', desc: 'Phát triển cả giao diện và hệ thống máy chủ.' },
+        { title: 'Data Scientist', desc: 'Phân tích dữ liệu và xây dựng mô hình học máy.' },
+        { title: 'Mobile Developer', desc: 'Phát triển ứng dụng di động iOS hoặc Android.' }
+    ];
 
     useEffect(() => {
         loadJobs();
@@ -49,7 +59,7 @@ export default function MockInterview() {
             // For now, let's assume user.id works or we need to fetch profile.
             // Let's fetch profile first to be safe.
             const profile = await api.getStudentProfile();
-            const data = await api.getAIMockInterviewHistory(profile.id); // Assuming profile object has ID
+            const data = await api.getAIMockInterviewHistory(profile.userId); // Use userId for matching history
             setAiHistory(data);
         } catch (e) {
             console.error(e);
@@ -72,44 +82,31 @@ export default function MockInterview() {
 
     const handleSearchRecruiter = async () => {
         try {
-            // Get jobs to find companies
-            const jobData = await api.getJobs(0, 20);
-            const jobs = jobData.content || [];
+            setLoading(true);
+            const experts = await api.getExpertRecruiters();
 
-            // Get unique company IDs
-            const companyIds = [...new Set(jobs.map(j => j.companyId).filter(Boolean))];
-
-            // Fetch recruiters for each company
-            const recruiterPromises = companyIds.map(async (companyId) => {
-                try {
-                    const recruiterData = await api.getRecruiterByCompanyId(companyId);
-                    if (recruiterData && recruiterData.id) {
-                        // Backend returns single object, not array
-                        // Need to fetch user and company info separately
-                        const job = jobs.find(j => j.companyId === companyId);
-                        return {
-                            id: recruiterData.id,
-                            name: recruiterData.fullName || recruiterData.position || 'Nhà tuyển dụng',
-                            company: job?.companyName || 'Công ty'
-                        };
-                    }
-                } catch (e) {
-                    console.error(`Error fetching recruiter for company ${companyId}:`, e);
-                }
-                return null;
-            });
-
-            const recruitersData = await Promise.all(recruiterPromises);
-            const validRecruiters = recruitersData.filter(r => r !== null);
+            const validRecruiters = experts.map(exp => ({
+                id: exp.id,
+                name: exp.name || 'Chuyên gia',
+                company: exp.companyName || 'Tự do'
+            }));
 
             setRecruiters(validRecruiters);
         } catch (e) {
-            console.error('Error loading recruiters:', e);
+            console.error('Error loading experts:', e);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const handleStartAI = (jobId) => {
-        navigate(`/student/mock-interview/ai/${jobId}`);
+    const handleStartAI = (jobOrRole) => {
+        if (typeof jobOrRole === 'string') {
+            // It's a jobId
+            navigate(`/student/mock-interview/ai/${jobOrRole}`);
+        } else {
+            // It's a custom role object {title, desc}
+            navigate(`/student/mock-interview/ai/custom`, { state: { customRole: jobOrRole } });
+        }
     };
 
     const handleBookRecruiter = async (e) => {
@@ -160,24 +157,103 @@ export default function MockInterview() {
                                 Chọn một vị trí công việc bạn quan tâm và để AI của CareerMate đóng vai nhà tuyển dụng phỏng vấn bạn. Nhận đánh giá chi tiết ngay lập tức.
                             </p>
 
-                            <h3 className="font-bold uppercase tracking-widest text-xs mb-4 text-white/50">Chọn công việc để bắt đầu</h3>
-                            <div className="grid gap-3 max-h-96 overflow-y-auto custom-scrollbar pr-2">
-                                {jobs.map(job => (
-                                    <div key={job.id} className="bg-white/10 hover:bg-white/20 p-4 rounded-xl cursor-pointer transition-all border border-white/5 flex justify-between items-center group"
-                                        onClick={() => handleStartAI(job.id)}
-                                    >
-                                        <div>
-                                            <h4 className="font-bold text-sm">{job.title}</h4>
-                                            <p className="text-xs opacity-70 mt-1">{job.companyName}</p>
-                                        </div>
-                                        <button className="w-10 h-10 rounded-full bg-white text-indigo-900 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity transform group-hover:scale-110">
-                                            <i className="fas fa-play"></i>
-                                        </button>
+                            <div className="grid gap-3 max-h-96 overflow-y-auto custom-scrollbar pr-2 mb-8">
+                                {jobs.length === 0 ? (
+                                    <div className="text-center py-4 bg-white/5 rounded-xl border border-dashed border-white/20">
+                                        <p className="text-xs text-white/50 italic text-center">Đang tải việc làm thực tế...</p>
                                     </div>
-                                ))}
+                                ) : (
+                                    jobs.map(job => (
+                                        <div key={job.id} className="bg-white/10 hover:bg-white/20 p-4 rounded-xl cursor-pointer transition-all border border-white/5 flex justify-between items-center group"
+                                            onClick={() => handleStartAI(job.id)}
+                                        >
+                                            <div>
+                                                <h4 className="font-bold text-sm text-white">{job.title}</h4>
+                                                <p className="text-[10px] opacity-70 mt-1 uppercase font-bold tracking-widest text-indigo-300">{job.companyName}</p>
+                                            </div>
+                                            <button className="w-8 h-8 rounded-full bg-white text-indigo-900 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform group-hover:scale-110">
+                                                <i className="fas fa-play text-xs"></i>
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            <div className="mt-8 pt-8 border-t border-white/10">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="font-bold uppercase tracking-widest text-xs text-white/50">Gợi ý vị trí phổ biến</h3>
+                                    <button
+                                        onClick={() => setShowCustomModal(true)}
+                                        className="text-[10px] font-black uppercase text-indigo-300 hover:text-white transition-colors"
+                                    >
+                                        <i className="fas fa-plus mr-1"></i> Tự nhập vị trí
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {SUGGESTED_ROLES.map((role, idx) => (
+                                        <div
+                                            key={idx}
+                                            onClick={() => handleStartAI(role)}
+                                            className="bg-indigo-800/40 hover:bg-indigo-700/60 p-4 rounded-2xl cursor-pointer transition-all border border-indigo-700/50 flex flex-col justify-between group"
+                                        >
+                                            <div>
+                                                <h4 className="font-bold text-sm text-indigo-100 group-hover:text-white transition-colors">{role.title}</h4>
+                                                <p className="text-[10px] text-white/40 mt-1 line-clamp-1">{role.desc}</p>
+                                            </div>
+                                            <div className="flex justify-end mt-2 opacity-0 group-hover:opacity-100 transition-all">
+                                                <span className="text-[10px] font-black uppercase text-white">Bắt đầu <i className="fas fa-arrow-right ml-1"></i></span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>
+
+                    {/* Custom Role Modal */}
+                    {showCustomModal && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl border border-slate-200 dark:border-white/10 animate-in fade-in zoom-in duration-200">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-xl font-black uppercase tracking-tight dark:text-white">Tự nhập vị trí</h3>
+                                    <button onClick={() => setShowCustomModal(false)} className="w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 flex items-center justify-center transition-colors">
+                                        <i className="fas fa-times text-slate-400"></i>
+                                    </button>
+                                </div>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Vị trí công việc</label>
+                                        <input
+                                            type="text"
+                                            value={customRole.title}
+                                            onChange={e => setCustomRole({ ...customRole, title: e.target.value })}
+                                            placeholder="Ví dụ: AI Engineer, UI Designer..."
+                                            className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border-none focus:ring-2 focus:ring-indigo-500 font-bold dark:text-white"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Mô tả ngắn (tùy chọn)</label>
+                                        <textarea
+                                            value={customRole.desc}
+                                            onChange={e => setCustomRole({ ...customRole, desc: e.target.value })}
+                                            placeholder="Ghi chú về công việc hoặc yêu cầu đặc biệt..."
+                                            className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border-none focus:ring-2 focus:ring-indigo-500 font-medium dark:text-white h-24 resize-none"
+                                        />
+                                    </div>
+                                    <button
+                                        disabled={!customRole.title.trim()}
+                                        onClick={() => {
+                                            handleStartAI(customRole);
+                                            setShowCustomModal(false);
+                                        }}
+                                        className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase rounded-2xl transition-all shadow-xl shadow-indigo-500/30 disabled:opacity-50 disabled:shadow-none mt-4"
+                                    >
+                                        Bắt đầu luyện tập
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="space-y-6">
                         <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 shadow-sm border border-slate-100 dark:border-slate-800">

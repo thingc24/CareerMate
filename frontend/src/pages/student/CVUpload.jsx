@@ -129,6 +129,25 @@ export default function CVUpload() {
     }
   };
 
+  const handleViewCV = async (cv) => {
+    try {
+      // Use the dedicated download endpoint which handles auth and paths correctly
+      const blob = await api.downloadCV(cv.id);
+
+      // Create object URL from blob
+      const url = window.URL.createObjectURL(blob);
+
+      // Open in new tab
+      window.open(url, '_blank');
+
+      // Clean up after a delay
+      setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+    } catch (error) {
+      console.error('Error viewing CV:', error);
+      alert('❌ Không thể mở file CV. Vui lòng thử lại.');
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       {/* Header Section */}
@@ -249,19 +268,13 @@ export default function CVUpload() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {cv.fileUrl && (
-                          <a
-                            href={cv.fileUrl.startsWith('http')
-                              ? cv.fileUrl
-                              : `${(import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api').replace(/\/+$/, '')}/users/${cv.fileUrl.replace(/^\/+/, '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Xem CV"
-                          >
-                            <i className="fas fa-eye"></i>
-                          </a>
-                        )}
+                        <button
+                          onClick={() => handleViewCV(cv)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Xem CV"
+                        >
+                          <i className="fas fa-eye"></i>
+                        </button>
                         <Link
                           to={`/student/cv/${cv.id}/analysis`}
                           className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"

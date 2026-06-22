@@ -46,7 +46,7 @@ public class MockInterview {
     @Column(name = "student_id", nullable = false)
     private UUID studentId; // Changed from StudentProfile entity to UUID
 
-    @Column(name = "job_id", nullable = false)
+    @Column(name = "job_id", nullable = true)
     private UUID jobId; // Changed from Job entity to UUID
 
     @Column(name = "job_title")

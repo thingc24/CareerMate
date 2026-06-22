@@ -20,6 +20,9 @@ export default function Messages() {
   const [lastMessages, setLastMessages] = useState({}); // Store last message for each conversation
   const [showUserInfoModal, setShowUserInfoModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [activeTab, setActiveTab] = useState('messages');
+  const [studentList, setStudentList] = useState([]);
+  const [loadingStudents, setLoadingStudents] = useState(false);
   const messagesEndRef = useRef(null);
   const pollingIntervalRef = useRef(null);
   const menuRef = useRef(null);
@@ -299,6 +302,40 @@ export default function Messages() {
     }
   };
 
+  const fetchStudents = async () => {
+    try {
+      setLoadingStudents(true);
+      const students = await api.getAvailableStudents();
+      setStudentList(students || []);
+    } catch (e) {
+      console.error("Failed to fetch students", e);
+    } finally {
+      setLoadingStudents(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'students' && studentList.length === 0) {
+      fetchStudents();
+    }
+  }, [activeTab]);
+
+  const handleStartNewChat = async (recipientId) => {
+    try {
+      const conv = await api.getOrCreateConversation(recipientId);
+      if (conv) {
+        setSelectedConversation(conv);
+        if (!conversations.find(c => c.id === conv.id)) {
+          setConversations(prev => [conv, ...prev]);
+        }
+        setActiveTab('messages');
+      }
+    } catch (e) {
+      console.error("Failed to start chat", e);
+      alert("Không thể bắt đầu cuộc trò chuyện");
+    }
+  };
+
   return (
     <div className="max-w-[1600px] mx-auto px-4 py-6 h-[calc(100vh-80px)] flex flex-col animate-fade-in">
       {/* Glass Container */}
@@ -308,101 +345,179 @@ export default function Messages() {
         <div className="w-full md:w-[350px] lg:w-[400px] border-r border-gray-100 dark:border-gray-700/50 flex flex-col bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
           {/* Header */}
           <div className="p-6 border-b border-gray-100 dark:border-gray-700/50 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-gray-800 dark:to-gray-800">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-3">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-3 mb-4">
               <i className="fas fa-comments text-blue-500"></i>
-              Tin nhắn
+              Chat
             </h2>
-            {unreadCount > 0 && (
-              <div className="mt-3 inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 animate-pulse">
+
+            {/* Tabs */}
+            <div className="flex gap-2 mb-3">
+              <button
+                onClick={() => setActiveTab('messages')}
+                className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${activeTab === 'messages'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+              >
+                <i className="fas fa-comments mr-2"></i>
+                Tin nhắn
+              </button>
+              <button
+                onClick={() => setActiveTab('students')}
+                className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${activeTab === 'students'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+              >
+                <i className="fas fa-user-graduate mr-2"></i>
+                Sinh viên
+              </button>
+            </div>
+
+            {activeTab === 'messages' && unreadCount > 0 && (
+              <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 animate-pulse">
                 {unreadCount} tin nhắn mới
               </div>
             )}
           </div>
 
-          {/* Conversations */}
+          {/* List Content */}
           <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
-            {loadingConversations ? (
-              <div className="p-8 text-center space-y-3">
-                <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin mx-auto"></div>
-                <p className="text-sm text-gray-500 font-medium">Đang tải cuộc trò chuyện...</p>
-              </div>
-            ) : conversations.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full p-8 text-center opacity-60">
-                <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-                  <i className="fas fa-comment-slash text-3xl text-gray-400"></i>
-                </div>
-                <p className="text-gray-900 dark:text-white font-medium">Chưa có tin nhắn</p>
-                <p className="text-sm text-gray-500">Hộp thư của bạn đang trống</p>
-              </div>
-            ) : (
-              conversations.map((conversation) => {
-                const otherUser = getOtherUser(conversation);
-                if (!otherUser) return null;
-                const isSelected = selectedConversation?.id === conversation.id;
-                const unreadCount = conversationUnreadCounts[conversation.id] || 0;
-                const avatarUrl = getAvatarUrl(otherUser.avatarUrl);
-
-                return (
-                  <button
-                    key={conversation.id}
-                    onClick={() => handleConversationClick(conversation)}
-                    className={`w-full p-4 rounded-2xl transition-all duration-200 group relative overflow-hidden text-left ${isSelected
-                      ? 'bg-blue-600 shadow-lg shadow-blue-500/30'
-                      : 'hover:bg-white/80 dark:hover:bg-gray-800/80 hover:shadow-md'
-                      }`}
-                  >
-                    {/* Background decoration for selected */}
-                    {isSelected && (
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-indigo-600"></div>
-                    )}
-
-                    <div className="flex items-center gap-4 relative z-10">
-                      <div className="relative flex-shrink-0">
-                        {avatarUrl ? (
-                          <img
-                            src={avatarUrl}
-                            alt={otherUser.fullName}
-                            className={`w-12 h-12 rounded-full object-cover border-2 shadow-sm ${isSelected ? 'border-blue-300' : 'border-white dark:border-gray-700'}`}
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              e.target.nextSibling.style.display = 'flex';
-                            }}
-                          />
-                        ) : null}
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold border-2 shadow-sm ${avatarUrl ? 'hidden' : ''
-                          } ${isSelected
-                            ? 'bg-white/20 text-white border-blue-400'
-                            : 'bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 text-gray-500 dark:text-gray-300 border-white dark:border-gray-600'
-                          }`}>
-                          {otherUser.fullName?.charAt(0).toUpperCase() || 'U'}
-                        </div>
-
-                        {unreadCount > 0 && !isSelected && (
-                          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-gray-900">
-                            {unreadCount > 9 ? '9+' : unreadCount}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <h3 className={`font-bold text-sm truncate ${isSelected ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
-                            {otherUser.fullName || 'Người dùng'}
-                          </h3>
-                          {conversation.lastMessageAt && (
-                            <span className={`text-[10px] ${isSelected ? 'text-blue-200' : 'text-gray-400 dark:text-gray-500'}`}>
-                              {formatDate(conversation.lastMessageAt)}
-                            </span>
-                          )}
-                        </div>
-                        <p className={`text-xs truncate font-medium ${isSelected ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300'}`}>
-                          {lastMessages[conversation.id] || 'Bắt đầu cuộc trò chuyện...'}
-                        </p>
-                      </div>
+            {activeTab === 'messages' ? (
+              <>
+                {loadingConversations ? (
+                  <div className="p-8 text-center space-y-3">
+                    <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin mx-auto"></div>
+                    <p className="text-sm text-gray-500 font-medium">Đang tải cuộc trò chuyện...</p>
+                  </div>
+                ) : conversations.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full p-8 text-center opacity-60">
+                    <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                      <i className="fas fa-comment-slash text-3xl text-gray-400"></i>
                     </div>
-                  </button>
-                );
-              })
+                    <p className="text-gray-900 dark:text-white font-medium">Chưa có tin nhắn</p>
+                    <p className="text-sm text-gray-500">Hộp thư của bạn đang trống</p>
+                  </div>
+                ) : (
+                  conversations.map((conversation) => {
+                    const otherUser = getOtherUser(conversation);
+                    if (!otherUser) return null;
+                    const isSelected = selectedConversation?.id === conversation.id;
+                    const unreadCount = conversationUnreadCounts[conversation.id] || 0;
+                    const avatarUrl = getAvatarUrl(otherUser.avatarUrl);
+
+                    return (
+                      <button
+                        key={conversation.id}
+                        onClick={() => handleConversationClick(conversation)}
+                        className={`w-full p-4 rounded-2xl transition-all duration-200 group relative overflow-hidden text-left ${isSelected
+                          ? 'bg-blue-600 shadow-lg shadow-blue-500/30'
+                          : 'hover:bg-white/80 dark:hover:bg-gray-800/80 hover:shadow-md'
+                          }`}
+                      >
+                        {/* Background decoration for selected */}
+                        {isSelected && (
+                          <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-indigo-600"></div>
+                        )}
+
+                        <div className="flex items-center gap-4 relative z-10">
+                          <div className="relative flex-shrink-0">
+                            {avatarUrl ? (
+                              <img
+                                src={avatarUrl}
+                                alt={otherUser.fullName}
+                                className={`w-12 h-12 rounded-full object-cover border-2 shadow-sm ${isSelected ? 'border-blue-300' : 'border-white dark:border-gray-700'}`}
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  e.target.nextSibling.style.display = 'flex';
+                                }}
+                              />
+                            ) : null}
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold border-2 shadow-sm ${avatarUrl ? 'hidden' : ''
+                              } ${isSelected
+                                ? 'bg-white/20 text-white border-blue-400'
+                                : 'bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 text-gray-500 dark:text-gray-300 border-white dark:border-gray-600'
+                              }`}>
+                              {otherUser.fullName?.charAt(0).toUpperCase() || 'U'}
+                            </div>
+
+                            {unreadCount > 0 && !isSelected && (
+                              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-gray-900">
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <h3 className={`font-bold text-sm truncate ${isSelected ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
+                                {otherUser.fullName || 'Người dùng'}
+                              </h3>
+                              {conversation.lastMessageAt && (
+                                <span className={`text-[10px] ${isSelected ? 'text-blue-200' : 'text-gray-400 dark:text-gray-500'}`}>
+                                  {formatDate(conversation.lastMessageAt)}
+                                </span>
+                              )}
+                            </div>
+                            <p className={`text-xs truncate font-medium ${isSelected ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300'}`}>
+                              {lastMessages[conversation.id] || 'Bắt đầu cuộc trò chuyện...'}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+              </>
+            ) : (
+              <>
+                {loadingStudents ? (
+                  <div className="flex justify-center p-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                  </div>
+                ) : studentList.length === 0 ? (
+                  <div className="text-center p-8 text-gray-500">
+                    <p>Hiện chưa có sinh viên nào.</p>
+                  </div>
+                ) : (
+                  studentList.map(student => {
+                    const avatarUrl = getAvatarUrl(student.avatarUrl);
+                    return (
+                      <button
+                        key={student.id}
+                        onClick={() => handleStartNewChat(student.id)}
+                        className="w-full p-4 rounded-2xl hover:bg-white/80 dark:hover:bg-gray-800/80 hover:shadow-md transition-all text-left"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="relative flex-shrink-0">
+                            {avatarUrl ? (
+                              <img
+                                src={avatarUrl}
+                                alt={student.fullName}
+                                className="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow-sm"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  e.target.nextSibling.style.display = 'flex';
+                                }}
+                              />
+                            ) : null}
+                            <div className={`w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-sm ${avatarUrl ? 'hidden' : ''}`}>
+                              {student.fullName?.charAt(0).toUpperCase() || 'S'}
+                            </div>
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-bold text-gray-900 dark:text-white">{student.fullName}</h4>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Sinh viên</p>
+                          </div>
+                          <div className="ml-auto">
+                            <i className="fas fa-comment-alt text-blue-500"></i>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+              </>
             )}
           </div>
         </div>

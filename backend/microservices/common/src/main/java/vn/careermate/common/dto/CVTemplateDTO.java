@@ -18,4 +18,6 @@ public class CVTemplateDTO {
     private String templateUrl;
     private String previewUrl;
     private Boolean isPremium;
+    private String templateHtml;
+    private String templateCss;
 }

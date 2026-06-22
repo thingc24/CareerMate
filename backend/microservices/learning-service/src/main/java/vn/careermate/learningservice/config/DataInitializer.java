@@ -713,10 +713,11 @@ public class DataInitializer {
     @PostConstruct
     @Order(4)
     public void initCVTemplates() {
-        if (cvTemplateRepository.count() > 0) {
-            log.info("CV templates already exist, skipping initialization");
-            return;
-        }
+//        if (cvTemplateRepository.count() > 0) {
+//            log.info("CV templates already exist, skipping initialization");
+//            return;
+//        }
+
 
         log.info("Initializing CV templates...");
 
@@ -1026,7 +1027,6 @@ public class DataInitializer {
                         List<CourseModule> modules = createModulesForCourse(course);
                         if (modules.isEmpty()) {
                             log.warn("No modules created for course: {}", course.getTitle());
-                            // Still continue to check quiz questions
                         } else {
                             courseModuleRepository.saveAll(modules);
                             totalModules += modules.size();
@@ -1052,8 +1052,40 @@ public class DataInitializer {
                             }
                         }
                     } else {
-                        log.info("Course '{}' already has {} modules, but will check/update quiz questions", 
+                        log.info("Course '{}' already has {} modules. Updating content...", 
                                 course.getTitle(), existingModuleCount);
+                        
+                        // Fetch existing modules with lessons
+                        List<CourseModule> existingModules = courseModuleRepository.findModulesWithLessonsByCourseId(course.getId());
+                        
+                        for (CourseModule module : existingModules) {
+                            if (module.getLessons() != null) {
+                                for (Lesson lesson : module.getLessons()) {
+                                    // Skip quiz lessons for content update
+                                    if (lesson.getType() == Lesson.LessonType.QUIZ) continue;
+                                    
+                                    // Update content
+                                    String newContent = getLessonContent(course, module.getTitle(), lesson.getOrderIndex());
+                                    // Don't overwrite if not meaningful change, but here we force update for "rich text"
+                                    if (newContent != null && !newContent.isEmpty()) {
+                                        lesson.setContent(newContent);
+                                        // Ensure type is TEXT if we want text-first experience, or VIDEO if it has video
+                                        // User asked for text content, so let's ensure it's presented well.
+                                        // We can keep type as VIDEO if videoUrl exists, but the content field will now be rich.
+                                        // Or switch to TEXT to force frontend to show text primarily?
+                                        // Let's keep existing type logic but update content.
+                                        // Actually user said "instead of waiting for video link", implying they want to READ.
+                                        // So maybe set type to LEssonType.TEXT?
+                                        // Let's set to TEXT for basic content to ensure it's readable.
+                                        if (lesson.getType() == Lesson.LessonType.VIDEO && (lesson.getVideoUrl() == null || lesson.getVideoUrl().contains("example.com"))) {
+                                            lesson.setType(Lesson.LessonType.TEXT);
+                                        }
+                                    }
+                                }
+                                lessonRepository.saveAll(module.getLessons());
+                                log.info("Updated content for module: {}", module.getTitle());
+                            }
+                        }
                     }
 
                     // Create final quiz for course (10-15 questions)
@@ -1344,9 +1376,7 @@ public class DataInitializer {
         String category = course.getCategory();
         StringBuilder content = new StringBuilder();
         
-        content.append("<div class='lesson-content' style='max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.8;'>");
-        content.append("<h2 style='color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px;'>")
-               .append(getLessonTitle(moduleTitle, lessonNum)).append("</h2>");
+        content.append("<div class='lesson-content' style='max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.8; font-family: Inter, system-ui, sans-serif; color: #1f2937;'>");
         
         // Generate real content based on course title and module
         if (moduleTitle.contains("Giới thiệu") || moduleTitle.contains("Tổng quan")) {
@@ -1367,92 +1397,54 @@ public class DataInitializer {
         StringBuilder content = new StringBuilder();
         
         if (lessonNum == 1) {
-            content.append("<p style='font-size: 1.1em; margin: 20px 0;'>Chào mừng bạn đến với khóa học <strong style='color: #2563eb;'>")
-                   .append(courseTitle).append("</strong>!</p>");
-            
+            content.append("<div class='intro-section'>");
+            content.append("<h2>Chào mừng bạn đến với khóa học ").append(courseTitle).append("</h2>");
+            content.append("<p>Khóa học này được thiết kế để đưa bạn từ người mới bắt đầu trở thành chuyên gia. Chúng ta sẽ cùng nhau khám phá các khái niệm cốt lõi, thực hành qua các dự án thực tế và xây dựng nền tảng vững chắc cho sự nghiệp của bạn.</p>");
+            content.append("</div>");
+
             if (category.equals("TECHNICAL")) {
                 if (courseTitle.contains("Java")) {
-                    content.append("<div style='background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;'>");
-                    content.append("<h3 style='color: #1e40af;'>Java là gì?</h3>");
-                    content.append("<p>Java là một ngôn ngữ lập trình hướng đối tượng, được phát triển bởi Sun Microsystems (nay thuộc Oracle). Java được thiết kế với nguyên tắc \"Write Once, Run Anywhere\" (WORA), nghĩa là code Java có thể chạy trên bất kỳ nền tảng nào có cài đặt Java Virtual Machine (JVM).</p>");
-                    content.append("<h4 style='margin-top: 15px;'>Đặc điểm nổi bật:</h4>");
-                    content.append("<ul style='margin-left: 20px;'>");
-                    content.append("<li><strong>Hướng đối tượng:</strong> Mọi thứ trong Java đều là object</li>");
-                    content.append("<li><strong>Đa nền tảng:</strong> Chạy trên Windows, Linux, macOS</li>");
-                    content.append("<li><strong>Bảo mật cao:</strong> Sandbox security model</li>");
-                    content.append("<li><strong>Garbage Collection:</strong> Tự động quản lý bộ nhớ</li>");
+                    content.append("<h3>Tại sao nên học Java?</h3>");
+                    content.append("<p>Java không chỉ là một ngôn ngữ lập trình, nó là nền tảng của hàng tỷ thiết bị trên toàn thế giới.</p>");
+                    content.append("<ul class='grid-list'>");
+                    content.append("<li><strong class='text-highlight'>🎯 Phổ biến toàn cầu</strong>Được sử dụng bởi 90% các công ty trong Fortune 500 cho hệ thống backend.</li>");
+                    content.append("<li><strong class='text-highlight'>🔒 Mạnh mẽ & Bảo mật</strong>Hệ thống kiểu dữ liệu tĩnh mạnh và quản lý bộ nhớ tự động giúp code an toàn hơn.</li>");
+                    content.append("<li><strong class='text-highlight'>📱 Đa nền tảng</strong>\"Write Once, Run Anywhere\" - Chạy trên mọi hệ điều hành mà không cần biên dịch lại.</li>");
                     content.append("</ul>");
-                    content.append("</div>");
                 } else if (courseTitle.contains("Python")) {
-                    content.append("<div style='background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0;'>");
-                    content.append("<h3 style='color: #166534;'>Python là gì?</h3>");
-                    content.append("<p>Python là ngôn ngữ lập trình cấp cao, được thiết kế với triết lý \"Readability counts\" - dễ đọc, dễ hiểu. Python có cú pháp rất đơn giản, phù hợp cho người mới bắt đầu và cả các dự án lớn.</p>");
-                    content.append("<h4 style='margin-top: 15px;'>Ưu điểm của Python:</h4>");
-                    content.append("<ul style='margin-left: 20px;'>");
-                    content.append("<li><strong>Cú pháp đơn giản:</strong> Dễ học, dễ viết</li>");
-                    content.append("<li><strong>Thư viện phong phú:</strong> NumPy, Pandas, Django, Flask...</li>");
-                    content.append("<li><strong>Đa mục đích:</strong> Web, Data Science, AI, Automation</li>");
-                    content.append("<li><strong>Cộng đồng lớn:</strong> Nhiều tài liệu và hỗ trợ</li>");
-                    content.append("</ul>");
+                    content.append("<h3>Sức mạnh của Python</h3>");
+                    content.append("<p>Python là ngôn ngữ phát triển nhanh nhất hiện nay, thống trị lĩnh vực AI và Data Science.</p>");
+                    content.append("<div class='info-box'>");
+                    content.append("<p>\"Python đơn giản như tiếng Anh, nhưng mạnh mẽ như C++.\"</p>");
                     content.append("</div>");
-                } else if (courseTitle.contains("JavaScript") || courseTitle.contains("React")) {
-                    content.append("<div style='background: #fefce8; padding: 20px; border-radius: 8px; margin: 20px 0;'>");
-                    content.append("<h3 style='color: #854d0e;'>JavaScript là gì?</h3>");
-                    content.append("<p>JavaScript là ngôn ngữ lập trình phía client, được sử dụng để tạo các trang web tương tác. JavaScript có thể chạy trên browser và cả server (Node.js), làm cho nó trở thành một trong những ngôn ngữ phổ biến nhất hiện nay.</p>");
-                    content.append("<h4 style='margin-top: 15px;'>Tại sao học JavaScript?</h4>");
-                    content.append("<ul style='margin-left: 20px;'>");
-                    content.append("<li><strong>Frontend Development:</strong> React, Vue, Angular</li>");
-                    content.append("<li><strong>Backend Development:</strong> Node.js, Express.js</li>");
-                    content.append("<li><strong>Full Stack:</strong> Một ngôn ngữ cho cả frontend và backend</li>");
-                    content.append("<li><strong>Nhu cầu cao:</strong> Rất nhiều công ty cần JavaScript developers</li>");
+                    content.append("<p>Bạn có thể làm gì với Python?</p>");
+                    content.append("<ul>");
+                    content.append("<li>🤖 <strong>Trí tuệ nhân tạo (AI):</strong> TensorFlow, PyTorch</li>");
+                    content.append("<li>📊 <strong>Khoa học dữ liệu:</strong> Phân tích và trực quan hóa dữ liệu lớn</li>");
+                    content.append("<li>🌐 <strong>Web Development:</strong> Django, Flask, FastAPI</li>");
+                    content.append("<li>⚙️ <strong>Tự động hóa:</strong> Scripting và DevOps</li>");
                     content.append("</ul>");
-                    content.append("</div>");
-                } else {
-                    content.append("<p style='font-size: 1.1em;'>Khóa học này sẽ giúp bạn nắm vững các kiến thức và kỹ năng cần thiết về ")
-                           .append(courseTitle).append(".</p>");
                 }
             } else if (category.equals("CV")) {
-                content.append("<div style='background: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0;'>");
-                content.append("<h3 style='color: #92400e;'>Tầm quan trọng của CV chuyên nghiệp</h3>");
-                content.append("<p>CV (Curriculum Vitae) là công cụ đầu tiên để bạn gây ấn tượng với nhà tuyển dụng. Một CV tốt có thể mở ra cánh cửa cơ hội, trong khi CV kém có thể khiến bạn bị loại ngay từ vòng đầu.</p>");
-                content.append("<h4 style='margin-top: 15px;'>Trong khóa học này, bạn sẽ học:</h4>");
-                content.append("<ul style='margin-left: 20px;'>");
-                content.append("<li>Cách viết CV thu hút nhà tuyển dụng</li>");
-                content.append("<li>Định dạng và bố cục CV chuyên nghiệp</li>");
-                content.append("<li>Cách highlight điểm mạnh và thành tích</li>");
-                content.append("<li>Tránh các lỗi thường gặp khi viết CV</li>");
-                content.append("</ul>");
-                content.append("</div>");
-            } else if (category.equals("INTERVIEW")) {
-                content.append("<div style='background: #fce7f3; padding: 20px; border-radius: 8px; margin: 20px 0;'>");
-                content.append("<h3 style='color: #9f1239;'>Chuẩn bị cho phỏng vấn xin việc</h3>");
-                content.append("<p>Phỏng vấn là bước quan trọng nhất trong quá trình tìm việc. Sự chuẩn bị kỹ lưỡng sẽ giúp bạn tự tin và thể hiện tốt nhất khả năng của mình.</p>");
-                content.append("<h4 style='margin-top: 15px;'>Bạn sẽ học:</h4>");
-                content.append("<ul style='margin-left: 20px;'>");
-                content.append("<li>Cách trả lời các câu hỏi phỏng vấn thường gặp</li>");
-                content.append("<li>Kỹ thuật STAR (Situation, Task, Action, Result)</li>");
-                content.append("<li>Cách thể hiện body language và giao tiếp hiệu quả</li>");
-                content.append("<li>Chuẩn bị câu hỏi cho nhà tuyển dụng</li>");
-                content.append("</ul>");
+                content.append("<h3>CV: Vũ khí bí mật của bạn</h3>");
+                content.append("<p>Một chiếc CV tốt không phải là liệt kê tất cả những gì bạn đã làm. Đó là nghệ thuật <strong>bán kỹ năng</strong> của bạn cho nhà tuyển dụng.</p>");
+                content.append("<div class='grid-2'>");
+                content.append("<div class='card error'><strong>❌ Sai lầm phổ biến:</strong> CV quá dài dòng, lỗi chính tả, không tập trung vào kết quả.</div>");
+                content.append("<div class='card success'><strong>✅ Mục tiêu khóa học:</strong> Tạo ra bản CV \"6 giây\" - vượt qua vòng lọc hồ sơ ngay lập tức.</div>");
                 content.append("</div>");
             }
-            
-            content.append("<h3 style='color: #2563eb; margin-top: 30px;'>Mục tiêu học tập:</h3>");
-            content.append("<ul style='margin-left: 20px; font-size: 1.05em;'>");
-            content.append("<li>Nắm vững các khái niệm và nguyên tắc cơ bản</li>");
-            content.append("<li>Thực hành với các ví dụ và bài tập cụ thể</li>");
-            content.append("<li>Áp dụng kiến thức vào các dự án thực tế</li>");
-            content.append("<li>Hoàn thành bài kiểm tra cuối khóa với điểm số cao</li>");
-            content.append("</ul>");
         } else {
-            content.append("<p style='font-size: 1.1em;'>Trong bài học này, bạn sẽ học cách cài đặt và thiết lập môi trường phát triển cho ")
-                   .append(courseTitle).append(".</p>");
-            content.append("<h3 style='color: #2563eb; margin-top: 20px;'>Yêu cầu hệ thống:</h3>");
-            content.append("<ul style='margin-left: 20px;'>");
-            content.append("<li>Máy tính với hệ điều hành Windows, macOS hoặc Linux</li>");
-            content.append("<li>Kết nối Internet để tải các công cụ cần thiết</li>");
-            content.append("<li>Ít nhất 2GB RAM trống</li>");
+            content.append("<h3>Thiết lập môi trường & Công cụ</h3>");
+            content.append("<p>Để bắt đầu hành trình này, chúng ta cần chuẩn bị những công cụ tốt nhất. Đừng lo, tôi sẽ hướng dẫn bạn từng bước.</p>");
+            content.append("<div class='box'>");
+            content.append("<h4>🛠 Checklist cài đặt:</h4>");
+            content.append("<ul>");
+            content.append("<li><input type='checkbox' checked disabled> <strong>IDE/Code Editor:</strong> VS Code hoặc IntelliJ IDEA</li>");
+            content.append("<li><input type='checkbox' disabled> <strong>Runtime/SDK:</strong> JDK 17+ (cho Java) hoặc Python 3.10+</li>");
+            content.append("<li><input type='checkbox' disabled> <strong>Version Control:</strong> Git & GitHub Account</li>");
             content.append("</ul>");
+            content.append("</div>");
+            content.append("<p class='tip'>💡 <em>Mẹo: Hãy đảm bảo đường truyền internet ổn định khi tải các bộ cài đặt nặng.</em></p>");
         }
         
         return content.toString();
@@ -1463,103 +1455,99 @@ public class DataInitializer {
         
         if (category.equals("TECHNICAL")) {
             if (courseTitle.contains("Java")) {
-                if (lessonNum == 1) {
-                    content.append("<h3 style='color: #1e40af;'>Biến và Kiểu dữ liệu trong Java</h3>");
-                    content.append("<p>Java là ngôn ngữ có kiểu dữ liệu mạnh (strongly typed), nghĩa là mọi biến phải được khai báo với kiểu dữ liệu cụ thể.</p>");
-                    content.append("<h4 style='margin-top: 15px;'>Các kiểu dữ liệu nguyên thủy:</h4>");
-                    content.append("<pre style='background: #1e293b; color: #f1f5f9; padding: 15px; border-radius: 5px; overflow-x: auto;'><code>// Kiểu số nguyên\nint age = 25;\nlong population = 7800000000L;\nshort year = 2024;\nbyte value = 127;\n\n// Kiểu số thực\nfloat price = 19.99f;\ndouble pi = 3.14159265359;\n\n// Kiểu ký tự và boolean\nchar grade = 'A';\nboolean isActive = true;</code></pre>");
-                    content.append("<h4 style='margin-top: 15px;'>Ví dụ thực hành:</h4>");
-                    content.append("<pre style='background: #1e293b; color: #f1f5f9; padding: 15px; border-radius: 5px; overflow-x: auto;'><code>public class VariablesExample {\n    public static void main(String[] args) {\n        String name = \"Nguyễn Văn A\";\n        int age = 25;\n        double salary = 15000000.5;\n        \n        System.out.println(\"Tên: \" + name);\n        System.out.println(\"Tuổi: \" + age);\n        System.out.println(\"Lương: \" + salary + \" VNĐ\");\n    }\n}</code></pre>");
-                } else if (lessonNum == 2) {
-                    content.append("<h3 style='color: #1e40af;'>Cấu trúc điều khiển: If-Else và Switch</h3>");
-                    content.append("<p>Cấu trúc điều khiển cho phép chương trình thực hiện các hành động khác nhau dựa trên điều kiện.</p>");
-                    content.append("<h4 style='margin-top: 15px;'>Cú pháp If-Else:</h4>");
-                    content.append("<pre style='background: #1e293b; color: #f1f5f9; padding: 15px; border-radius: 5px; overflow-x: auto;'><code>int score = 85;\n\nif (score >= 90) {\n    System.out.println(\"Xuất sắc\");\n} else if (score >= 80) {\n    System.out.println(\"Giỏi\");\n} else if (score >= 70) {\n    System.out.println(\"Khá\");\n} else {\n    System.out.println(\"Cần cố gắng\");\n}</code></pre>");
-                } else {
-                    content.append("<h3 style='color: #1e40af;'>Vòng lặp: For, While, Do-While</h3>");
-                    content.append("<p>Vòng lặp cho phép thực hiện một đoạn code nhiều lần.</p>");
-                    content.append("<pre style='background: #1e293b; color: #f1f5f9; padding: 15px; border-radius: 5px; overflow-x: auto;'><code>// Vòng lặp for\nfor (int i = 1; i <= 10; i++) {\n    System.out.println(\"Số: \" + i);\n}\n\n// Vòng lặp while\nint count = 0;\nwhile (count < 5) {\n    System.out.println(\"Count: \" + count);\n    count++;\n}</code></pre>");
+                if (lessonNum == 1) { // Variables & Data Types
+                    content.append("<h3 style='color: #2563eb;'>Biến & Kiểu dữ liệu: Nền tảng của Java</h3>");
+                    content.append("<p>Trong Java, mọi biến đều cần một \"danh phận\" rõ ràng. Đây là đặc điểm của ngôn ngữ <strong>Strongly Typed</strong>.</p>");
+                    
+                    content.append("<h4>1. Các kiểu dữ liệu nguyên thủy (Primitive Types)</h4>");
+                    content.append("<table style='width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;'>");
+                    content.append("<tr style='background: #f3f4f6;'><th style='padding: 10px; border: 1px solid #e5e7eb;'>Kiểu</th><th style='padding: 10px; border: 1px solid #e5e7eb;'>Kích thước</th><th style='padding: 10px; border: 1px solid #e5e7eb;'>Ví dụ</th><th style='padding: 10px; border: 1px solid #e5e7eb;'>Mô tả</th></tr>");
+                    content.append("<tr><td style='padding: 10px; border: 1px solid #e5e7eb;'><code>int</code></td><td style='padding: 10px; border: 1px solid #e5e7eb;'>4 bytes</td><td style='padding: 10px; border: 1px solid #e5e7eb;'><code>int age = 25;</code></td><td style='padding: 10px; border: 1px solid #e5e7eb;'>Số nguyên thông dụng nhất</td></tr>");
+                    content.append("<tr><td style='padding: 10px; border: 1px solid #e5e7eb;'><code>double</code></td><td style='padding: 10px; border: 1px solid #e5e7eb;'>8 bytes</td><td style='padding: 10px; border: 1px solid #e5e7eb;'><code>double pi = 3.14;</code></td><td style='padding: 10px; border: 1px solid #e5e7eb;'>Số thực có độ chính xác cao</td></tr>");
+                    content.append("<tr><td style='padding: 10px; border: 1px solid #e5e7eb;'><code>boolean</code></td><td style='padding: 10px; border: 1px solid #e5e7eb;'>1 bit</td><td style='padding: 10px; border: 1px solid #e5e7eb;'><code>boolean isJavaFun = true;</code></td><td style='padding: 10px; border: 1px solid #e5e7eb;'>Đúng hoặc Sai</td></tr>");
+                    content.append("</table>");
+                    
+                    content.append("<h4>2. Ví dụ thực tế</h4>");
+                    content.append("<pre style='background: #1e293b; color: #e2e8f0; padding: 20px; border-radius: 8px; font-family: monospace; overflow-x: auto;'><code>public class UserProfile {\n    public static void main(String[] args) {\n        // Khai báo thông tin user\n        String fullName = \"Nguyễn Văn A\";\n        int age = 22;\n        double gpa = 3.8;\n        boolean isGraduated = false;\n\n        System.out.println(\"Hồ sơ sinh viên: \" + fullName);\n        System.out.println(\"Điểm GPA: \" + gpa);\n        \n        // Type casting (Ép kiểu)\n        int roundedGpa = (int) gpa; // Ép kiểu tường minh: 3.8 -> 3\n        System.out.println(\"Điểm làm tròn: \" + roundedGpa);\n    }\n}</code></pre>");
+                } else { // Control Flow
+                    content.append("<h3 style='color: #2563eb;'>Điều hướng luồng chương trình (Control Flow)</h3>");
+                    content.append("<p>Lập trình không chỉ là chạy code từ trên xuống dưới. Bạn cần ra quyết định (<code>if-else</code>) và lặp lại công việc (<code>loops</code>).</p>");
+                    
+                    content.append("<div style='background: #eff6ff; border-left: 4px solid #2563eb; padding: 15px; margin: 20px 0;'>");
+                    content.append("<strong>💡 Pro Tip:</strong> Luôn sử dụng dấu ngoặc nhọn <code>{}</code> ngay cả khi chỉ có một dòng lệnh trong if/else để tránh lỗi logic sau này.");
+                    content.append("</div>");
+                    
+                    content.append("<h4>Vòng lặp For vs While</h4>");
+                    content.append("<p>Khi nào dùng cái nào?</p>");
+                    content.append("<ul>");
+                    content.append("<li><strong>For Loop:</strong> Khi bạn biết trước số lần lặp (ví dụ: duyệt qua mảng kích thước 10).</li>");
+                    content.append("<li><strong>While Loop:</strong> Khi bạn lặp dựa trên một điều kiện chưa biết trước thời điểm dừng (ví dụ: đọc file đến khi hết dòng).</li>");
+                    content.append("</ul>");
                 }
             } else if (courseTitle.contains("Python")) {
                 if (lessonNum == 1) {
-                    content.append("<h3 style='color: #166534;'>Biến và Kiểu dữ liệu trong Python</h3>");
-                    content.append("<p>Python là ngôn ngữ động (dynamically typed), không cần khai báo kiểu dữ liệu khi tạo biến.</p>");
-                    content.append("<pre style='background: #1e293b; color: #f1f5f9; padding: 15px; border-radius: 5px; overflow-x: auto;'><code># Kiểu số\nage = 25\nprice = 19.99\n\n# Kiểu chuỗi\nname = \"Nguyễn Văn A\"\nmessage = 'Xin chào!'\n\n# Kiểu boolean\nis_active = True\nis_completed = False\n\n# Kiểu danh sách\nnumbers = [1, 2, 3, 4, 5]\nfruits = [\"apple\", \"banana\", \"orange\"]\n\n# Kiểu từ điển\nstudent = {\n    \"name\": \"Nguyễn Văn A\",\n    \"age\": 25,\n    \"grade\": \"A\"\n}</code></pre>");
-                } else if (lessonNum == 2) {
-                    content.append("<h3 style='color: #166534;'>Cấu trúc điều khiển trong Python</h3>");
-                    content.append("<pre style='background: #1e293b; color: #f1f5f9; padding: 15px; border-radius: 5px; overflow-x: auto;'><code>score = 85\n\nif score >= 90:\n    print(\"Xuất sắc\")\nelif score >= 80:\n    print(\"Giỏi\")\nelif score >= 70:\n    print(\"Khá\")\nelse:\n    print(\"Cần cố gắng\")</code></pre>");
+                    content.append("<h3 style='color: #16a34a;'>Biến & Kiểu dữ liệu: Sự linh hoạt của Python</h3>");
+                    content.append("<p>Python là ngôn ngữ <strong>Dynamically Typed</strong>. Bạn không cần khai báo kiểu, Python sẽ tự hiểu.</p>");
+                    
+                    content.append("<h4>Data Structures cốt lõi</h4>");
+                    content.append("<div style='display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;'>");
+                    content.append("<div style='background: #f9fafb; padding: 15px; border-radius: 8px;'><h5>📌 List (Danh sách)</h5><code>items = [1, \"apple\", True]</code><p style='font-size: 13px; color: #666;'>Có thứ tự, thay đổi được.</p></div>");
+                    content.append("<div style='background: #f9fafb; padding: 15px; border-radius: 8px;'><h5>📌 Tuple</h5><code>coords = (10, 20)</code><p style='font-size: 13px; color: #666;'>Có thứ tự, <strong>không</strong> đổi được.</p></div>");
+                    content.append("<div style='background: #f9fafb; padding: 15px; border-radius: 8px;'><h5>📌 Dictionary (Từ điển)</h5><code>user = {\"name\": \"Nam\", \"age\": 25}</code><p style='font-size: 13px; color: #666;'>Key-Value pair, tra cứu cực nhanh.</p></div>");
+                    content.append("<div style='background: #f9fafb; padding: 15px; border-radius: 8px;'><h5>📌 Set (Tập hợp)</h5><code>unique = {1, 2, 3}</code><p style='font-size: 13px; color: #666;'>Không trùng lặp, không thứ tự.</p></div>");
+                    content.append("</div>");
                 } else {
-                    content.append("<h3 style='color: #166534;'>Vòng lặp trong Python</h3>");
-                    content.append("<pre style='background: #1e293b; color: #f1f5f9; padding: 15px; border-radius: 5px; overflow-x: auto;'><code># Vòng lặp for\nfor i in range(1, 11):\n    print(f\"Số: {i}\")\n\n# Vòng lặp với danh sách\nfruits = [\"apple\", \"banana\", \"orange\"]\nfor fruit in fruits:\n    print(fruit)\n\n# Vòng lặp while\ncount = 0\nwhile count < 5:\n    print(f\"Count: {count}\")\n    count += 1</code></pre>");
-                }
-            } else if (courseTitle.contains("JavaScript") || courseTitle.contains("React")) {
-                if (lessonNum == 1) {
-                    content.append("<h3 style='color: #854d0e;'>Biến và Kiểu dữ liệu trong JavaScript</h3>");
-                    content.append("<p>JavaScript có 3 cách khai báo biến: var, let, và const.</p>");
-                    content.append("<pre style='background: #1e293b; color: #f1f5f9; padding: 15px; border-radius: 5px; overflow-x: auto;'><code>// let - có thể thay đổi\nlet age = 25;\nage = 26; // OK\n\n// const - không thể thay đổi\nconst name = \"Nguyễn Văn A\";\n// name = \"Nguyễn Văn B\"; // Lỗi!\n\n// Kiểu dữ liệu\nlet number = 42;\nlet text = \"Hello\";\nlet isActive = true;\nlet data = null;\nlet user = { name: \"A\", age: 25 };\nlet numbers = [1, 2, 3];</code></pre>");
-                } else if (lessonNum == 2) {
-                    content.append("<h3 style='color: #854d0e;'>Functions trong JavaScript</h3>");
-                    content.append("<pre style='background: #1e293b; color: #f1f5f9; padding: 15px; border-radius: 5px; overflow-x: auto;'><code>// Function declaration\nfunction greet(name) {\n    return `Xin chào, ${name}!`;\n}\n\n// Arrow function\nconst add = (a, b) => a + b;\n\n// Function với default parameters\nfunction introduce(name = \"Khách\", age = 0) {\n    return `Tôi là ${name}, ${age} tuổi`;\n}</code></pre>");
-                } else {
-                    content.append("<h3 style='color: #854d0e;'>Array Methods trong JavaScript</h3>");
-                    content.append("<pre style='background: #1e293b; color: #f1f5f9; padding: 15px; border-radius: 5px; overflow-x: auto;'><code>const numbers = [1, 2, 3, 4, 5];\n\n// map - tạo array mới\nconst doubled = numbers.map(n => n * 2);\n\n// filter - lọc phần tử\nconst evens = numbers.filter(n => n % 2 === 0);\n\n// reduce - tính tổng\nconst sum = numbers.reduce((acc, n) => acc + n, 0);</code></pre>");
+                    content.append("<h3 style='color: #16a34a;'>List Comprehensions - Pythonic Way</h3>");
+                    content.append("<p>Đây là tính năng \"đặc sản\" của Python giúp code ngắn gọn và dễ đọc hơn.</p>");
+                    content.append("<pre style='background: #1e293b; color: #e2e8f0; padding: 20px; border-radius: 8px; font-family: monospace;'><code># Cách thông thường\nsquares = []\nfor x in range(10):\n    squares.append(x**2)\n\n# Cách Pythonic (List Comp)\nsquares = [x**2 for x in range(10)]\n\n# Kết hợp điều kiện\nevens = [x for x in range(10) if x % 2 == 0]</code></pre>");
                 }
             } else {
-                content.append("<h3 style='color: #2563eb;'>Kiến thức cơ bản</h3>");
-                content.append("<p>Trong bài học này, bạn sẽ học các khái niệm và kỹ thuật cơ bản về ").append(courseTitle).append(".</p>");
-                content.append("<h4 style='margin-top: 15px;'>Nội dung chính:</h4>");
-                content.append("<ul style='margin-left: 20px;'>");
-                content.append("<li>Khái niệm và định nghĩa quan trọng</li>");
-                content.append("<li>Cú pháp và cách sử dụng</li>");
-                content.append("<li>Ví dụ minh họa cụ thể</li>");
-                content.append("</ul>");
+                content.append("<h3>Nền tảng kiến thức</h3>");
+                content.append("<p>Hãy bắt đầu xây dựng những viên gạch đầu tiên. Kiến thức cơ bản vững chắc sẽ giúp bạn tiến xa hơn.</p>");
             }
-        } else {
-            content.append("<h3 style='color: #2563eb;'>Nội dung chính</h3>");
-            content.append("<p>Trong bài học này, bạn sẽ học các kiến thức và kỹ năng cần thiết về ").append(courseTitle).append(".</p>");
+        } else if (category.equals("CV")) {
+             content.append("<h3 style='color: #d97706;'>Cấu trúc chuẩn của một CV chuyên nghiệp</h3>");
+             content.append("<p>Đừng để nhà tuyển dụng phải \"truy tìm kho báu\" thông tin của bạn. Hãy sắp xếp nó thật khoa học.</p>");
+             content.append("<div style='border-left: 4px solid #d97706; padding-left: 20px; margin: 20px 0;'>");
+             content.append("<h4>1. Thông tin liên hệ (Contact Info)</h4>");
+             content.append("<p>Họ tên, Email (chuyên nghiệp), Số điện thoại, Link LinkedIn. <em>Không cần địa chỉ nhà cụ thể, chỉ cần Quận/Thành phố.</em></p>");
+             content.append("<h4>2. Tóm tắt chuyên môn (Professional Summary)</h4>");
+             content.append("<p>2-3 câu tóm tắt bạn là ai, kinh nghiệm cốt lõi và giá trị bạn mang lại.</p>");
+             content.append("<h4>3. Kinh nghiệm làm việc (Work Experience)</h4>");
+             content.append("<p>Liệt kê ngược thời gian (mới nhất trước). Dùng bullet points và động từ mạnh (Developed, Managed, Created).</p>");
+             content.append("<h4>4. Kỹ năng (Skills)</h4>");
+             content.append("<p>Chia thành Hard Skills (Kỹ thuật) và Soft Skills (Mềm).</p>");
+             content.append("</div>");
         }
         
         return content.toString();
     }
-
+    
     private String getAdvancedContent(String courseTitle, String category, int lessonNum) {
         StringBuilder content = new StringBuilder();
+        content.append("<div style='background: #fff; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);'>");
+        content.append("<h3 style='color: #4338ca; border-bottom: 2px solid #4338ca; padding-bottom: 10px; display: inline-block;'>Chuyên sâu & Thực chiến</h3>");
         
         if (category.equals("TECHNICAL")) {
-            if (courseTitle.contains("Java") || courseTitle.contains("Spring")) {
-                content.append("<h3 style='color: #1e40af;'>OOP và Design Patterns</h3>");
-                content.append("<p>Trong bài học này, bạn sẽ học về lập trình hướng đối tượng nâng cao và các design patterns phổ biến.</p>");
-                content.append("<pre style='background: #1e293b; color: #f1f5f9; padding: 15px; border-radius: 5px; overflow-x: auto;'><code>// Ví dụ về Interface và Abstract Class\ninterface Animal {\n    void makeSound();\n}\n\nabstract class Mammal implements Animal {\n    public void breathe() {\n        System.out.println(\"Breathing...\");\n    }\n}\n\nclass Dog extends Mammal {\n    @Override\n    public void makeSound() {\n        System.out.println(\"Woof!\");\n    }\n}</code></pre>");
-            } else if (courseTitle.contains("Python") || courseTitle.contains("Django")) {
-                content.append("<h3 style='color: #166534;'>Django Models và ORM</h3>");
-                content.append("<p>Học cách sử dụng Django ORM để tương tác với database.</p>");
-                content.append("<pre style='background: #1e293b; color: #f1f5f9; padding: 15px; border-radius: 5px; overflow-x: auto;'><code>from django.db import models\n\nclass Student(models.Model):\n    name = models.CharField(max_length=100)\n    age = models.IntegerField()\n    email = models.EmailField()\n    \n    def __str__(self):\n        return self.name\n\n# Query\nstudents = Student.objects.filter(age__gte=18)\nstudent = Student.objects.get(name=\"Nguyễn Văn A\")</code></pre>");
-            } else if (courseTitle.contains("React")) {
-                content.append("<h3 style='color: #854d0e;'>React Hooks và State Management</h3>");
-                content.append("<p>Học cách sử dụng React Hooks và quản lý state hiệu quả.</p>");
-                content.append("<pre style='background: #1e293b; color: #f1f5f9; padding: 15px; border-radius: 5px; overflow-x: auto;'><code>import { useState, useEffect } from 'react';\n\nfunction Counter() {\n    const [count, setCount] = useState(0);\n    \n    useEffect(() => {\n        document.title = `Count: ${count}`;\n    }, [count]);\n    \n    return (\n        &lt;div&gt;\n            &lt;p&gt;Count: {count}&lt;/p&gt;\n            &lt;button onClick={() => setCount(count + 1)}&gt;\n                Increment\n            &lt;/button&gt;\n        &lt;/div&gt;\n    );\n}</code></pre>");
-            } else {
-                content.append("<h3 style='color: #2563eb;'>Nội dung nâng cao</h3>");
-                content.append("<p>Bài học này sẽ giúp bạn hiểu sâu hơn về các tính năng nâng cao của ").append(courseTitle).append(".</p>");
-            }
-        } else {
-            content.append("<h3 style='color: #2563eb;'>Áp dụng thực tế</h3>");
-            content.append("<p>Trong bài học này, bạn sẽ học cách áp dụng kiến thức vào các tình huống thực tế.</p>");
+             content.append("<p style='margin-top: 20px;'>Đã đến lúc nâng tầm code của bạn. Chúng ta không chỉ viết code chạy được, mà phải viết code <strong>sạch (clean), tối ưu (optimized) và dễ bảo trì (maintainable)</strong>.</p>");
+             
+             if (courseTitle.contains("Java") || courseTitle.contains("Spring")) {
+                 content.append("<h4>Design Patterns: Singleton & Factory</h4>");
+                 content.append("<p>Giải quyết các vấn đề thiết kế phổ biến bằng các mẫu chuẩn mực.</p>");
+                 content.append("<pre style='background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; font-size: 13px; overflow-x: auto;'><code>// Singleton Pattern (Lazy Initialization)\npublic class DatabaseConnection {\n    private static DatabaseConnection instance;\n    \n    private DatabaseConnection() {} // Private Constructor\n    \n    public static synchronized DatabaseConnection getInstance() {\n        if (instance == null) {\n            instance = new DatabaseConnection();\n        }\n        return instance;\n    }\n}</code></pre>");
+             }
         }
         
+        content.append("<div style='margin-top: 30px; background: #f0fdfa; padding: 15px; border-radius: 8px;'>");
+        content.append("<strong style='color: #0d9488;'>🚀 Challenge:</strong>");
+        content.append("<p style='margin: 10px 0 0;'>Hãy thử áp dụng kiến thức này vào dự án cá nhân của bạn ngay hôm nay. Đừng chỉ đọc, hãy code!</p>");
+        content.append("</div>");
+        content.append("</div>");
         return content.toString();
     }
-
+    
     private String getGeneralContent(String courseTitle, String category) {
-        StringBuilder content = new StringBuilder();
-        content.append("<p style='font-size: 1.1em;'>Nội dung bài học về ").append(courseTitle).append(".</p>");
-        content.append("<h3 style='color: #2563eb; margin-top: 20px;'>Điểm quan trọng:</h3>");
-        content.append("<ul style='margin-left: 20px;'>");
-        content.append("<li>Nắm vững kiến thức cơ bản</li>");
-        content.append("<li>Thực hành thường xuyên</li>");
-        content.append("<li>Áp dụng vào dự án thực tế</li>");
-        content.append("</ul>");
-        return content.toString();
+        return "<p>Nội dung đang được cập nhật chi tiết cho khóa học <strong>" + courseTitle + "</strong>. Vui lòng quay lại sau.</p>";
     }
 
     private Quiz createCourseQuiz(Course course) {

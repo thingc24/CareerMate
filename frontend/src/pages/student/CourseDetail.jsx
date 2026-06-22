@@ -303,14 +303,31 @@ export default function CourseDetail() {
                         {expandedModule === idx && (
                           <div className="bg-white dark:bg-gray-900 divide-y dark:divide-gray-800">
                             {module.lessons?.map((lesson, lIdx) => (
-                              <div key={lesson.id} className="p-3 pl-10 flex items-center justify-between hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors group cursor-pointer">
-                                <div className="flex items-center gap-3">
-                                  <i className="fas fa-play-circle text-gray-400 group-hover:text-blue-500 text-sm"></i>
-                                  <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                                    {lesson.title}
-                                  </span>
+                              <div key={lesson.id} className="p-3 pl-10 flex items-start justify-between hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors group cursor-pointer gap-4">
+                                <div className="flex gap-3 flex-1">
+                                  <div className="mt-1">
+                                    <i className={`fas ${lesson.type === 'VIDEO' ? 'fa-play-circle' : lesson.type === 'QUIZ' ? 'fa-question-circle' : 'fa-file-alt'} text-gray-400 group-hover:text-blue-500 text-sm`}></i>
+                                  </div>
+                                  <div>
+                                    <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 mb-0.5">
+                                      {lesson.title}
+                                    </div>
+                                    {lesson.description && (
+                                      <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{lesson.description}</p>
+                                    )}
+                                    <div className="flex items-center gap-3 mt-1">
+                                      {lesson.durationMinutes > 0 && (
+                                        <span className="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                          <i className="far fa-clock text-[9px]"></i> {lesson.durationMinutes} phút
+                                        </span>
+                                      )}
+                                      <span className="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
+                                        {lesson.type}
+                                      </span>
+                                    </div>
+                                  </div>
                                 </div>
-                                {lesson.isPreview && <span className="text-[10px] font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded">Học thử</span>}
+                                {lesson.isPreview && <span className="text-[10px] font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded whitespace-nowrap h-fit">Học thử</span>}
                               </div>
                             ))}
                           </div>
@@ -427,7 +444,7 @@ export default function CourseDetail() {
           </div>
 
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }

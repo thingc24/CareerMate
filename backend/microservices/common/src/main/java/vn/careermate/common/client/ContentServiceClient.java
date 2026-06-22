@@ -16,13 +16,20 @@ public interface ContentServiceClient {
     CompanyDTO getCompanyById(@PathVariable UUID companyId);
     
     @GetMapping("/companies")
-    List<CompanyDTO> getAllCompanies();
+    Page<CompanyDTO> getAllCompanies(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String keyword
+    );
 
     @PostMapping("/companies")
     CompanyDTO createOrUpdateCompany(@RequestBody CompanyDTO companyDTO);
     
     @DeleteMapping("/companies/{companyId}")
     void deleteCompany(@PathVariable UUID companyId);
+
+    @PutMapping("/companies/{companyId}/verify")
+    vn.careermate.common.dto.CompanyDTO verifyCompany(@PathVariable UUID companyId, @RequestParam boolean verified);
     
     // Article endpoints
     @GetMapping("/articles/{articleId}")

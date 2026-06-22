@@ -64,6 +64,18 @@ public class CVController {
         }
     }
 
+    @GetMapping("/all")
+    @PreAuthorize("hasAnyRole('RECRUITER', 'ADMIN')")
+    public ResponseEntity<List<CV>> getAllCVs() {
+        try {
+            List<CV> cvs = cvService.getAllCVs();
+            return ResponseEntity.ok(cvs);
+        } catch (Exception e) {
+            log.error("Error getting all CVs", e);
+            return ResponseEntity.status(500).build();
+        }
+    }
+
     @GetMapping("/{cvId}")
     @PreAuthorize("hasAnyRole('STUDENT', 'RECRUITER')")
     public ResponseEntity<?> getCV(@PathVariable UUID cvId) {
@@ -147,7 +159,7 @@ public class CVController {
             
             return ResponseEntity.ok()
                 .contentType(org.springframework.http.MediaType.parseMediaType(contentType))
-                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"")
                 .body(resource);
         } catch (RuntimeException e) {
             log.error("Error downloading CV: {}", e.getMessage());

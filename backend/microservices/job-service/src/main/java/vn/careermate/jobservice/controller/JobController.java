@@ -57,12 +57,14 @@ public class JobController {
     public ResponseEntity<Page<Job>> searchJobs(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String location,
+            @RequestParam(required = false) UUID companyId,
+            @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         try {
             Pageable pageable = PageRequest.of(page, size);
-            Page<Job> jobs = jobService.searchJobs(keyword, location, pageable);
+            Page<Job> jobs = jobService.searchJobs(keyword, location, companyId, status, pageable);
             return ResponseEntity.ok(jobs);
         } catch (RuntimeException e) {
             log.error("Runtime error searching jobs: {}", e.getMessage());

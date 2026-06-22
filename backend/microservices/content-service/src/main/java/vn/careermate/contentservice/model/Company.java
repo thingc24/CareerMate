@@ -9,7 +9,9 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "companies", schema = "contentservice")
@@ -55,4 +57,8 @@ public class Company {
     @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<CompanyRating> ratings;
 }

@@ -57,7 +57,10 @@ export default function ProfileEdit() {
           currentStatus: data.currentStatus || 'STUDENT',
         });
         if (data.avatarUrl) {
-          setAvatarPreview(getAvatarUrl(data.avatarUrl));
+          let url = api.getFileUrl(data.avatarUrl);
+          // Add cache busting for display
+          url = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
+          setAvatarPreview(url);
         }
       }
     } catch (error) {
@@ -66,13 +69,6 @@ export default function ProfileEdit() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const getAvatarUrl = (avatarUrl) => {
-    if (!avatarUrl) return null;
-    if (avatarUrl.startsWith('http')) return avatarUrl;
-    if (avatarUrl.startsWith('/api')) return `http://localhost:8080${avatarUrl}`;
-    return `http://localhost:8080/api${avatarUrl}`;
   };
 
   const handleAvatarChange = async (e) => {
@@ -98,6 +94,11 @@ export default function ProfileEdit() {
       const response = await api.uploadAvatar(file);
       if (response?.avatarUrl) {
         setProfile(prev => ({ ...prev, avatarUrl: response.avatarUrl }));
+
+        let fullUrl = api.getFileUrl(response.avatarUrl);
+        fullUrl = fullUrl + (fullUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+        setAvatarPreview(fullUrl);
+
         setMessage('Cập nhật ảnh đại diện thành công!');
         window.dispatchEvent(new CustomEvent('avatarUpdated', {
           detail: { avatarUrl: response.avatarUrl }

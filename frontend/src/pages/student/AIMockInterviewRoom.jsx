@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function AIMockInterviewRoom() {
     const { jobId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const { user } = useAuth();
 
     const [loading, setLoading] = useState(true);
@@ -41,7 +42,17 @@ export default function AIMockInterviewRoom() {
             const profile = await api.getStudentProfile();
             // Start interview
             // Assuming startAIMockInterview returns { questions: [...], jobId, jobTitle ... }
-            const session = await api.startAIMockInterview(jobId, JSON.stringify(profile));
+            let session;
+            if (jobId === 'custom') {
+                if (!location.state?.customRole) {
+                    navigate('/student/mock-interview');
+                    return;
+                }
+                const { title, desc } = location.state.customRole;
+                session = await api.startCustomAIMockInterview(title, desc);
+            } else {
+                session = await api.startAIMockInterview(jobId, JSON.stringify(profile));
+            }
 
             setJobInfo({ title: session.jobTitle, id: session.jobId });
 
@@ -158,7 +169,7 @@ export default function AIMockInterviewRoom() {
             const transcript = JSON.stringify(currentMessages);
 
             await api.finishAIMockInterview({
-                studentId: profile.id,
+                studentId: profile.userId,
                 jobId: jobInfo.id,
                 jobTitle: jobInfo.title,
                 startedAt: startTime.toISOString(),

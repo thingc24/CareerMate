@@ -309,12 +309,8 @@ function ApplicantCard({ applicant, onStatusChange, formatDate }) {
             onClick={async (e) => {
               e.stopPropagation();
               try {
-                const response = await api.client.get(`/students/cv/download/${applicant.cvId}`, {
-                  responseType: 'blob'
-                });
-                // Create a blob with PDF type for browser to render
-                const file = new Blob([response.data], { type: 'application/pdf' });
-                const url = window.URL.createObjectURL(file);
+                const blob = await api.downloadCV(applicant.cvId);
+                const url = window.URL.createObjectURL(blob);
                 window.open(url, '_blank');
               } catch (error) {
                 console.error('Error viewing CV:', error);

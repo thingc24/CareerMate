@@ -20,9 +20,9 @@ export default function Messages() {
   const [showUserInfoModal, setShowUserInfoModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('messages'); // 'messages' or 'recruiters'
 
-  // New Chat Modal State
-  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  // Recruiter List State (now for tab, not modal)
   const [recruiterList, setRecruiterList] = useState([]);
   const [loadingRecruiters, setLoadingRecruiters] = useState(false);
 
@@ -211,9 +211,8 @@ export default function Messages() {
   const fetchRecruiters = async () => {
     try {
       setLoadingRecruiters(true);
-      const recruiters = await api.getUsersByRole('RECRUITER');
-      // Filter out current user if accidentally returned (though role check handles it)
-      setRecruiterList(recruiters.filter(u => u.id !== user?.id));
+      const recruiters = await api.getAvailableRecruiters();
+      setRecruiterList(recruiters || []);
     } catch (e) {
       console.error("Failed to fetch recruiters", e);
     } finally {
@@ -221,16 +220,24 @@ export default function Messages() {
     }
   };
 
+  // Load recruiters when switching to recruiters tab
+  useEffect(() => {
+    if (activeTab === 'recruiters' && recruiterList.length === 0) {
+      fetchRecruiters();
+    }
+  }, [activeTab]);
+
   const handleStartNewChat = async (recipientId) => {
     try {
       const conv = await api.getOrCreateConversation(recipientId);
       if (conv) {
         setSelectedConversation(conv);
-        setShowNewChatModal(false);
         // Optimistically add to list if not present
         if (!conversations.find(c => c.id === conv.id)) {
           setConversations(prev => [conv, ...prev]);
         }
+        // Switch back to messages tab
+        setActiveTab('messages');
       }
     } catch (e) {
       console.error("Failed to start chat", e);
@@ -250,9 +257,8 @@ export default function Messages() {
   });
 
   const getAvatar = (u) => {
-    if (u?.avatarUrl?.startsWith('http')) return u.avatarUrl;
-    if (u?.avatarUrl) return `http://localhost:8080/api${u.avatarUrl}`;
-    return null;
+    if (!u?.avatarUrl) return null;
+    return api.getFileUrl(u.avatarUrl);
   };
 
   return (
@@ -264,6 +270,31 @@ export default function Messages() {
         {/* Header */}
         <div className="p-4 border-b border-gray-100 dark:border-gray-800">
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Chat</h1>
+
+          {/* Tabs */}
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => setActiveTab('messages')}
+              className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-all ${activeTab === 'messages'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+            >
+              <i className="fas fa-comments mr-2"></i>
+              Tin nhắn
+            </button>
+            <button
+              onClick={() => setActiveTab('recruiters')}
+              className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-all ${activeTab === 'recruiters'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+            >
+              <i className="fas fa-user-tie mr-2"></i>
+              Chuyên gia
+            </button>
+          </div>
+
           <div className="relative">
             <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
             <input
@@ -278,57 +309,106 @@ export default function Messages() {
 
         {/* List */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
-          {loadingConversations ? (
-            <div className="space-y-3 p-2">
-              {[1, 2, 3].map(i => <div key={i} className="h-16 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse"></div>)}
-            </div>
-          ) : filteredConversations.length === 0 ? (
-            <div className="text-center py-10 text-gray-500 text-sm">
-              {searchTerm ? 'Không tìm thấy kết quả' : 'Chưa có cuộc trò chuyện nào'}
-            </div>
-          ) : (
-            filteredConversations.map(conv => {
-              const other = getOtherUser(conv);
-              const active = selectedConversation?.id === conv.id;
-              const lastMsg = lastMessages[conv.id] || 'Bắt đầu trò chuyện';
-              const avatar = getAvatar(other);
+          {activeTab === 'messages' ? (
+            // Conversations List
+            <>
+              {loadingConversations ? (
+                <div className="space-y-3 p-2">
+                  {[1, 2, 3].map(i => <div key={i} className="h-16 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse"></div>)}
+                </div>
+              ) : filteredConversations.length === 0 ? (
+                <div className="text-center py-10 text-gray-500 text-sm">
+                  {searchTerm ? 'Không tìm thấy kết quả' : 'Chưa có cuộc trò chuyện nào'}
+                </div>
+              ) : (
+                filteredConversations.map(conv => {
+                  const other = getOtherUser(conv);
+                  const active = selectedConversation?.id === conv.id;
+                  const lastMsg = lastMessages[conv.id] || 'Bắt đầu trò chuyện';
+                  const avatar = getAvatar(other);
 
-              return (
-                <button
-                  key={conv.id}
-                  onClick={() => setSelectedConversation(conv)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${active
-                    ? 'bg-blue-50 dark:bg-blue-900/20 shadow-sm'
-                    : 'hover:bg-gray-50 dark:hover:bg-gray-800'
-                    }`}
-                >
-                  <div className="relative">
-                    {avatar ? (
-                      <img src={avatar} alt="avt" className="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-gray-700" />
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
-                        {other?.fullName?.[0]}
+                  return (
+                    <button
+                      key={conv.id}
+                      onClick={() => setSelectedConversation(conv)}
+                      className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${active
+                        ? 'bg-blue-50 dark:bg-blue-900/20 shadow-sm'
+                        : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                        }`}
+                    >
+                      <div className="relative">
+                        {avatar ? (
+                          <img src={avatar} alt="avt" className="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-gray-700" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                            {other?.fullName?.[0]}
+                          </div>
+                        )}
+                        {/* Status dot (fake for now) */}
+                        <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-gray-900 rounded-full"></div>
                       </div>
-                    )}
-                    {/* Status dot (fake for now) */}
-                    <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-gray-900 rounded-full"></div>
-                  </div>
-                  <div className="flex-1 min-w-0 text-left">
-                    <div className="flex justify-between items-baseline mb-0.5">
-                      <h3 className={`text-sm font-bold truncate ${active ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}>
-                        {other?.fullName}
-                      </h3>
-                      <span className="text-[10px] text-gray-400">
-                        {conv.lastMessageAt ? new Date(conv.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                      </span>
-                    </div>
-                    <p className={`text-xs truncate ${active ? 'text-blue-500/80 dark:text-blue-300/80' : 'text-gray-500 font-medium'}`}>
-                      {lastMsg}
-                    </p>
-                  </div>
-                </button>
-              );
-            })
+                      <div className="flex-1 min-w-0 text-left">
+                        <div className="flex justify-between items-baseline mb-0.5">
+                          <h3 className={`text-sm font-bold truncate ${active ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}>
+                            {other?.fullName}
+                          </h3>
+                          <span className="text-[10px] text-gray-400">
+                            {conv.lastMessageAt ? new Date(conv.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                          </span>
+                        </div>
+                        <p className={`text-xs truncate ${active ? 'text-blue-500/80 dark:text-blue-300/80' : 'text-gray-500 font-medium'}`}>
+                          {lastMsg}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </>
+          ) : (
+            // Recruiters List
+            <>
+              {loadingRecruiters ? (
+                <div className="flex justify-center p-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                </div>
+              ) : recruiterList.filter(r => r.fullName?.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
+                <div className="text-center p-8 text-gray-500">
+                  <p>{searchTerm ? 'Không tìm thấy kết quả' : 'Hiện chưa có chuyên gia nào.'}</p>
+                </div>
+              ) : (
+                recruiterList
+                  .filter(r => r.fullName?.toLowerCase().includes(searchTerm.toLowerCase()))
+                  .map(recruiter => (
+                    <button
+                      key={recruiter.id}
+                      onClick={() => handleStartNewChat(recruiter.id)}
+                      className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl transition-colors text-left"
+                    >
+                      <div className="relative">
+                        {recruiter.avatarUrl ? (
+                          <img
+                            src={getAvatar(recruiter)}
+                            alt={recruiter.fullName}
+                            className="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-gray-700"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                            {recruiter.fullName?.[0]}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-gray-800 dark:text-white">{recruiter.fullName}</h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Chuyên gia / Nhà tuyển dụng</p>
+                      </div>
+                      <div className="ml-auto">
+                        <i className="fas fa-comment-alt text-blue-500"></i>
+                      </div>
+                    </button>
+                  ))
+              )}
+            </>
           )}
         </div>
       </div>
@@ -476,14 +556,11 @@ export default function Messages() {
               <form onSubmit={handleSend} className="flex gap-3 items-end max-w-4xl mx-auto">
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowNewChatModal(true);
-                    fetchRecruiters();
-                  }}
+                  onClick={() => setActiveTab('recruiters')}
                   className="p-3 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-gray-800 rounded-full transition-colors"
-                  title="Chat với chuyên gia"
+                  title="Tìm chuyên gia"
                 >
-                  <i className="fas fa-plus"></i>
+                  <i className="fas fa-user-plus"></i>
                 </button>
                 <button type="button" className="p-3 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-gray-800 rounded-full transition-colors">
                   <i className="fas fa-image"></i>
@@ -514,63 +591,6 @@ export default function Messages() {
           </>
         )}
       </div>
-
-      {/* New Chat Modal (Select Expert) */}
-      {showNewChatModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 backdrop-blur-sm"
-          onClick={() => setShowNewChatModal(false)}
-        >
-          <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col max-h-[80vh]"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-              <h3 className="font-bold text-lg text-gray-800 dark:text-white">Chat với Chuyên gia</h3>
-              <button onClick={() => setShowNewChatModal(false)} className="w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center">
-                <i className="fas fa-times text-gray-500"></i>
-              </button>
-            </div>
-
-            <div className="p-4 overflow-y-auto custom-scrollbar space-y-2">
-              {loadingRecruiters ? (
-                <div className="flex justify-center p-4">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                </div>
-              ) : recruiterList.length === 0 ? (
-                <div className="text-center p-8 text-gray-500">
-                  <p>Hiện chưa có chuyên gia nào trực tuyến.</p>
-                </div>
-              ) : (
-                recruiterList.map(recruiter => (
-                  <button
-                    key={recruiter.id}
-                    onClick={() => handleStartNewChat(recruiter.id)}
-                    className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl transition-colors text-left"
-                  >
-                    <div className="relative">
-                      {recruiter.avatarUrl ? (
-                        <img src={recruiter.avatarUrl.startsWith('http') ? recruiter.avatarUrl : `http://localhost:8080/api${recruiter.avatarUrl}`}
-                          alt={recruiter.fullName}
-                          className="w-12 h-12 rounded-full object-cover" />
-                      ) : (
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
-                          {recruiter.fullName?.[0]}
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-gray-800 dark:text-white">{recruiter.fullName}</h4>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Chuyên gia / Nhà tuyển dụng</p>
-                    </div>
-                    <div className="ml-auto">
-                      <i className="fas fa-comment-alt text-blue-500"></i>
-                    </div>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* User Info Modal */}
       {selectedConversation && (

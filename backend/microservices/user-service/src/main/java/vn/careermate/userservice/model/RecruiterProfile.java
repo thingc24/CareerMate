@@ -42,6 +42,9 @@ public class RecruiterProfile {
 
     private String phone;
 
+    @Builder.Default
+    private Boolean isExpert = false;
+
     @Column(columnDefinition = "TEXT")
     private String bio;
 

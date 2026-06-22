@@ -40,7 +40,9 @@ public class SecurityConfig {
                 .requestMatchers(AntPathRequestMatcher.antMatcher("/uploads/**")).permitAll()
                 .requestMatchers(AntPathRequestMatcher.antMatcher("/users/uploads/**")).permitAll()
                 .requestMatchers(AntPathRequestMatcher.antMatcher("/error")).permitAll()
-                .requestMatchers(AntPathRequestMatcher.antMatcher("/actuator/**")).permitAll()
+                .requestMatchers(AntPathRequestMatcher.antMatcher("/api/setup/**")).permitAll()
+                .requestMatchers(AntPathRequestMatcher.antMatcher("/recruiters/experts")).permitAll()
+                .requestMatchers(AntPathRequestMatcher.antMatcher("/api/recruiters/experts")).permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session

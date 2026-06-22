@@ -276,10 +276,10 @@ export default function CoursePlayer() {
       {/* 2. Main Workspace */}
       <div className="flex-1 flex overflow-hidden">
 
-        {/* Main Content (Video/Quiz) */}
+        {/* Main Content (Video/Quiz/Text) */}
         <div className="flex-1 flex flex-col relative bg-black">
           {/* Player Area */}
-          <div className="flex-1 relative group overflow-hidden">
+          <div className="flex-1 relative group overflow-hidden bg-[#121212]">
             {currentLesson.type === 'VIDEO' && currentLesson.videoUrl ? (
               <video
                 ref={videoRef}
@@ -373,6 +373,58 @@ export default function CoursePlayer() {
                   )}
                 </div>
               </div>
+            ) : currentLesson.type === 'TEXT' || (!currentLesson.videoUrl && currentLesson.content) ? (
+              <div className="absolute inset-0 w-full h-full bg-[#121212] overflow-y-auto custom-scrollbar">
+                <div className="max-w-4xl mx-auto p-6 md:p-10">
+                  <h1 className="text-3xl md:text-4xl font-bold text-white mb-6 border-b border-gray-800 pb-4">
+                    {currentLesson.title}
+                  </h1>
+
+                  <div
+                    className="prose prose-invert prose-lg max-w-none 
+                      text-gray-300
+                      prose-headings:text-white prose-headings:font-bold 
+                      prose-p:text-gray-300 prose-li:text-gray-300
+                      prose-strong:text-blue-400 prose-strong:font-bold
+                      prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline
+                      prose-code:text-pink-400 prose-code:bg-[#1E1E1E] prose-code:px-2 prose-code:py-0.5 prose-code:rounded
+                      prose-pre:bg-[#1E1E1E] prose-pre:border prose-pre:border-[#333]
+                      prose-img:rounded-xl prose-img:shadow-lg
+                      [&_*]:text-gray-300 [&_h1]:text-white [&_h2]:text-white [&_h3]:text-white [&_strong]:text-blue-400"
+                    dangerouslySetInnerHTML={{ __html: currentLesson.content }}
+                  />
+
+                  {/* Text Lesson Completion Button - Explicit action */}
+                  <div className="mt-12 pt-8 border-t border-gray-800 flex justify-center">
+                    {!getLessonProgressStatus(currentLesson) ? (
+                      <button
+                        onClick={async () => {
+                          try {
+                            await api.updateLessonProgress(enrollmentId, currentLesson.id, 1, true); // 1 second, completed
+                            await api.completeLesson(currentLesson.id);
+                            loadData(); // Refresh sidebar status
+                            handleNext();
+                          } catch (e) {
+                            console.error("Lỗi hoàn thành bài học:", e);
+                          }
+                        }}
+                        className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-all shadow-lg flex items-center gap-2"
+                      >
+                        <span>Đánh dấu đã hoàn thành</span>
+                        <i className="fas fa-check"></i>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleNext}
+                        className="px-8 py-3 bg-[#333] hover:bg-[#444] text-white font-bold rounded-xl transition-all border border-gray-600 flex items-center gap-2"
+                      >
+                        <span>Đã hoàn thành. Bài tiếp theo</span>
+                        <i className="fas fa-arrow-right"></i>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
             ) : (
               <div className="flex items-center justify-center h-full text-gray-500">
                 <p>Định dạng bài học không hỗ trợ</p>
@@ -444,6 +496,10 @@ export default function CoursePlayer() {
                     const isActive = currentLesson?.id === lesson.id;
                     const isCompleted = getLessonProgressStatus(lesson);
 
+                    let iconClass = 'fa-play-circle';
+                    if (lesson.type === 'QUIZ') iconClass = 'fa-question-circle';
+                    else if (lesson.type === 'TEXT') iconClass = 'fa-file-alt';
+
                     return (
                       <button
                         key={lesson.id}
@@ -453,12 +509,12 @@ export default function CoursePlayer() {
                           : 'text-gray-400 hover:bg-[#252525] hover:text-gray-300'}`}
                       >
                         <div className={`mt-0.5 ${isActive ? 'text-blue-500' : isCompleted ? 'text-green-500' : 'text-gray-600'}`}>
-                          <i className={`fas ${lesson.type === 'VIDEO' ? 'fa-play-circle' : 'fa-question-circle'}`}></i>
+                          <i className={`fas ${iconClass}`}></i>
                         </div>
                         <div className="flex-1">
                           <p className={`text-sm font-medium leading-snug ${isCompleted && !isActive ? 'line-through opacity-70' : ''}`}>{lesson.title}</p>
                           <p className="text-[10px] text-gray-500 mt-1">
-                            {lesson.durationMinutes ? `${lesson.durationMinutes} phút` : 'Bài tập'}
+                            {lesson.durationMinutes ? `${lesson.durationMinutes} phút` : (lesson.type === 'QUIZ' ? 'Bài tập' : 'Bài đọc')}
                           </p>
                         </div>
                         {isCompleted && (

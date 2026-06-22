@@ -12,7 +12,17 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
+
+import vn.careermate.userservice.model.OAuthAccount;
+import vn.careermate.userservice.model.StudentProfile;
+import vn.careermate.userservice.model.RecruiterProfile;
+import vn.careermate.userservice.model.OtpToken;
+import vn.careermate.userservice.model.PasswordResetToken;
+import vn.careermate.userservice.model.LoginLog;
+import vn.careermate.userservice.model.Message;
+import vn.careermate.userservice.model.Conversation;
 
 @Entity
 @Table(name = "users", schema = "userservice", indexes = {
@@ -69,6 +79,42 @@ public class User {
 
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<OAuthAccount> oauthAccounts;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private StudentProfile studentProfile;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private RecruiterProfile recruiterProfile;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<OtpToken> otpTokens;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<PasswordResetToken> passwordResetTokens;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<LoginLog> loginLogs;
+
+    @OneToMany(mappedBy = "participant1", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Conversation> conversationsAsParticipant1;
+
+    @OneToMany(mappedBy = "participant2", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Conversation> conversationsAsParticipant2;
+
+    @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Message> sentMessages;
 
     public enum UserRole {
         STUDENT, RECRUITER, ADMIN, MENTOR

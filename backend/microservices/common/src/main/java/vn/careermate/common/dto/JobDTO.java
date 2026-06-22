@@ -25,4 +25,9 @@ public class JobDTO {
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    
+    // Hidden fields
+    private Boolean hidden;
+    private String hiddenReason;
+    private LocalDateTime hiddenAt;
 }

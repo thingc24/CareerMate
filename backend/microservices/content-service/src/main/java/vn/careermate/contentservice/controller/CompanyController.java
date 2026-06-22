@@ -30,7 +30,7 @@ public class CompanyController {
     private final UserServiceClient userServiceClient;
 
     @GetMapping
-    public ResponseEntity<Page<Map<String, Object>>> getAllCompanies(
+    public ResponseEntity<Page<vn.careermate.common.dto.CompanyDTO>> getAllCompanies(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String keyword
@@ -38,30 +38,31 @@ public class CompanyController {
         Pageable pageable = PageRequest.of(page, size);
         Page<Company> companiesPage = companyService.getAllCompanies(pageable, keyword);
         
-        // Convert to DTO with rating info
-        List<Map<String, Object>> companiesWithRatings = companiesPage.getContent().stream()
+        List<vn.careermate.common.dto.CompanyDTO> companyDTOs = companiesPage.getContent().stream()
                 .map(company -> {
                     Double avgRating = companyService.getAverageRating(company.getId());
                     Long ratingsCount = companyService.getRatingsCount(company.getId());
-                    Map<String, Object> companyMap = new HashMap<>();
-                    companyMap.put("id", company.getId());
-                    companyMap.put("name", company.getName());
-                    companyMap.put("description", company.getDescription());
-                    companyMap.put("websiteUrl", company.getWebsiteUrl());
-                    companyMap.put("logoUrl", company.getLogoUrl());
-                    companyMap.put("industry", company.getIndustry());
-                    companyMap.put("companySize", company.getCompanySize());
-                    companyMap.put("foundedYear", company.getFoundedYear());
-                    companyMap.put("headquarters", company.getHeadquarters());
-                    companyMap.put("createdAt", company.getCreatedAt());
-                    companyMap.put("updatedAt", company.getUpdatedAt());
-                    companyMap.put("averageRating", avgRating);
-                    companyMap.put("ratingsCount", ratingsCount);
-                    return companyMap;
+                    UUID recruiterId = companyService.getCompanyRecruiterId(company.getId());
+                    
+                    return vn.careermate.common.dto.CompanyDTO.builder()
+                            .id(company.getId())
+                            .name(company.getName())
+                            .description(company.getDescription())
+                            .websiteUrl(company.getWebsiteUrl())
+                            .logoUrl(company.getLogoUrl())
+                            .industry(company.getIndustry())
+                            .companySize(company.getCompanySize())
+                            .foundedYear(company.getFoundedYear())
+                            .headquarters(company.getHeadquarters())
+                            .averageRating(avgRating)
+                            .ratingsCount(ratingsCount)
+                            .recruiterId(recruiterId)
+                            .verified(company.isVerified())
+                            .build();
                 })
                 .collect(Collectors.toList());
         
-        return ResponseEntity.ok(new PageImpl<>(companiesWithRatings, pageable, companiesPage.getTotalElements()));
+        return ResponseEntity.ok(new PageImpl<>(companyDTOs, pageable, companiesPage.getTotalElements()));
     }
 
     @GetMapping("/top")
@@ -72,13 +73,26 @@ public class CompanyController {
     }
 
     @PutMapping("/{companyId}/verify")
-    public ResponseEntity<Company> verifyCompany(
+    public ResponseEntity<vn.careermate.common.dto.CompanyDTO> verifyCompany(
             @PathVariable UUID companyId,
             @RequestParam boolean verified
     ) {
         Company company = companyService.getCompanyById(companyId);
         company.setVerified(verified);
-        return ResponseEntity.ok(companyService.createOrUpdateCompany(company));
+        company = companyService.createOrUpdateCompany(company);
+        
+        return ResponseEntity.ok(vn.careermate.common.dto.CompanyDTO.builder()
+                .id(company.getId())
+                .name(company.getName())
+                .description(company.getDescription())
+                .websiteUrl(company.getWebsiteUrl())
+                .logoUrl(company.getLogoUrl())
+                .industry(company.getIndustry())
+                .companySize(company.getCompanySize())
+                .foundedYear(company.getFoundedYear())
+                .headquarters(company.getHeadquarters())
+                .verified(company.isVerified())
+                .build());
     }
 
     @DeleteMapping("/{companyId}")
@@ -92,6 +106,9 @@ public class CompanyController {
         Company company = companyService.getCompanyById(companyId);
         Double avgRating = companyService.getAverageRating(companyId);
         Long ratingsCount = companyService.getRatingsCount(companyId);
+        
+        // Get recruiter ID from first job posting of this company
+        UUID recruiterId = companyService.getCompanyRecruiterId(companyId);
         
         Map<String, Object> companyMap = new HashMap<>();
         companyMap.put("id", company.getId());
@@ -107,6 +124,7 @@ public class CompanyController {
         companyMap.put("updatedAt", company.getUpdatedAt());
         companyMap.put("averageRating", avgRating);
         companyMap.put("ratingsCount", ratingsCount);
+        companyMap.put("recruiterId", recruiterId); // Add recruiter ID
         
         return ResponseEntity.ok(companyMap);
     }

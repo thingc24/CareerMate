@@ -432,7 +432,8 @@ public class ArticleService {
         Article article = articleRepository.findById(articleId)
                 .orElseThrow(() -> new RuntimeException("Article not found"));
         article.setHidden(true);
-        // Reason could be logged or stored in a separate table/field
+        article.setHiddenReason(reason);
+        article.setHiddenAt(LocalDateTime.now());
         return articleRepository.save(article);
     }
 
@@ -441,6 +442,8 @@ public class ArticleService {
         Article article = articleRepository.findById(articleId)
                 .orElseThrow(() -> new RuntimeException("Article not found"));
         article.setHidden(false);
+        article.setHiddenReason(null);
+        article.setHiddenAt(null);
         return articleRepository.save(article);
     }
 

@@ -12,7 +12,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
+import vn.careermate.userservice.model.CV;
+import vn.careermate.userservice.model.StudentSkill;
 
 @Entity
 @Table(name = "student_profiles", schema = "userservice")
@@ -80,6 +83,14 @@ public class StudentProfile {
     @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<CV> cvs;
+
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<StudentSkill> skills;
 
     // Note: References to StudentSkill, CV, Application are kept for now
     // They can be accessed via UUID references if needed in future microservice architecture

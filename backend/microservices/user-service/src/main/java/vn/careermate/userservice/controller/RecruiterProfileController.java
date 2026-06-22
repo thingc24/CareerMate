@@ -302,4 +302,10 @@ public class RecruiterProfileController {
             return ResponseEntity.status(500).build();
         }
     }
+
+    @GetMapping("/experts")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<java.util.List<Map<String, Object>>> getExperts() {
+        return ResponseEntity.ok(recruiterProfileService.getAllExperts());
+    }
 }
